@@ -1,0 +1,39 @@
+
+.helloworld-label {
+    font-size: 72px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 5px;
+    padding: .5em;
+}
+
+.multimonitor-spacer {
+	height: 4em;
+}
+
+.panel-status-menu-box {
+    spacing: 0px;
+}
+
+.system-status-icon {
+    padding: 0 2px;
+}
+
+.workspace-thumbnails-left {
+    spacing: 11px;
+    visible-width: 32px; /* Amount visible before hovering */
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-left: 0px;
+    border-radius: 0px 9px 9px 0px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 11px 11px 11px 7px;
+
+}
+
+.workspace-thumbnails-left:rtl {
+    border-left: 1px;
+    border-right: 0px;
+    border-radius: 9px 0px 0px 9px;
+    padding: 11px 7px 11px 11px;
+}

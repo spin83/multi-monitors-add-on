@@ -1,0 +1,8 @@
+{
+	"shell-version": ["3.10.4"],
+	"uuid": "multi-monitors-add-on@spin83",
+	"name": "Multi Monitors Add-On",
+	"settings-schema": "org.gnome.shell.extensions.multi-monitors-add-on",
+	"gettext-domain": "gnome-shell-extensions-multi-monitors-add-on",
+	"description": "Add multiple monitors overview and panel for gnome-shell."
+}

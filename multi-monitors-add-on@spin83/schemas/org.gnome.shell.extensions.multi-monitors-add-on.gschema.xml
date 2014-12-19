@@ -1,0 +1,53 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.multi-monitors-add-on" path="/org/gnome/shell/extensions/multi-monitors-add-on/">
+
+	<key name="show-indicator" type="b">
+      <default>true</default>
+      <summary>Show Multi Monitors indicator on Top Panel.</summary>
+      <description>Add or remove Multi Monitors indicator from Top Panel.</description>
+    </key>
+
+    <key name="show-panel" type="b">
+      <default>true</default>
+      <summary>Show Panel on additional monitors.</summary>
+      <description>Add or remove Panel from additional monitors.</description>
+    </key>
+    
+    <key name="show-thumbnails-slider" type="b">
+      <default>true</default>
+      <summary>Show Thumbnails-Slider on additional monitors.</summary>
+      <description>Add or remove Thumbnails-Slider from additional monitors.</description>
+    </key>
+
+    <key name="show-activities" type="b">
+      <default>true</default>
+      <summary>Show Activities-Button on additional monitors.</summary>
+      <description>Change visibility of Activities-Button on additional monitors.</description>
+    </key>
+    
+    <key name="show-app-menu" type="b">
+      <default>true</default>
+      <summary>Show AppMenu-Button on additional monitors.</summary>
+      <description>Change visibility of AppMenu-Button on additional monitors.</description>
+    </key>
+    
+    <key name="thumbnails-on-left-side" type="b">
+      <default>true</default>
+      <summary>Show Thumbnails-Slider on left side of additional monitors.</summary>
+      <description>Toggle position of Thumbnails-Slider from right to left  on additional monitors.</description>
+    </key>
+    
+	<key name="available-indicators" type="as">
+      <default>[]</default>
+      <summary>A list of available indicators.</summary>
+      <description>A list of indicators that are available for transfer. For internal use only.</description>
+    </key>
+    
+	<key name="transfer-indicators" type="a{si}">
+      <default>{}</default>
+      <summary>A list of indicators for transfer.</summary>
+      <description>A list of indicators selected for transfer to additional Panel.</description>
+    </key>
+    
+  </schema>
+</schemalist>
