@@ -239,9 +239,9 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
 //			global.log(this._monitorIndex+": lastFocus :"+this._lastFocusedWindow.get_title());
 			return tracker.get_window_app(this._lastFocusedWindow);
         }
-        
-        let screen = global.screen;
-        let windows = screen.get_display().get_tab_list(Meta.TabList.NORMAL_ALL, screen, workspace);
+
+        let windows = global.screen.get_display().get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
+
         for (let i = 0; i < windows.length; i++) {
         	if(windows[i].get_monitor() == this._monitorIndex){
         		this._lastFocusedWindow = windows[i];
@@ -269,7 +269,7 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': Panel.ActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
-	    'appMenu': MultiMonitorsAppMenuButton,
+//	    'appMenu': MultiMonitorsAppMenuButton,
 //	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
@@ -384,7 +384,10 @@ const MultiMonitorsPanel = new Lang.Class({
 
     _getPreferredWidth: function(actor, forHeight, alloc) {
         alloc.min_size = -1;
-        alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
+        if(Main.layoutManager.monitors.length>this.monitorIndex)
+        	alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
+        else
+        	alloc.natural_size = 0;
     },
     
     _hideIndicators: function() {

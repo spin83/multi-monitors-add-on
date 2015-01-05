@@ -12,12 +12,14 @@
 	height: 4em;
 }
 
-.panel-status-menu-box {
+.multimonitor-status-indicators-box {
     spacing: 0px;
 }
 
-.system-status-icon {
+.multimonitor-status-icon {
+	icon-size: 1.09em;
     padding: 0 2px;
+    icon-shadow: black 0px 2px 2px;
 }
 
 .workspace-thumbnails-left {

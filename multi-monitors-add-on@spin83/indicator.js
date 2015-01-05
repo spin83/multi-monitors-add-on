@@ -31,7 +31,7 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 	Extends: St.BoxLayout,
 	
 	_init: function() {
-		this.parent({ style_class: 'panel-status-menu-box' });
+		this.parent({ style_class: 'multimonitor-status-indicators-box' });
 		
 		this._leftRightIcon = true;
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
@@ -49,23 +49,25 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 	
 		let monitorChange = Main.layoutManager.monitors.length - monitors.length;
 		if(monitorChange>0){
+			global.log("Add Monitors ...");
 			for(let idx = 0; idx<monitorChange; idx++){
 				if(this._leftRightIcon){
 					this.add_child(new St.Icon({
 						icon_name: 'multi-monitors-l-symbolic',
-						style_class: 'system-status-icon'
+						style_class: 'multimonitor-status-icon'
 					}));
 				}
 				else{
 					this.add_child(new St.Icon({
 						icon_name: 'multi-monitors-r-symbolic',
-						style_class: 'system-status-icon'
+						style_class: 'multimonitor-status-icon'
 					}));
 				}
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 		}
 		else if(monitorChange<0){
+			global.log("Remove Monitors ...");
 			monitorChange = -monitorChange;
 			
 			for(let idx = 0; idx<monitorChange; idx++){
@@ -81,7 +83,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 	Extends: PanelMenu.Button,
 	
 	_init: function() {
-		this.parent(0.0, "MultiMonitorsAddOn");
+		this.parent(0.0, "MultiMonitorsAddOn", false);
 		
 		this.text = null;
 

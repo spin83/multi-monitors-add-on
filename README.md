@@ -6,6 +6,12 @@ and rewritten from scratch for gnome-shell version 3.10.4.  Adds panels
 and thumbnails for additional monitors. Settings changes are applied 
 in dynamic fashion, no restart needed.
 
+Versions
+========
+
+* Branch [master](https://github.com/spin83/multi-monitors-add-on/tree/master) contains extension for GNOME 3.14 
+* Branch [gnome-3-10](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-10) contains extension for GNOME 3.10
+
 Installation from git
 =====================
 
@@ -19,4 +25,4 @@ License
 =======
 
 Multi Monitors Add-On extension is distributed under the terms of the 
-GNU General Public License, version 2 or later. See the COPYING file for details.
+GNU General Public License, version 2 or later. See the LICENSE file for details.

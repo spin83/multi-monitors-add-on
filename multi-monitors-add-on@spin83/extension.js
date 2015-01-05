@@ -54,6 +54,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this.panelBox = null;
 		this.mmappMenu = false;
 		
+		this._showAppMenuId = null;
+		
 		this._mmMonitors = 0;
 	},
 	
@@ -111,9 +113,10 @@ const MultiMonitorsAddOn = new Lang.Class({
 			
 			this.statusIndicatorsController = new MMPanel.StatusIndicatorsController();
 			
-	        this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID, Lang.bind(this, this._showAppMenu));
-			this._showAppMenu();
-			
+			if (Main.mmPanel.length>1) {
+		        this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID, Lang.bind(this, this._showAppMenu));
+				this._showAppMenu();
+			}
 			
 			if(Main.mmOverview){
 				for (let i = 0; i < Main.mmOverview.length; i++) {
@@ -143,8 +146,10 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	_hidePanel: function() {
 		if(Main.mmPanel){
-			this._settings.disconnect(this._showAppMenuId);
-			
+			if(this._showAppMenuId) {
+				this._settings.disconnect(this._showAppMenuId);
+				this._showAppMenuId = null;
+			}
 			
 			this.statusIndicatorsController.destroy();
 			this.statusIndicatorsController = null;

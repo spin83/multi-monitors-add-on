@@ -62,7 +62,7 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
 //        this._createBackground();
         this._bgManager = new Background.BackgroundManager({ monitorIndex: this.monitorIndex,
 														        container: this._contents,
-														        effects: Meta.BackgroundEffects.NONE });
+														        vignette: false });
 
         let monitor = Main.layoutManager.monitors[this.monitorIndex];
         this.setPorthole(monitor.x, monitor.y, monitor.width, monitor.height);
@@ -148,7 +148,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		
 		this._thumbnails = [];
 		
-		this.actor.connect('button-press-event', function() { return true; });
+		this.actor.connect('button-press-event', function() { return Clutter.EVENT_STOP; });
 		this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 		
 		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._createThumbnails));
@@ -161,7 +161,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		this._windowDragEndId = Main.overview.connect('window-drag-end', Lang.bind(this, this._onDragEnd));
 		this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', Lang.bind(this, this._onDragCancelled));
 		
-		this._settings = new Gio.Settings({ schema: WorkspaceThumbnail.OVERRIDE_SCHEMA });
+		this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
 		this._changedDynamicWorkspacesId = this._settings.connect('changed::dynamic-workspaces',
 												Lang.bind(this, this._updateSwitcherVisibility));
     },
@@ -186,36 +186,9 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         
         this.actor._delegate = null;
     },
-    
-    _createThumbnails: function() {
-        this._switchWorkspaceNotifyId =
-            global.window_manager.connect('switch-workspace',
-                                          Lang.bind(this, this._activeWorkspaceChanged));
-        this._nWorkspacesNotifyId =
-            global.screen.connect('notify::n-workspaces',
-                                  Lang.bind(this, this._workspacesChanged));
-        this._syncStackingId =
-            Main.overview.connect('windows-restacked',
-                                  Lang.bind(this, this._syncStacking));
-
-        this._targetScale = 0;
-        this._scale = 0;
-        this._pendingScaleUpdate = false;
-        this._stateUpdateQueued = false;
-
-        this._stateCounts = {};
-        for (let key in WorkspaceThumbnail.ThumbnailState)
-            this._stateCounts[WorkspaceThumbnail.ThumbnailState[key]] = 0;
-
-        // The "porthole" is the portion of the screen that we show in the workspaces
-        this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
-
-        this.addThumbnails(0, global.screen.n_workspaces);
-
-        this._updateSwitcherVisibility();
-    },
 
     addThumbnails: function(start, count) {
+    	this._ensurePorthole();
         for (let k = start; k < start + count; k++) {
             let metaWorkspace = global.screen.get_workspace_by_index(k);
 
@@ -245,7 +218,13 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 
         // Clear the splice index, we got the message
         this._spliceIndex = -1;
-    }
+    },
+    // The "porthole" is the portion of the screen that we show in the
+    // workspaces
+    _ensurePorthole: function() {
+        if (!this._porthole)
+            this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
+    },
 });
 
 const MultiMonitorsSlidingControl = new Lang.Class({
@@ -255,8 +234,8 @@ const MultiMonitorsSlidingControl = new Lang.Class({
     _init: function(params) {
         params = Params.parse(params, { slideDirection: OverviewControls.SlideDirection.LEFT });
 
-        this.visible = true;
-        this.inDrag = false;
+        this._visible = true;
+        this._inDrag = false;
 
         this.layout = new OverviewControls.SlideLayout();
         this.layout.slideDirection = params.slideDirection;
@@ -266,7 +245,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
 
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
         
-        this._showingId = Main.overview.connect('showing', Lang.bind(this, this._onOverviewShowing));
+        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this._onOverviewHiding));
 
         this._itemDragBeginId = Main.overview.connect('item-drag-begin', Lang.bind(this, this._onDragBegin));
         this._itemDragEndId = Main.overview.connect('item-drag-end', Lang.bind(this, this._onDragEnd));
@@ -278,7 +257,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
     },
     
     _onDestroy: function(actor) {
-    	Main.overview.disconnect(this._showingId);
+    	Main.overview.disconnect(this._hidingId);
 	    
     	Main.overview.disconnect(this._itemDragBeginId);
     	Main.overview.disconnect(this._itemDragEndId);
@@ -305,23 +284,28 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         this.actor.reactive = true;
         this.actor.track_hover = true;
         this.actor.add_actor(this._thumbnailsBox.actor);
+        
+        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._updateSlide));
+        this.actor.connect('notify::hover', Lang.bind(this, this._updateSlide));
+        this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSlide));
 
-        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this.updateSlide));
-        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this.slideOut));
-        this.actor.connect('notify::hover', Lang.bind(this, this.updateSlide));
         this._thumbnailsBox.actor.bind_property('visible', this.actor, 'visible', GObject.BindingFlags.SYNC_CREATE);
     },
     
     _onDestroy: function() {
     	Main.layoutManager.disconnect(this._monitorsChangedId);
-    	Main.overview.disconnect(this._hidingId);
+    	global.window_manager.disconnect(this._switchWorkspaceId);
     	this.parent();
 	},
 
     _getAlwaysZoomOut: function() {
         // Always show the pager when hover, during a drag, or if workspaces are
-        // actually used, e.g. there are windows on more than one
-        let alwaysZoomOut = this.actor.hover || this.inDrag || !Meta.prefs_get_dynamic_workspaces() || global.screen.n_workspaces > 2;
+        // actually used, e.g. there are windows on any non-active workspace
+        let alwaysZoomOut = this.actor.hover ||
+                            this._inDrag ||
+                            !Meta.prefs_get_dynamic_workspaces() ||
+                            global.screen.n_workspaces > 2 ||
+                            global.screen.get_active_workspace_index() != 0;
 
         if (!alwaysZoomOut) {
             let monitors = Main.layoutManager.monitors;
@@ -341,20 +325,13 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         return alwaysZoomOut;
     },
 
-    _onOverviewShowing: function() {
-        this.visible = true;
-        this.layout.slideX = this.getSlide();
-        this.actor.translation_x = this._getTranslation();
-        this.slideIn();
-    },
-
     getNonExpandedWidth: function() {
         let child = this.actor.get_first_child();
         return child.get_theme_node().get_length('visible-width');
     },
 
-    getSlide: function() {
-        if (!this.visible)
+    _getSlide: function() {
+        if (!this._visible)
             return 0;
 
         let alwaysZoomOut = this._getAlwaysZoomOut();
