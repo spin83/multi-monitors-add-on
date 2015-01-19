@@ -44,6 +44,12 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 		Main.layoutManager.disconnect(this._viewMonitorsId);
 	},
 	
+	_syncIndicatorsVisible: function() {
+        this.visible = this.get_children().some(function(actor) {
+            return actor.visible;
+        });
+    },
+	
 	_viewMonitors: function() {
 		let monitors = this.get_children();
 	
@@ -51,27 +57,34 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 		if(monitorChange>0){
 			global.log("Add Monitors ...");
 			for(let idx = 0; idx<monitorChange; idx++){
+				let icon;
 				if(this._leftRightIcon){
-					this.add_child(new St.Icon({
+					icon = new St.Icon({
 						icon_name: 'multi-monitors-l-symbolic',
 						style_class: 'multimonitor-status-icon'
-					}));
+					});
 				}
 				else{
-					this.add_child(new St.Icon({
+					icon = new St.Icon({
 						icon_name: 'multi-monitors-r-symbolic',
 						style_class: 'multimonitor-status-icon'
-					}));
+					});
 				}
+				
+				this.add_child(icon);
+				icon.connect('notify::visible', Lang.bind(this, this._syncIndicatorsVisible));
 				this._leftRightIcon = !this._leftRightIcon;
 			}
+			this._syncIndicatorsVisible();
 		}
 		else if(monitorChange<0){
 			global.log("Remove Monitors ...");
 			monitorChange = -monitorChange;
 			
 			for(let idx = 0; idx<monitorChange; idx++){
-				this.remove_child(this.get_last_child());
+				let icon = this.get_last_child();
+				this.remove_child(icon);
+				icon.destroy();
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 		}

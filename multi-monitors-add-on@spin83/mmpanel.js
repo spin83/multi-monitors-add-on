@@ -269,7 +269,7 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': Panel.ActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
-//	    'appMenu': MultiMonitorsAppMenuButton,
+	    'appMenu': MultiMonitorsAppMenuButton,
 //	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
