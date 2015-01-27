@@ -236,7 +236,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 });
 
 function init() {
-    Convenience.initTranslations("multi-monitors-add-on");
+    Convenience.initTranslations();
 }
 
 function buildPrefsWidget() {

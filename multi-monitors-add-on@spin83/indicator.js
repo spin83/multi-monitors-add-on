@@ -36,7 +36,7 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 	
 	_init: function() {
 		this.parent({ style_class: 'multimonitor-status-indicators-box' });
-		Convenience.initTranslations("multi-monitors-add-on");		
+		Convenience.initTranslations();		
 
 		this._leftRightIcon = true;
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
