@@ -26,13 +26,18 @@ const Tweener = imports.ui.tweener;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
+const Gettext = imports.gettext.domain('multi-monitors-add-on');
+const _ = Gettext.gettext;
+const Convenience = imports.misc.extensionUtils.getCurrentExtension().imports.convenience;
+
 const MultiMonitorsStatusIcon = new Lang.Class({
 	Name: 'MultiMonitorsStatusIcon',
 	Extends: St.BoxLayout,
 	
 	_init: function() {
 		this.parent({ style_class: 'multimonitor-status-indicators-box' });
-		
+		Convenience.initTranslations("multi-monitors-add-on");		
+
 		this._leftRightIcon = true;
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
 		this.connect('destroy', Lang.bind(this, this._onDestroy));
@@ -103,8 +108,8 @@ const MultiMonitorsIndicator = new Lang.Class({
 		this._mmStatusIcon = new MultiMonitorsStatusIcon();
 		this.actor.add_child(this._mmStatusIcon);
 
-		this.menu.addAction('Preferences', Lang.bind(this, this._onPreferences));
-		this.menu.addAction('Test', Lang.bind(this, this._onTest));
+		this.menu.addAction(_("Preferences"), Lang.bind(this, this._onPreferences));
+		this.menu.addAction(_("Test"), Lang.bind(this, this._onTest));
 
 	},
 	
@@ -126,7 +131,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 	
 	_showHello: function() {
 	    if (!this.text) {
-	        this.text = new St.Label({ style_class: 'helloworld-label', text: "Multi Monitors Add-On" });
+	        this.text = new St.Label({ style_class: 'helloworld-label', text: _("Multi Monitors Add-On") });
 	        Main.uiGroup.add_actor(this.text);
 	    }
 
