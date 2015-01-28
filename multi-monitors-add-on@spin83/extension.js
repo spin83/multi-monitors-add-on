@@ -186,7 +186,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 			for (let i = 0; i < Main.layoutManager.monitors.length; i++) {
 				let monitor = Main.layoutManager.monitors[i];
 				if(i != Main.layoutManager.primaryIndex) {
-					Main.mmOverview[i] = new MMOverview.MultiMonitorsOverview(i);	
+					Main.mmOverview[i] = new MMOverview.MultiMonitorsOverview(i);
+					Main.mmOverview[i].init();
 				}
 			}
 		}

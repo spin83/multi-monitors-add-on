@@ -392,7 +392,16 @@ const MultiMonitorsControlsManager = new Lang.Class({
         
 	    this._pageChangedId = Main.overview.viewSelector.connect('page-changed', Lang.bind(this, this._setVisibility));
 	    this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', Lang.bind(this, this._onPageEmpty));
-
+	    
+	    this._clickAction = new Clutter.ClickAction()
+        this._clickedId = this._clickAction.connect('clicked', Lang.bind(this, function(action) {
+            if (action.get_button() == 1 && this._workspacesViews &&
+            								this._workspacesViews.getActiveWorkspace().isEmpty())
+                Main.overview.hide();
+        }));
+	    
+	    Main.mmOverview[this._monitorIndex].addAction(this._clickAction);
+	    
 //        
 //        Main.overview.connect('item-drag-begin', Lang.bind(this,
 //            function() {
@@ -414,6 +423,9 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	    Main.overview.viewSelector.disconnect(this._pageChangedId);
 	    Main.overview.viewSelector.disconnect(this._pageEmptyId);
 	    this._settings.disconnect(this._thumbnailsOnLeftSideId);
+	    
+	    this._clickAction.disconnect(this._clickedId);
+	    Main.mmOverview[this._monitorIndex].removeAction(this._clickAction);
     },
     
     _thumbnailsOnLeftSide: function() {
@@ -553,16 +565,21 @@ const MultiMonitorsOverview = new Lang.Class({
         this._overview._delegate = this;
         this._stack.add_actor(this._overview);
         
-        if(Main.mmPanel && Main.mmPanel[this.monitorIndex]){
-            this._panelGhost = new St.Bin({ child: new Clutter.Clone({ source: Main.mmPanel[this.monitorIndex].actor }),
+        this._showingId = null;
+        this._hidingId = null;
+	},
+	
+	init: function() {
+	    if(Main.mmPanel && Main.mmPanel[this.monitorIndex]){
+	        this._panelGhost = new St.Bin({ child: new Clutter.Clone({ source: Main.mmPanel[this.monitorIndex].actor }),
 			                				reactive: false, opacity: 0 });
 			this._overview.add_actor(this._panelGhost);        	
-        }
-        else
-        	this._panelGhost = null;
-
-
-        this._overview.add_actor(new St.Widget({style_class: 'multimonitor-spacer'}));
+	    }
+	    else
+	    	this._panelGhost = null;
+	
+	
+	    this._overview.add_actor(new St.Widget({style_class: 'multimonitor-spacer'}));
 		
 		this._controls = new MultiMonitorsControlsManager(this.monitorIndex);
 		this._overview.add(this._controls.actor, { y_fill: true, expand: true });
@@ -572,8 +589,10 @@ const MultiMonitorsOverview = new Lang.Class({
 	},
 	
     _onDestroy: function(actor) {
-	    Main.overview.disconnect(this._showingId);
-	    Main.overview.disconnect(this._hidingId);
+		if(this._showingId)
+			Main.overview.disconnect(this._showingId);
+	    if(this._hidingId)
+	    	Main.overview.disconnect(this._hidingId);
 	    
 	    Tweener.removeTweens(actor);
 	    
@@ -634,6 +653,18 @@ const MultiMonitorsOverview = new Lang.Class({
 	
 	destroy: function() {
 		this._stack.destroy();
+	},
+	
+	addAction: function(action) {
+//	    if (this.isDummy)
+//	        return;
+	
+	    this._overview.add_action(action);
+	},
+
+	removeAction: function(action) {
+		if(action.get_actor())
+			this._overview.remove_action(action);
 	}
 
 });
