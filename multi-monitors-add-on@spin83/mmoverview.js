@@ -450,6 +450,17 @@ const MultiMonitorsControlsManager = new Lang.Class({
     },
 
     _updateWorkspacesGeometry: function() {
+	
+		let spacer_height = Main.layoutManager.primaryMonitor.height;
+		spacer_height -= Main.overview._controls.actor.get_transformed_size()[1];
+		if(Main.mmOverview[this._monitorIndex]._panelGhost)
+			spacer_height -= Main.mmOverview[this._monitorIndex]._panelGhost.get_height();
+		let spacer_min_height = Main.layoutManager.monitors[this._monitorIndex].height*0.05;
+		if(spacer_height<spacer_min_height)
+			spacer_height = spacer_min_height;
+
+	    Main.mmOverview[this._monitorIndex]._spacer.set_height(spacer_height);
+	
         let [x, y] = this.actor.get_transformed_position();
         let [width, height] = this.actor.get_transformed_size();
         let geometry = { x: x, y: y, width: width, height: height };
@@ -573,13 +584,13 @@ const MultiMonitorsOverview = new Lang.Class({
 	    if(Main.mmPanel && Main.mmPanel[this.monitorIndex]){
 	        this._panelGhost = new St.Bin({ child: new Clutter.Clone({ source: Main.mmPanel[this.monitorIndex].actor }),
 			                				reactive: false, opacity: 0 });
-			this._overview.add_actor(this._panelGhost);        	
+			this._overview.add_actor(this._panelGhost);
 	    }
 	    else
 	    	this._panelGhost = null;
-	
-	
-	    this._overview.add_actor(new St.Widget({style_class: 'multimonitor-spacer'}));
+
+	    this._spacer = new St.Widget();
+	    this._overview.add_actor(this._spacer);
 		
 		this._controls = new MultiMonitorsControlsManager(this.monitorIndex);
 		this._overview.add(this._controls.actor, { y_fill: true, expand: true });
