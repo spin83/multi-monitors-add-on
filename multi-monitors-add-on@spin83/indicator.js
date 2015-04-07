@@ -96,7 +96,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 			monitorChange = -monitorChange;
 			
 			for(let idx = 0; idx<monitorChange; idx++){
-				let icon = this.get_last_child();
+				let icon = this._mmStatusIcon.get_last_child();
 				this._mmStatusIcon.remove_child(icon);
 				icon.destroy();
 				this._leftRightIcon = !this._leftRightIcon;
