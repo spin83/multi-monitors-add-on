@@ -26,17 +26,25 @@ const Tweener = imports.ui.tweener;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
-const MultiMonitorsStatusIcon = new Lang.Class({
-	Name: 'MultiMonitorsStatusIcon',
-	Extends: St.BoxLayout,
+const MultiMonitorsIndicator = new Lang.Class({
+	Name: 'MultiMonitorsIndicator',
+	Extends: PanelMenu.Button,
 	
 	_init: function() {
-		this.parent({ style_class: 'panel-status-menu-box' });
+		this.parent(0.0, "MultiMonitorsAddOn");
+		
+		this.text = null;
+
+		this._mmStatusIcon = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+		this.actor.add_child(this._mmStatusIcon);
 		
 		this._leftRightIcon = true;
+
+		this.menu.addAction('Preferences', Lang.bind(this, this._onPreferences));
+		this.menu.addAction('Test', Lang.bind(this, this._onTest));
+
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
 		this.connect('destroy', Lang.bind(this, this._onDestroy));
-
 		this._viewMonitors();
 	},
 	
@@ -45,19 +53,19 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 	},
 	
 	_viewMonitors: function() {
-		let monitors = this.get_children();
+		let monitors = this._mmStatusIcon.get_children();
 	
 		let monitorChange = Main.layoutManager.monitors.length - monitors.length;
 		if(monitorChange>0){
 			for(let idx = 0; idx<monitorChange; idx++){
 				if(this._leftRightIcon){
-					this.add_child(new St.Icon({
+					this._mmStatusIcon.add_child(new St.Icon({
 						icon_name: 'multi-monitors-l-symbolic',
 						style_class: 'system-status-icon'
 					}));
 				}
 				else{
-					this.add_child(new St.Icon({
+					this._mmStatusIcon.add_child(new St.Icon({
 						icon_name: 'multi-monitors-r-symbolic',
 						style_class: 'system-status-icon'
 					}));
@@ -69,28 +77,12 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 			monitorChange = -monitorChange;
 			
 			for(let idx = 0; idx<monitorChange; idx++){
-				this.remove_child(this.get_last_child());
+				let icon = this._mmStatusIcon.get_last_child();
+				this._mmStatusIcon.remove_child(icon);
+				icon.destroy();
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 		}
-	}
-});
-
-const MultiMonitorsIndicator = new Lang.Class({
-	Name: 'MultiMonitorsIndicator',
-	Extends: PanelMenu.Button,
-	
-	_init: function() {
-		this.parent(0.0, "MultiMonitorsAddOn");
-		
-		this.text = null;
-
-		this._mmStatusIcon = new MultiMonitorsStatusIcon();
-		this.actor.add_child(this._mmStatusIcon);
-
-		this.menu.addAction('Preferences', Lang.bind(this, this._onPreferences));
-		this.menu.addAction('Test', Lang.bind(this, this._onTest));
-
 	},
 	
 	_onPreferences: function()
