@@ -30,33 +30,42 @@ const Gettext = imports.gettext.domain('multi-monitors-add-on');
 const _ = Gettext.gettext;
 const Convenience = imports.misc.extensionUtils.getCurrentExtension().imports.convenience;
 
-const MultiMonitorsStatusIcon = new Lang.Class({
-	Name: 'MultiMonitorsStatusIcon',
-	Extends: St.BoxLayout,
+const MultiMonitorsIndicator = new Lang.Class({
+	Name: 'MultiMonitorsIndicator',
+	Extends: PanelMenu.Button,
 	
 	_init: function() {
-		this.parent({ style_class: 'multimonitor-status-indicators-box' });
-		Convenience.initTranslations();		
+		this.parent(0.0, "MultiMonitorsAddOn", false);
+		
+		Convenience.initTranslations();
+		
+		this.text = null;
 
+		this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
+		this.actor.add_child(this._mmStatusIcon);
 		this._leftRightIcon = true;
+
+		this.menu.addAction(_("Preferences"), Lang.bind(this, this._onPreferences));
+		this.menu.addAction(_("Test"), Lang.bind(this, this._onTest));
+//		this.menu.addAction(_("Init 2nd monitor"), Lang.bind(this, this._onInit2ndMonitor));
+		
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
 		this.connect('destroy', Lang.bind(this, this._onDestroy));
-
 		this._viewMonitors();
-	},
-	
+	},	
+		
 	_onDestroy: function(actor) {
 		Main.layoutManager.disconnect(this._viewMonitorsId);
 	},
 	
 	_syncIndicatorsVisible: function() {
-        this.visible = this.get_children().some(function(actor) {
+        this.visible = this._mmStatusIcon.get_children().some(function(actor) {
             return actor.visible;
         });
     },
 	
 	_viewMonitors: function() {
-		let monitors = this.get_children();
+		let monitors = this._mmStatusIcon.get_children();
 	
 		let monitorChange = Main.layoutManager.monitors.length - monitors.length;
 		if(monitorChange>0){
@@ -76,7 +85,7 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 					});
 				}
 				
-				this.add_child(icon);
+				this._mmStatusIcon.add_child(icon);
 				icon.connect('notify::visible', Lang.bind(this, this._syncIndicatorsVisible));
 				this._leftRightIcon = !this._leftRightIcon;
 			}
@@ -88,29 +97,11 @@ const MultiMonitorsStatusIcon = new Lang.Class({
 			
 			for(let idx = 0; idx<monitorChange; idx++){
 				let icon = this.get_last_child();
-				this.remove_child(icon);
+				this._mmStatusIcon.remove_child(icon);
 				icon.destroy();
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 		}
-	}
-});
-
-const MultiMonitorsIndicator = new Lang.Class({
-	Name: 'MultiMonitorsIndicator',
-	Extends: PanelMenu.Button,
-	
-	_init: function() {
-		this.parent(0.0, "MultiMonitorsAddOn", false);
-		
-		this.text = null;
-
-		this._mmStatusIcon = new MultiMonitorsStatusIcon();
-		this.actor.add_child(this._mmStatusIcon);
-
-		this.menu.addAction(_("Preferences"), Lang.bind(this, this._onPreferences));
-		this.menu.addAction(_("Test"), Lang.bind(this, this._onTest));
-
 	},
 	
 	_onPreferences: function()
@@ -122,6 +113,11 @@ const MultiMonitorsIndicator = new Lang.Class({
 	{
 		global.log('Multi Monitors Add-On');
 		this._showHello();
+	},
+	
+	_onInit2ndMonitor: function()
+	{
+		Util.spawn(["intel-virtual-output"]);
 	},
 	
 	_hideHello: function() {

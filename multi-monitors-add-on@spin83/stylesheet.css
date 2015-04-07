@@ -23,6 +23,20 @@
 }
 
 .workspace-thumbnails-left {
+  visible-width: 32px;
+  spacing: 11px;
+  padding: 8px;
+  border-radius: 0 9px 9px 0; }
+
+.workspace-thumbnails-left:rtl {
+    border-radius: 9px 0 0 9px; }
+    
+.workspace-thumbnails-left {
+  color: #eeeeec;
+  background-color: #2e3436;
+  border: 1px solid rgba(238, 238, 236, 0.2); }
+
+.workspace-thumbnails-left-314 {
     spacing: 11px;
     visible-width: 32px; /* Amount visible before hovering */
     border: 1px solid rgba(128, 128, 128, 0.4);
@@ -33,7 +47,7 @@
 
 }
 
-.workspace-thumbnails-left:rtl {
+.workspace-thumbnails-left-314:rtl {
     border-left: 1px;
     border-right: 0px;
     border-radius: 9px 0px 0px 9px;

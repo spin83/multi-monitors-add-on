@@ -28,6 +28,8 @@ const PopupMenu = imports.ui.popupMenu;
 const CtrlAltTab = imports.ui.ctrlAltTab;
 const ExtensionSystem = imports.ui.extensionSystem;
 
+const Config = imports.misc.config;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
@@ -282,6 +284,9 @@ const MultiMonitorsPanel = new Lang.Class({
 
     _init : function(monitorIndex) {
     	this.monitorIndex = monitorIndex;
+    	
+    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
+    	
         this.actor = new Shell.GenericContainer({ name: 'panel', reactive: true });
         this.actor._delegate = this;
 
@@ -289,7 +294,11 @@ const MultiMonitorsPanel = new Lang.Class({
 
         this.statusArea = {};
 
-        this.menuManager = new PopupMenu.PopupMenuManager(this, { keybindingMode: Shell.KeyBindingMode.TOPBAR_POPUP });
+
+        if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
+        	this.menuManager = new PopupMenu.PopupMenuManager(this, { keybindingMode: Shell.KeyBindingMode.TOPBAR_POPUP });
+        else
+	        this.menuManager = new PopupMenu.PopupMenuManager(this);
 
         this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
         this.actor.add_actor(this._leftBox);
@@ -317,9 +326,13 @@ const MultiMonitorsPanel = new Lang.Class({
             this.actor.remove_style_pseudo_class('overview');
         }));
 
-        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'emblem-system-symbolic',
+        if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
+        	Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'emblem-system-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
-
+        else
+	        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'focus-top-bar-symbolic',
+                                        { sortGroup: CtrlAltTab.SortGroup.TOP });
+                                        
         Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
         this._updatePanel();
         

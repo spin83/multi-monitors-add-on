@@ -228,9 +228,11 @@ const MultiMonitorsAddOn = new Lang.Class({
 			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
 	},
 	
+	
+	
 	enable: function() {
 		global.log("Enable Multi Monitors Add-On ...")
-		
+
 		this._switchOffThumbnailsId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																				Lang.bind(this, this._switchOffThumbnails));
 		
@@ -258,6 +260,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._hideIndicator();
 		
 		this._ov_settings.disconnect(this._switchOffThumbnailsId);
+		global.log("Disable Multi Monitors Add-On ...")
 	}
 });
 

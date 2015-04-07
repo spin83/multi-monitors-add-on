@@ -34,6 +34,8 @@ const ViewSelector = imports.ui.viewSelector;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
 
+const Config = imports.misc.config;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
@@ -361,6 +363,8 @@ const MultiMonitorsControlsManager = new Lang.Class({
     	this._monitorIndex = index;
     	this._workspacesViews = null;
     	
+    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
+    	
         this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
 
@@ -434,7 +438,10 @@ const MultiMonitorsControlsManager = new Lang.Class({
     		if(first != this._thumbnailsSlider.actor){
                 this._thumbnailsSlider.layout.slideDirection = OverviewControls.SlideDirection.LEFT;
                 this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails');
-                this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails-left');
+                if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
+                	this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails-left-314');
+                else
+                	this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails-left');
                 this._group.set_child_below_sibling(this._thumbnailsSlider.actor, first)
     		}
     	}
@@ -442,7 +449,10 @@ const MultiMonitorsControlsManager = new Lang.Class({
     		let last = this._group.get_last_child();
     		if(last != this._thumbnailsSlider.actor){
                 this._thumbnailsSlider.layout.slideDirection = OverviewControls.SlideDirection.RIGHT;
-                this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails-left');
+                if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
+                	this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails-left-314');
+                else
+                	this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails-left');
                 this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails');
                 this._group.set_child_above_sibling(this._thumbnailsSlider.actor, last);
     		}
