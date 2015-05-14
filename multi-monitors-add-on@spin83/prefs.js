@@ -35,6 +35,7 @@ const SHOW_PANEL_ID = 'show-panel';
 const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
 const SHOW_ACTIVITIES_ID = 'show-activities';
 const SHOW_APP_MENU_ID = 'show-app-menu';
+const SHOW_DATE_MENU_ID = 'show-date-menu';
 const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
@@ -63,6 +64,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 		this._addBooleanSwitch(_('Show Thumbnails-Slider on additional monitors.'), SHOW_THUMBNAILS_SLIDER_ID);
 		this._addBooleanSwitch(_('Show Activities-Button on additional monitors.'), SHOW_ACTIVITIES_ID);
 		this._addBooleanSwitch(_('Show AppMenu-Button on additional monitors.'), SHOW_APP_MENU_ID);
+		this._addBooleanSwitch(_('Show DateMenu-Button on additional monitors.'), SHOW_DATE_MENU_ID);
 		this._addBooleanSwitch(_('Show Thumbnails-Slider on left side of additional monitors.'), THUMBNAILS_ON_LEFT_SIDE_ID);
 		
         this._store = new Gtk.ListStore();
