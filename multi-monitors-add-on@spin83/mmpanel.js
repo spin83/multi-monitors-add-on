@@ -20,11 +20,14 @@ const Lang = imports.lang;
 const St = imports.gi.St;
 const Shell = imports.gi.Shell;
 const Meta = imports.gi.Meta;
+const Atk = imports.gi.Atk;
+const Clutter = imports.gi.Clutter;
 
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
 const Panel = imports.ui.panel;
 const PopupMenu = imports.ui.popupMenu;
+const PanelMenu = imports.ui.panelMenu;
 const CtrlAltTab = imports.ui.ctrlAltTab;
 const ExtensionSystem = imports.ui.extensionSystem;
 
@@ -267,9 +270,56 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
 	}
 });
 
+const MultiMonitorsActivitiesButton = new Lang.Class({
+    Name: 'MultiMonitorsActivitiesButton',
+    Extends: PanelMenu.Button,
+    
+	handleDragOver: Panel.ActivitiesButton.prototype["handleDragOver"],
+	_onCapturedEvent: Panel.ActivitiesButton.prototype["_onCapturedEvent"],
+	_onEvent: Panel.ActivitiesButton.prototype["_onEvent"],
+	_onKeyRelease: Panel.ActivitiesButton.prototype["_onKeyRelease"],
+	_xdndToggleOverview: Panel.ActivitiesButton.prototype["_xdndToggleOverview"],
+
+    _init: function() {
+        this.parent(0.0, null, true);
+        this.actor.accessible_role = Atk.Role.TOGGLE_BUTTON;
+
+        this.actor.name = 'mmPanelActivities';
+
+        /* Translators: If there is no suitable word for "Activities"
+           in your language, you can use the word for "Overview". */
+        this._label = new St.Label({ text: _("Activities"),
+                                     y_align: Clutter.ActorAlign.CENTER });
+        this.actor.add_actor(this._label);
+
+        this.actor.label_actor = this._label;
+
+        this.actor.connect('captured-event', Lang.bind(this, this._onCapturedEvent));
+        this.actor.connect_after('key-release-event', Lang.bind(this, this._onKeyRelease));
+
+        this._showingId = Main.overview.connect('showing', Lang.bind(this, function() {
+            this.actor.add_style_pseudo_class('overview');
+            this.actor.add_accessible_state (Atk.StateType.CHECKED);
+        }));
+        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, function() {
+            this.actor.remove_style_pseudo_class('overview');
+            this.actor.remove_accessible_state (Atk.StateType.CHECKED);
+        }));
+        
+        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+
+        this._xdndTimeOut = 0;
+    },
+    
+    _onDestroy: function(actor) {
+	    Main.overview.disconnect(this._showingId);
+	    Main.overview.disconnect(this._hidingId);
+    }
+
+});
 
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
-	    'activities': Panel.ActivitiesButton,
+	    'activities': MultiMonitorsActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
 	    'appMenu': MultiMonitorsAppMenuButton,
 //	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
@@ -333,7 +383,7 @@ const MultiMonitorsPanel = new Lang.Class({
 	        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'focus-top-bar-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
                                         
-        Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
+        this._updatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
         this._updatePanel();
         
         this._settings = Convenience.getSettings();
@@ -354,6 +404,8 @@ const MultiMonitorsPanel = new Lang.Class({
 //	    Tweener.removeTweens(actor);
 	    
 	    Main.ctrlAltTabManager.removeGroup(this.actor);
+	    
+	    Main.sessionMode.disconnect(this._updatedId);
 	    
 	    for(let name in this.statusArea){
 	    	if(this.statusArea.hasOwnProperty(name))

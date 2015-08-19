@@ -388,6 +388,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
         this._group.add_actor(this._thumbnailsSlider.actor);
 
         layout.connect('allocation-changed', Lang.bind(this, this._updateWorkspacesGeometry));
+        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
         
         this._settings = Convenience.getSettings();
         this._thumbnailsOnLeftSideId = this._settings.connect('changed::'+THUMBNAILS_ON_LEFT_SIDE_ID,
@@ -423,6 +424,25 @@ const MultiMonitorsControlsManager = new Lang.Class({
 //            }));
     },
     
+	_onScrollEvent: function(actor, event) {
+		if (!this.actor.mapped)
+			return Clutter.EVENT_PROPAGATE;
+		let activeWs = global.screen.get_active_workspace();
+		let ws;
+		switch (event.get_scroll_direction()) {
+		case Clutter.ScrollDirection.UP:
+			ws = activeWs.get_neighbor(Meta.MotionDirection.UP);
+			break;
+		case Clutter.ScrollDirection.DOWN:
+			ws = activeWs.get_neighbor(Meta.MotionDirection.DOWN);
+			break;
+		default:
+			return Clutter.EVENT_PROPAGATE;
+		}
+		Main.wm.actionMoveWorkspace(ws);
+		return Clutter.EVENT_STOP;
+	},
+	
     _onDestroy: function() {
 	    Main.overview.viewSelector.disconnect(this._pageChangedId);
 	    Main.overview.viewSelector.disconnect(this._pageEmptyId);
