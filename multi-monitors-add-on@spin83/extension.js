@@ -104,6 +104,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 			        this.panelBox[i] = new St.BoxLayout({ name: 'panelBox'+i, vertical: true });
 			        Main.layoutManager.addChrome(this.panelBox[i], { affectsStruts: true, trackFullscreen: true });
 			        this.panelBox[i].set_position(monitor.x, monitor.y);
+			        this.panelBox[i].set_size(monitor.width, -1);
+			        Main.uiGroup.set_child_below_sibling(this.panelBox[i], Main.layoutManager.panelBox);
 		//			this.panelBox.connect('allocation-changed', Lang.bind(this, this._panelBoxChanged));
 					this.panelBox[i].add(panel.actor);
 					

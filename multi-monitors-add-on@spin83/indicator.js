@@ -42,6 +42,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 		this.text = null;
 
 		this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
+		this._mmStatusIcon.hide();
 		this.actor.add_child(this._mmStatusIcon);
 		this._leftRightIcon = true;
 
@@ -59,7 +60,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 	},
 	
 	_syncIndicatorsVisible: function() {
-        this.visible = this._mmStatusIcon.get_children().some(function(actor) {
+        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some(function(actor) {
             return actor.visible;
         });
     },
@@ -72,21 +73,14 @@ const MultiMonitorsIndicator = new Lang.Class({
 			global.log("Add Monitors ...");
 			for(let idx = 0; idx<monitorChange; idx++){
 				let icon;
-				if(this._leftRightIcon){
-					icon = new St.Icon({
-						icon_name: 'multi-monitors-l-symbolic',
-						style_class: 'multimonitor-status-icon'
-					});
-				}
-				else{
-					icon = new St.Icon({
-						icon_name: 'multi-monitors-r-symbolic',
-						style_class: 'multimonitor-status-icon'
-					});
-				}
-				
+				icon = new St.Icon({style_class: 'multimonitor-status-icon'});
 				this._mmStatusIcon.add_child(icon);
 				icon.connect('notify::visible', Lang.bind(this, this._syncIndicatorsVisible));
+				
+				if(this._leftRightIcon)
+					icon.icon_name = 'multi-monitors-l-symbolic';
+				else
+					icon.icon_name = 'multi-monitors-r-symbolic';
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 			this._syncIndicatorsVisible();
