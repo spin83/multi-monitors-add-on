@@ -55,7 +55,7 @@ const StatusIndicatorsController = new Lang.Class({
         										Lang.bind(this, this._extensionStateChanged));
 
         this._transferIndicatorsId = this._settings.connect('changed::'+TRANSFER_INDICATORS_ID,
-																		Lang.bind(this, this._transferIndicators));
+																		Lang.bind(this, this.transferIndicators));
 	},
 	
 	destroy: function() {
@@ -66,7 +66,15 @@ const StatusIndicatorsController = new Lang.Class({
 		this._transferBack(this._transfered_indicators);
 	},
 	
-	_transferIndicators: function() {
+	transferBack: function(panel) {
+		let transfer_back = this._transfered_indicators.filter(function(element) {
+			return element.monitor==panel.monitorIndex;
+		});
+		
+		this._transferBack(transfer_back, panel);
+	},
+	
+	transferIndicators: function() {
 		let boxs = ['_leftBox', '_centerBox', '_rightBox'];
     	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).deep_unpack();
 
@@ -79,27 +87,41 @@ const StatusIndicatorsController = new Lang.Class({
 		for(let iname in transfers) {
 			if(transfers.hasOwnProperty(iname) && Main.panel.statusArea[iname]) {
 				let monitor = transfers[iname];
+				
 				let indicator = Main.panel.statusArea[iname];
+				let panel = this._findPanel(monitor);
 				boxs.forEach(Lang.bind(this, function(box) {
-					if(Main.panel[box].contains(indicator.container) && Main.mmPanel[monitor]) {
+					if(Main.panel[box].contains(indicator.container) && panel) {
 						global.log('a '+box+ " > " + iname + " : "+ monitor);
 						this._transfered_indicators.push({iname:iname, box:box, monitor:monitor});
 						Main.panel[box].remove_child(indicator.container);
-						Main.mmPanel[monitor][box].insert_child_at_index(indicator.container, 0);
+						panel[box].insert_child_at_index(indicator.container, 0);
 					}
 				}));
 			}
 		}
 	},
 	
-	_transferBack: function(transfer_back) {
+	_findPanel: function(monitor) {
+		for (let i = 0; i < Main.mmPanel.length; i++) {
+			if (Main.mmPanel[i].monitorIndex == monitor) {
+				return Main.mmPanel[i];
+			}
+		}
+		return null;
+	},
+	
+	_transferBack: function(transfer_back, panel) {
     	transfer_back.forEach(Lang.bind(this, function(element) {
     		this._transfered_indicators.slice(this._transfered_indicators.indexOf(element));
 			if(Main.panel.statusArea[element.iname]) {
 				let indicator = Main.panel.statusArea[element.iname];
-				if(Main.mmPanel[element.monitor][element.box].contains(indicator.container)) {
+				if(!panel) {
+					panel = this._findPanel(element.monitor);
+				}
+				if(panel[element.box].contains(indicator.container)) {
 		    		global.log("r "+element.box+ " > " + element.iname + " : "+ element.monitor);
-					Main.mmPanel[element.monitor][element.box].remove_child(indicator.container);
+		    		panel[element.box].remove_child(indicator.container);
 					Main.panel[element.box].insert_child_at_index(indicator.container, 0);
 				}
 			}
@@ -108,7 +130,7 @@ const StatusIndicatorsController = new Lang.Class({
     
 	_extensionStateChanged: function() {
 		this._findAvailableIndicators();
-        this._transferIndicators();
+        this.transferIndicators();
 	},
 	
 	_updateSessionIndicators: function() {
@@ -124,7 +146,7 @@ const StatusIndicatorsController = new Lang.Class({
 		this._available_indicators = [];
 		
         this._findAvailableIndicators();
-        this._transferIndicators();
+        this.transferIndicators();
 	},
 	
     _findAvailableIndicators: function() {
@@ -258,8 +280,6 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
         return null;
     },
     destroy: function() {
-    	this.parent();
-    	
     	if (this._actionGroupNotifyId) {
             this._targetApp.disconnect(this._actionGroupNotifyId);
             this._actionGroupNotifyId = 0;
@@ -267,6 +287,8 @@ const MultiMonitorsAppMenuButton = new Lang.Class({
     	
         global.screen.disconnect(this._windowEnteredMonitorId);
         global.screen.disconnect(this._windowLeftMonitorId);
+        
+    	this.parent();
 	}
 });
 
@@ -344,7 +366,6 @@ const MultiMonitorsPanel = new Lang.Class({
 
         this.statusArea = {};
 
-
         if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
         	this.menuManager = new PopupMenu.PopupMenuManager(this, { keybindingMode: Shell.KeyBindingMode.TOPBAR_POPUP });
         else
@@ -377,10 +398,10 @@ const MultiMonitorsPanel = new Lang.Class({
         }));
 
         if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
-        	Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'emblem-system-symbolic',
+        	Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'emblem-system-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
         else
-	        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar "+this.monitorIndex), 'focus-top-bar-symbolic',
+	        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'focus-top-bar-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
                                         
         this._updatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
@@ -400,7 +421,7 @@ const MultiMonitorsPanel = new Lang.Class({
 	    Main.overview.disconnect(this._showingId);
 	    Main.overview.disconnect(this._hidingId);
 	    this._settings.disconnect(this._showActivitiesId);
-	    
+	    this._settings.disconnect(this._showAppMenuId);
 //	    Tweener.removeTweens(actor);
 	    
 	    Main.ctrlAltTabManager.removeGroup(this.actor);
@@ -436,7 +457,6 @@ const MultiMonitorsPanel = new Lang.Class({
     			let box = this._leftBox;
     			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
     		}
-    			
     	}
     	else{
     		if(this.statusArea[name]){

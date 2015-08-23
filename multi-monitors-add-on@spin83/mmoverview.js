@@ -641,23 +641,6 @@ const MultiMonitorsOverview = new Lang.Class({
 	    
 	    this._overview._delegate = null;
     },
-    
-    addPanelGhost: function() {
-    	if(!this._panelGhost) {
-        	this._panelGhost = new St.Bin({ child: new Clutter.Clone({ source: Main.mmPanel[this.monitorIndex].actor }),
-        																reactive: false, opacity: 0 });
-        	this._overview.add_actor(this._panelGhost);
-        	this._overview.set_child_at_index(this._panelGhost, 0);
-    	}
-    },
-    
-	removePanelGhost: function() {
-    	if(this._panelGhost) {
-    		this._overview.remove_actor(this._panelGhost);
-    		this._panelGhost.destroy();
-    		this._panelGhost = null;
-    	}
-	},
 	
 	_show: function() {
 	    this._controls.show();
