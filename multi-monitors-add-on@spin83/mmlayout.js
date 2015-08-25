@@ -8,6 +8,7 @@ const St = imports.gi.St;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;
+const Layout = imports.ui.layout;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
@@ -33,6 +34,7 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 		this._monitorsChangedId = null;
 		
 		this.statusIndicatorsController = null;
+		this._layoutManager_updateHotCorners = null;
 	},
 	
 	showPanel: function() {
@@ -48,6 +50,32 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 			if (!this.statusIndicatorsController) {
 				this.statusIndicatorsController = new MMPanel.StatusIndicatorsController();
 			}
+			
+			if (!this._layoutManager_updateHotCorners) {
+				this._layoutManager_updateHotCorners = Main.layoutManager['_updateHotCorners'];
+				Main.layoutManager['_updateHotCorners'] = function() {
+			        this.hotCorners.forEach(function(corner) {
+			            if (corner)
+			                corner.destroy();
+			        });
+			        this.hotCorners = [];
+
+			        let size = this.panelBox.height;
+
+			        for (let i = 0; i < this.monitors.length; i++) {
+			            let monitor = this.monitors[i];
+			            let cornerX = this._rtl ? monitor.x + monitor.width : monitor.x;
+			            let cornerY = monitor.y;
+	
+		                let corner = new Layout.HotCorner(this, monitor, cornerX, cornerY);
+		                corner.setBarrierSize(size);
+		                this.hotCorners.push(corner);
+			        }
+
+			        this.emit('hot-corners-changed');
+				};
+				Main.layoutManager._updateHotCorners();
+			}
 		}
 		else {
 			this.hidePanel();
@@ -55,6 +83,12 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 	},
 	
 	hidePanel: function() {
+		if (this._layoutManager_updateHotCorners) {
+			Main.layoutManager['_updateHotCorners'] = this._layoutManager_updateHotCorners;
+			this._layoutManager_updateHotCorners = null;
+			Main.layoutManager._updateHotCorners();
+		}
+			
 		if (this.statusIndicatorsController) {
 			this.statusIndicatorsController.destroy();
 			this.statusIndicatorsController = null;
