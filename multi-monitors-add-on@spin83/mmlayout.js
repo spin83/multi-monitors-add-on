@@ -5,6 +5,7 @@
 const Lang = imports.lang;
 
 const St = imports.gi.St;
+const Meta = imports.gi.Meta;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;
@@ -18,6 +19,53 @@ const MMPanel = MultiMonitors.imports.mmpanel;
 
 const SHOW_PANEL_ID = 'show-panel';
 
+const MultiMonitorsPanelBox = new Lang.Class({
+	Name: 'MultiMonitorsPanelBox',
+	_init: function (panel, monitor) {
+		this._rightPanelBarrier = null;
+	
+		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
+        Main.layoutManager.addChrome(this.panelBox, { affectsStruts: true, trackFullscreen: true });
+        this.panelBox.set_position(monitor.x, monitor.y);
+        this.panelBox.set_size(monitor.width, -1);
+        Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
+        
+		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', Lang.bind(this, this._panelBoxChanged));
+		this.panelBox.add(panel.actor);
+	},
+	
+	destroy: function () {
+		if (this._rightPanelBarrier) {
+	        this._rightPanelBarrier.destroy();
+	        this._rightPanelBarrier = null;
+	    }
+	
+		this.panelBox.disconnect(this._panelBoxChangedId);
+		this.panelBox.destroy();
+	},
+	
+	updatePanel: function(monitor) {
+	    this.panelBox.set_position(monitor.x, monitor.y);
+	    this.panelBox.set_size(monitor.width, -1);
+	},
+
+	_panelBoxChanged: function(self, box, flags) {
+//		global.log(box.get_x()+" "+box.get_y()+" "+box.get_height()+" "+box.get_width())
+		
+	    if (this._rightPanelBarrier) {
+	        this._rightPanelBarrier.destroy();
+	        this._rightPanelBarrier = null;
+	    }
+	    
+	    if (this.panelBox.height) {
+	    	this._rightPanelBarrier = new Meta.Barrier({ display: global.display,
+	    									x1: box.get_x() + box.get_width(), y1: box.get_y(),
+								            x2: box.get_x() + box.get_width(), y2: box.get_y() + this.panelBox.height,
+								            directions: Meta.BarrierDirection.NEGATIVE_X });
+	    }
+	},
+});
+
 const MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
 	_init: function () {
@@ -27,7 +75,7 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 		Main.mmPanel = [];
 	
 		this._monitorIds = [];
-		this.panelBox = [];
+		this.mmPanelBox = [];
 		this.mmappMenu = false;
 		
 		this._showAppMenuId = null;
@@ -137,7 +185,7 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 				else if (this._monitorIds[j]>monitorId || this._monitorIds[j]<monitorId) {
 					let oldMonitorId = this._monitorIds[j];
 					this._monitorIds[j]=monitorId;
-					this._updatePanel(j, monitor);
+					this.mmPanelBox[j].updatePanel(monitor);
 					global.log("update: "+oldMonitorId+">"+monitorId);
 				}
 				j++;
@@ -151,16 +199,10 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 	
 	_pushPanel: function(i, monitor) {
 		let panel = new MMPanel.MultiMonitorsPanel(i);
-		let panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
-        Main.layoutManager.addChrome(panelBox, { affectsStruts: true, trackFullscreen: true });
-        panelBox.set_position(monitor.x, monitor.y);
-        panelBox.set_size(monitor.width, -1);
-        Main.uiGroup.set_child_below_sibling(panelBox, Main.layoutManager.panelBox);
-//			this.panelBox.connect('allocation-changed', Lang.bind(this, this._panelBoxChanged));
-		panelBox.add(panel.actor);
+		let mmPanelBox = new MultiMonitorsPanelBox(panel, monitor);
 		
 		Main.mmPanel.push(panel);
-		this.panelBox.push(panelBox);
+		this.mmPanelBox.push(mmPanelBox);
 	},
 	
 	_popPanel: function() {
@@ -168,15 +210,9 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 		if (this.statusIndicatorsController) {
 			this.statusIndicatorsController.transferBack(panel);
 		}
-		let panelBox = this.panelBox.pop();
-		panelBox.destroy();
+		let mmPanelBox = this.mmPanelBox.pop();
+		mmPanelBox.destroy();
     },
-    
-    _updatePanel: function(j, monitor) {
-	    this.panelBox[j].set_position(monitor.x, monitor.y);
-	    this.panelBox[j].set_size(monitor.width, -1);
-    },
-    
     	
 	_changeMainPanelAppMenuButton: function(appMenuButton) {
 		let role = "appMenu";
