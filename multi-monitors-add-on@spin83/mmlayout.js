@@ -152,8 +152,9 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 			Main.layoutManager.disconnect(this._monitorsChangedId);
 			this._monitorsChangedId = null;
 		}
-		
-		for (let i = 0; i < this._monitorIds.length; i++) {
+
+		let panels2remove = this._monitorIds.length;
+		for (let i = 0; i < panels2remove; i++) {
 			let monitorId = this._monitorIds.pop();
 			this._popPanel();
 			global.log("remove: "+monitorId);
