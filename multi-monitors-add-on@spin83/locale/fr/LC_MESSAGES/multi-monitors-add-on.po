@@ -24,7 +24,7 @@ msgstr "Afficher l'icone Multi Moniteurs sur la barre du haut"
 
 #: prefs.js:62
 msgid "Show Panel on additional monitors."
-msgstr "Afficher Panneau sur les moniteurs secondaires"
+msgstr "Afficher Menu sur les moniteurs secondaires"
 
 #: prefs.js:63
 msgid "Show Thumbnails-Slider on additional monitors."
@@ -36,7 +36,7 @@ msgstr "Afficher le bouton Activités sur les moniteurs secondaires"
 
 #: prefs.js:65
 msgid "Show AppMenu-Button on additional monitors."
-msgstr "Afficher le bouton Applications sur les moniteurs secondaires"
+msgstr "Afficher le bouton du menu Applications sur les moniteurs secondaires"
 
 #: prefs.js:66
 msgid "Show Thumbnails-Slider on left side of additional monitors."
