@@ -113,6 +113,8 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     
     _init: function(monitorIndex) {
     	this._monitorIndex = monitorIndex;
+    	
+    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
 
         this.actor = new Shell.GenericContainer({ reactive: true,
 									            style_class: 'workspace-thumbnails',
@@ -152,6 +154,9 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		
 		this.actor.connect('button-press-event', function() { return Clutter.EVENT_STOP; });
 		this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
+		
+		if (this._currentVersion[0]==3 && this._currentVersion[1]>18)
+			this.actor.connect('touch-event', Lang.bind(this, this._onTouchEvent));
 		
 		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._createThumbnails));
 		this._hiddenId = Main.overview.connect('hidden', Lang.bind(this, this._destroyThumbnails));
