@@ -484,8 +484,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
     	}
     },
 
-    _updateWorkspacesGeometry: function() {
-	
+    getWorkspacesGeometry: function() {
 		let spacer_height = Main.layoutManager.primaryMonitor.height;
 		spacer_height -= Main.overview._controls.actor.get_transformed_size()[1];
 		if(Main.mmOverview[this._monitorIndex]._panelGhost)
@@ -494,7 +493,8 @@ const MultiMonitorsControlsManager = new Lang.Class({
 		if(spacer_height<spacer_min_height)
 			spacer_height = spacer_min_height;
 
-	    Main.mmOverview[this._monitorIndex]._spacer.set_height(spacer_height);
+		if (Main.mmOverview[this._monitorIndex]._spacer.get_height()!=spacer_height)
+			Main.mmOverview[this._monitorIndex]._spacer.set_height(spacer_height);
 	
         let [x, y] = this.actor.get_transformed_position();
         let [width, height] = this.actor.get_transformed_size();
@@ -505,17 +505,20 @@ const MultiMonitorsControlsManager = new Lang.Class({
         let thumbnailsWidth = this._thumbnailsSlider.getVisibleWidth() + spacing;
         
         geometry.width -= thumbnailsWidth;
-        
+
         if(this._settings.get_boolean(THUMBNAILS_ON_LEFT_SIDE_ID)){
             geometry.x += thumbnailsWidth;
         }
-        
+        return geometry;
+    },
+    
+    _updateWorkspacesGeometry: function() {
 //		let [x, y] = this._viewActor.get_transformed_position();
 //		let width = this._viewActor.allocation.x2 - this._viewActor.allocation.x1;
 //		let height = this._viewActor.allocation.y2 - this._viewActor.allocation.y1;
 //		let geometry = { x: x, y: y, width: width, height: height };
 
-        this.setWorkspacesFullGeometry(geometry);
+        this.setWorkspacesFullGeometry(this.getWorkspacesGeometry());
     },
 
     _setVisibility: function() {
@@ -573,7 +576,6 @@ const MultiMonitorsControlsManager = new Lang.Class({
     setWorkspacesFullGeometry: function(geom) {
     	if(!this._workspacesViews)
     		return;
-    	
 
         this._workspacesViews.setActualGeometry(geom);	
     },
@@ -632,6 +634,10 @@ const MultiMonitorsOverview = new Lang.Class({
 		
 		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._show));
 		this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this._hide));
+	},
+	
+	getWorkspacesGeometry: function() {
+		return this._controls.getWorkspacesGeometry();
 	},
 	
     _onDestroy: function(actor) {

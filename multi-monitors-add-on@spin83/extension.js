@@ -82,6 +82,48 @@ const MultiMonitorsAddOn = new Lang.Class({
 					Main.mmOverview[i].init();
 				}
 			}
+			
+			this.orginalSetWorkspacesFullGeometry = Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry;
+			
+			Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry = function(geom) {
+		        this._fullGeometry = geom;
+		        if (this._workspacesViews.length) {
+		        	this._workspacesViews[this._primaryIndex].setFullGeometry(geom);
+		        }
+		    };
+		    
+		    this.orginal_updateWorkspacesFullGeometry = Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry;
+		    Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry = function() {
+		        if (!this._workspacesViews.length)
+		            return;
+
+		        let monitors = Main.layoutManager.monitors;
+		        for (let i = 0; i < monitors.length; i++) {
+		            let geometry = (i == this._primaryIndex) ? this._fullGeometry : Main.mmOverview[i].getWorkspacesGeometry();
+		            this._workspacesViews[i].setFullGeometry(geometry);
+		        }
+		    };
+		    
+		    this.orginal_updateWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry;
+		    Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry = function() {
+		        if (!this._workspacesViews.length)
+		            return;
+
+		        let [x, y] = this.actor.get_transformed_position();
+		        let allocation = this.actor.allocation;
+		        let width = allocation.x2 - allocation.x1;
+		        let height = allocation.y2 - allocation.y1;
+		        let primaryGeometry = { x: x, y: y, width: width, height: height };
+
+		        let monitors = Main.layoutManager.monitors;
+		        for (let i = 0; i < monitors.length; i++) {
+		            let geometry = (i == this._primaryIndex) ? primaryGeometry : Main.mmOverview[i].getWorkspacesGeometry();
+		            this._workspacesViews[i].setActualGeometry(geometry);
+		        }
+		    };
+		    
+		    this._notif_allocationId = Main.overview.viewSelector._workspacesDisplay.actor.connect('notify::allocation', Lang.bind(Main.overview.viewSelector._workspacesDisplay, Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry));
+			
 		}
 		else{
 			this._hideThumbnailsSlider();
@@ -90,6 +132,14 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	_hideThumbnailsSlider: function() {
 		if(Main.mmOverview){
+			Main.overview.viewSelector._workspacesDisplay.actor.disconnect(this._notif_allocationId);
+			Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry = this.orginalSetWorkspacesFullGeometry;
+			this.orginalSetWorkspacesFullGeometry = null;
+			Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry = this.orginal_updateWorkspacesFullGeometry;
+			this.orginal_updateWorkspacesFullGeometry = null;
+			Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry = this.orginal_updateWorkspacesActualGeometry;
+			this.orginal_updateWorkspacesActualGeometry = null;
+			
 			for (let i = 0; i < Main.mmOverview.length; i++) {
 				if(Main.mmOverview[i])
 					Main.mmOverview[i].destroy();
