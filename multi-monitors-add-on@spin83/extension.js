@@ -94,7 +94,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 				if(Main.mmOverview[i])
 					Main.mmOverview[i].destroy();
 			}
-			
+
 			Main.mmOverview = null;
 		}
 	},
@@ -120,6 +120,9 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	enable: function() {
 		global.log("Enable Multi Monitors Add-On ...")
+		
+		if(Main.panel.statusArea.MultiMonitorsAddOn)
+			disable();
 
 		this._switchOffThumbnailsId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	Lang.bind(this, this._switchOffThumbnails));
@@ -158,6 +161,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 });
 
 function init(extensionMeta) {
+	Convenience.initTranslations();
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
 	return new MultiMonitorsAddOn();
