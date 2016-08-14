@@ -72,7 +72,7 @@ const MultiMonitorsIndicator = new Lang.Class({
 			global.log("Add Monitors ...");
 			for(let idx = 0; idx<monitorChange; idx++){
 				let icon;
-				icon = new St.Icon({style_class: 'multimonitor-status-icon'});
+				icon = new St.Icon({style_class: 'system-status-icon multimonitor-status-icon'});
 				this._mmStatusIcon.add_child(icon);
 				icon.connect('notify::visible', Lang.bind(this, this._syncIndicatorsVisible));
 				
