@@ -206,6 +206,10 @@ const MultiMonitorsAddOn = new Lang.Class({
 		Main.mmLayoutManager = null;
 		
 		this._ov_settings.disconnect(this._switchOffThumbnailsId);
+		
+		if(!this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+				this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, true);
+		
 		global.log("Disable Multi Monitors Add-On ...")
 	}
 });
