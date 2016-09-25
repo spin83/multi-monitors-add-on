@@ -373,9 +373,13 @@ const MultiMonitorsControlsManager = new Lang.Class({
         this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
 
+        let reactiveFlag = false;
+        if(this._currentVersion[0]==3 && this._currentVersion[1]<22)
+        	reactiveFlag = true;
+        
         let layout = new OverviewControls.ControlsLayout();
         this.actor = new St.Widget({ layout_manager: layout,
-                                     reactive: true,
+                                     reactive: reactiveFlag,
                                      x_expand: true, y_expand: true,
                                      clip_to_allocation: true });
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
@@ -597,22 +601,15 @@ const MultiMonitorsOverview = new Lang.Class({
 		
 		let monitor = Main.layoutManager.monitors[this.monitorIndex];
 		
-        let layout = new Clutter.BinLayout();
-        this._stack = new Clutter.Actor({ layout_manager: layout });
-        this._stack.add_constraint(new LayoutManager.MonitorConstraint({ index: this.monitorIndex }));
-        this._stack.connect('destroy', Lang.bind(this, this._onDestroy));
-        Main.layoutManager.overviewGroup.add_child(this._stack);
-        
-        
         this._overview = new St.BoxLayout({ name: 'overview'+this.monitorIndex,
 							                    accessible_name: _("Overview"+this.monitorIndex),
-							                    reactive: true,
-							                    vertical: true,
-							                    x_expand: true,
-							                    y_expand: true });
+							                    vertical: true});
+        this._overview.add_constraint(new LayoutManager.MonitorConstraint({ index: this.monitorIndex }));
+        this._overview.connect('destroy', Lang.bind(this, this._onDestroy));
         this._overview._delegate = this;
-        this._stack.add_actor(this._overview);
-        
+
+        Main.layoutManager.overviewGroup.add_child(this._overview);
+
         this._showingId = null;
         this._hidingId = null;
 	},
@@ -648,7 +645,7 @@ const MultiMonitorsOverview = new Lang.Class({
 	    
 	    Tweener.removeTweens(actor);
 	    
-	    Main.layoutManager.overviewGroup.remove_child(this._stack);
+	    Main.layoutManager.overviewGroup.remove_child(this._overview);
 	    
 	    this._overview._delegate = null;
     },
@@ -656,8 +653,8 @@ const MultiMonitorsOverview = new Lang.Class({
 	_show: function() {
 	    this._controls.show();
 		
-	    this._stack.opacity = 0;
-	    Tweener.addTween(this._stack,
+	    this._overview.opacity = 0;
+	    Tweener.addTween(this._overview,
 	                     { opacity: 255,
 	                       transition: 'easeOutQuad',
 	                       time: Overview.ANIMATION_TIME,
@@ -673,7 +670,7 @@ const MultiMonitorsOverview = new Lang.Class({
 	_hide: function() {
         this._controls.zoomFromOverview();
 
-        Tweener.addTween(this._stack,
+        Tweener.addTween(this._overview,
                          { opacity: 0,
                            transition: 'easeOutQuad',
                            time: Overview.ANIMATION_TIME,
@@ -687,7 +684,7 @@ const MultiMonitorsOverview = new Lang.Class({
 	},
 	
 	destroy: function() {
-		this._stack.destroy();
+		this._overview.destroy();
 	},
 	
 	addAction: function(action) {
@@ -695,6 +692,7 @@ const MultiMonitorsOverview = new Lang.Class({
 //	        return;
 	
 	    this._overview.add_action(action);
+//	    _overview >> _backgroundGroup
 	},
 
 	removeAction: function(action) {
