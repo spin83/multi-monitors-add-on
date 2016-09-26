@@ -30,6 +30,12 @@
       <summary>Show AppMenu-Button on additional monitors.</summary>
       <description>Change visibility of AppMenu-Button on additional monitors.</description>
     </key>
+
+    <key name="show-date-menu" type="b">
+      <default>true</default>
+      <summary>Show DateMenu-Button on additional monitors.</summary>
+      <description>Change visibility of DateMenu-Button on additional monitors.</description>
+    </key>
     
     <key name="thumbnails-on-left-side" type="b">
       <default>true</default>

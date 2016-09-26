@@ -39,6 +39,7 @@ const Convenience = MultiMonitors.imports.convenience;
 
 const SHOW_ACTIVITIES_ID = 'show-activities';
 const SHOW_APP_MENU_ID = 'show-app-menu';
+const SHOW_DATE_MENU_ID = 'show-date-menu';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 
@@ -344,7 +345,7 @@ const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': MultiMonitorsActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
 	    'appMenu': MultiMonitorsAppMenuButton,
-//	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
+	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
@@ -415,6 +416,10 @@ const MultiMonitorsPanel = new Lang.Class({
         this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
 															Lang.bind(this, this._showAppMenu));
         this._showAppMenu();
+
+        this._showDateMenuId = this._settings.connect('changed::'+SHOW_DATE_MENU_ID,
+															Lang.bind(this, this._showDateMenu));
+        this._showDateMenu();
     },
     
     _onDestroy: function(actor) {
@@ -466,6 +471,18 @@ const MultiMonitorsPanel = new Lang.Class({
     		}
     	}
 	},
+
+    _showDateMenu: function() {
+        let name = 'dateMenu';
+        if(this._settings.get_boolean(SHOW_DATE_MENU_ID)){
+            if(this.statusArea[name])
+                this.statusArea[name].actor.visible = true;
+        }
+        else{
+            if(this.statusArea[name])
+                this.statusArea[name].actor.visible = false;
+        }
+    },
 
     _getPreferredWidth: function(actor, forHeight, alloc) {
         alloc.min_size = -1;

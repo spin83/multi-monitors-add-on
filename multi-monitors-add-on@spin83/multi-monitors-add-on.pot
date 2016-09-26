@@ -38,26 +38,30 @@ msgid "Show AppMenu-Button on additional monitors."
 msgstr ""
 
 #: prefs.js:66
+msgid "Show DateMenu-Button on additional monitors."
+msgstr ""
+
+#: prefs.js:67
 msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr ""
 
-#: prefs.js:75
+#: prefs.js:76
 msgid "A list of indicators for transfer to additional monitors."
 msgstr ""
 
-#: prefs.js:122
+#: prefs.js:123
 msgid "Select indicator"
 msgstr ""
 
-#: prefs.js:125
+#: prefs.js:126
 msgid "Add"
 msgstr ""
 
-#: prefs.js:139
+#: prefs.js:140
 msgid "Indicators on Top Panel"
 msgstr ""
 
-#: prefs.js:168
+#: prefs.js:169
 msgid "Monitor index:"
 msgstr ""
 
