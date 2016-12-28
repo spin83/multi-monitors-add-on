@@ -46,7 +46,6 @@ const MultiMonitorsIndicator = new Lang.Class({
 		this._leftRightIcon = true;
 
 		this.menu.addAction(_("Preferences"), Lang.bind(this, this._onPreferences));
-		this.menu.addAction(_("Test"), Lang.bind(this, this._onTest));
 //		this.menu.addAction(_("Init 2nd monitor"), Lang.bind(this, this._onInit2ndMonitor));
 		
 		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
@@ -100,12 +99,6 @@ const MultiMonitorsIndicator = new Lang.Class({
 	_onPreferences: function()
 	{
 		Util.spawn(["gnome-shell-extension-prefs", "multi-monitors-add-on@spin83"]);
-	},
-	
-	_onTest: function()
-	{
-		global.log('Multi Monitors Add-On');
-		this._showHello();
 	},
 	
 	_onInit2ndMonitor: function()
