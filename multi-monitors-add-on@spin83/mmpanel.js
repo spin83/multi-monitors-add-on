@@ -22,6 +22,8 @@ const Shell = imports.gi.Shell;
 const Meta = imports.gi.Meta;
 const Atk = imports.gi.Atk;
 const Clutter = imports.gi.Clutter;
+const GnomeDesktop = imports.gi.GnomeDesktop;
+const GObject = imports.gi.GObject;
 
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -39,6 +41,7 @@ const Convenience = MultiMonitors.imports.convenience;
 
 const SHOW_ACTIVITIES_ID = 'show-activities';
 const SHOW_APP_MENU_ID = 'show-app-menu';
+const SHOW_DATE_TIME_ID = 'show-date-time';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 
@@ -340,11 +343,35 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
 
 });
 
+const MultiMonitorsDateMenuButton  = new Lang.Class({
+    Name: 'MultiMonitorsDateMenuButton',
+    Extends: PanelMenu.Button,
+
+    _init: function() {
+        let menuAlignment = 0.5;
+        if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL)
+            menuAlignment = 1.0 - menuAlignment;
+        this.parent(menuAlignment);
+
+        this._clockDisplay = new St.Label({ y_align: Clutter.ActorAlign.CENTER });
+
+        let box = new St.BoxLayout();
+        box.add_actor(this._clockDisplay);
+
+        this.actor.label_actor = this._clockDisplay;
+        this.actor.add_actor(box);
+        this.actor.add_style_class_name ('clock-display');
+
+        this._clock = new GnomeDesktop.WallClock();
+        this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
+    },
+});
+
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': MultiMonitorsActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
 	    'appMenu': MultiMonitorsAppMenuButton,
-//	    'dateMenu': imports.ui.dateMenu.DateMenuButton,
+	    'dateMenu': MultiMonitorsDateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
@@ -415,6 +442,11 @@ const MultiMonitorsPanel = new Lang.Class({
         this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
 															Lang.bind(this, this._showAppMenu));
         this._showAppMenu();
+        
+        this._showDateTimeId = this._settings.connect('changed::'+SHOW_DATE_TIME_ID,
+				Lang.bind(this, this._showDateTime));
+        this._showDateTime();
+
     },
     
     _onDestroy: function(actor) {
@@ -439,6 +471,18 @@ const MultiMonitorsPanel = new Lang.Class({
     _showActivities: function() {
     	let name = 'activities';
     	if(this._settings.get_boolean(SHOW_ACTIVITIES_ID)){
+    		if(this.statusArea[name])
+    			this.statusArea[name].actor.visible = true;
+    	}
+    	else{
+    		if(this.statusArea[name])
+    			this.statusArea[name].actor.visible = false;
+    	}
+	},
+	
+	_showDateTime: function() {
+    	let name = 'dateMenu';
+    	if(this._settings.get_boolean(SHOW_DATE_TIME_ID)){
     		if(this.statusArea[name])
     			this.statusArea[name].actor.visible = true;
     	}

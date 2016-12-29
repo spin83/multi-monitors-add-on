@@ -31,6 +31,12 @@
       <description>Change visibility of AppMenu-Button on additional monitors.</description>
     </key>
     
+    <key name="show-date-time" type="b">
+      <default>true</default>
+      <summary>Show DateTime-Button on additional monitors.</summary>
+      <description>Change visibility of DateTime-Button on additional monitors.</description>
+    </key>
+    
     <key name="thumbnails-on-left-side" type="b">
       <default>true</default>
       <summary>Show Thumbnails-Slider on left side of additional monitors.</summary>
