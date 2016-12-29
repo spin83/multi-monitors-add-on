@@ -27,20 +27,3 @@
 .workspace-thumbnails-left:rtl {
     border-radius: 9px 0 0 9px; 
 }
-
-.workspace-thumbnails-left-314 {
-    spacing: 11px;
-    visible-width: 32px; /* Amount visible before hovering */
-    border: 1px solid rgba(128, 128, 128, 0.4);
-    border-left: 0px;
-    border-radius: 0px 9px 9px 0px;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 11px 11px 11px 7px;
-}
-
-.workspace-thumbnails-left-314:rtl {
-    border-left: 1px;
-    border-right: 0px;
-    border-radius: 9px 0px 0px 9px;
-    padding: 11px 7px 11px 11px;
-}

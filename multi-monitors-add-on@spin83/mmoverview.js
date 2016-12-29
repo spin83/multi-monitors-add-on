@@ -467,10 +467,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
     		if(first != this._thumbnailsSlider.actor){
                 this._thumbnailsSlider.layout.slideDirection = OverviewControls.SlideDirection.LEFT;
                 this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails');
-                if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
-                	this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails-left-314');
-                else
-                	this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails workspace-thumbnails-left');
+               	this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails workspace-thumbnails-left');
                 this._group.set_child_below_sibling(this._thumbnailsSlider.actor, first)
     		}
     	}
@@ -478,10 +475,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
     		let last = this._group.get_last_child();
     		if(last != this._thumbnailsSlider.actor){
                 this._thumbnailsSlider.layout.slideDirection = OverviewControls.SlideDirection.RIGHT;
-                if(this._currentVersion[0]==3 && this._currentVersion[1]==14)
-                	this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails-left-314');
-                else
-                	this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails workspace-thumbnails-left');
+               	this._thumbnailsBox.actor.remove_style_class_name('workspace-thumbnails workspace-thumbnails-left');
                 this._thumbnailsBox.actor.set_style_class_name('workspace-thumbnails');
                 this._group.set_child_above_sibling(this._thumbnailsSlider.actor, last);
     		}
