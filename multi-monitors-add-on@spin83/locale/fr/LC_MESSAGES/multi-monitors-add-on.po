@@ -42,6 +42,10 @@ msgstr "Afficher le bouton du menu Applications sur les moniteurs secondaires"
 msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr "Afficher le dock listant les espaces de travail, sur la gauche pour les moniteurs secondaires"
 
+#: prefs.js:67
+msgid "Show DateTime-Button on additional monitors."
+msgstr "Afficher le bouton Date-Heure sur les moniteurs secondaires."
+
 #: prefs.js:75
 msgid "A list of indicators for transfer to additional monitors."
 msgstr ""

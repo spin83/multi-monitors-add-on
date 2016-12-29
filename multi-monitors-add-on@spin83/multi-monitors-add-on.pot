@@ -41,6 +41,10 @@ msgstr ""
 msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr ""
 
+#: prefs.js:67
+msgid "Show DateTime-Button on additional monitors."
+msgstr ""
+
 #: prefs.js:75
 msgid "A list of indicators for transfer to additional monitors."
 msgstr ""

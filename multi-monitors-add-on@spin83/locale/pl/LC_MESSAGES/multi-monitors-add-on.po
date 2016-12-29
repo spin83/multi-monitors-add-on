@@ -5,72 +5,70 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Multi Monitors Add On Gnome Shell Extension\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-23 22:29+0100\n"
-"PO-Revision-Date: 2015-01-23 22:30+0100\n"
-"Last-Translator: Jonatan Zeidler <jonatan_zeidler@gmx.de>\n"
-"Language-Team: German <jonatan_zeidler@gmx.de>\n"
-"Language: de\n"
+"POT-Creation-Date: 2016-12-29 14:25+0100\n"
+"PO-Revision-Date: 2016-12-29 14:25+0100\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
-"X-Poedit-SourceCharset: UTF-8\n"
+"X-Generator: Poedit 1.8.11\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: pl_PL\n"
 
 #: prefs.js:61
 msgid "Show Multi Monitors indicator on Top Panel."
-msgstr "Multimonitor-Indikator in der oberen Leiste anzeigen"
+msgstr "Wyświetl wskaźnik rozszerzenia na głównym pasku."
 
 #: prefs.js:62
 msgid "Show Panel on additional monitors."
-msgstr "Leiste auf zusätzlichen Monitoren anzeigen"
+msgstr "Wyświetl główny pasek na dodatkowych monitorach."
 
 #: prefs.js:63
 msgid "Show Thumbnails-Slider on additional monitors."
-msgstr "Arbeitsflächenübersicht auf zusätzlichen Monitoren anzeigen"
+msgstr "Wyświetl pasek miniatur na dodatkowych monitorach."
 
 #: prefs.js:64
 msgid "Show Activities-Button on additional monitors."
-msgstr "Aktivitäten-Schaltfläche auf zusätzlichen Monitoren anzeigen"
+msgstr "Wyświetl przycisk podglądu na dodatkowych monitorach."
 
 #: prefs.js:65
 msgid "Show AppMenu-Button on additional monitors."
-msgstr "Anwendungsmenü auf zusätzlichen Monitoren anzeigen"
+msgstr "Wyświetl przycisk aplikacji na dodatkowych monitorach."
 
 #: prefs.js:66
 msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr "Arbeitsflächenübersicht bei zusätzlichen Monitoren links anzeigen"
+msgstr "Wyświetl pasek miniatur po lewej stronie dla dodatkowych monitorów."
 
 #: prefs.js:67
 msgid "Show DateTime-Button on additional monitors."
-msgstr "Datum-Zeit auf zusätzlichen Monitoren anzeigen."
+msgstr "Wyświetl przycisk daty i czasu na dodatkowych monitorach."
 
 #: prefs.js:75
 msgid "A list of indicators for transfer to additional monitors."
-msgstr ""
-"Eine Liste von Indikatoren, die auf die zusätzlichen Monitore verschoben "
-"werden sollen"
+msgstr "Lista wskaźników do przesunięcia na dodatkowe monitory."
 
 #: prefs.js:122
 msgid "Select indicator"
-msgstr "Indikator auswählen"
+msgstr "Wybierz wskaźnik"
 
 #: prefs.js:125
 msgid "Add"
-msgstr "Hinzufügen"
+msgstr "Dodaj"
 
 #: prefs.js:139
 msgid "Indicators on Top Panel"
-msgstr "Indikatoren in der oberen Leiste"
+msgstr "Wskaźniki na głównym panelu"
 
 #: prefs.js:168
 msgid "Monitor index:"
-msgstr "Monitorindex:"
+msgstr "Indeks monitora:"
 
 #: indicator.js:106
 msgid "Preferences"
-msgstr "Einstellungen"
+msgstr "Ustawienia"
 
 #: indicator.js:107
 msgid "Test"
@@ -78,4 +76,4 @@ msgstr "Test"
 
 #: indicator.js:129
 msgid "Multi Monitors Add-On"
-msgstr "Multimonitor-Erweiterung"
+msgstr "Multi Monitors Add-On"
