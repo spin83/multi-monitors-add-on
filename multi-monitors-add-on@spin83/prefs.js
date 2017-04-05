@@ -80,7 +80,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", Columns.INDICATOR_NAME);
         
-        let nameRenderer = new Gtk.CellRendererText;
+        nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", Columns.MONITOR_NUMBER);
         
