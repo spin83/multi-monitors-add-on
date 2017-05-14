@@ -38,6 +38,7 @@ const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
+const MMCalendar = MultiMonitors.imports.mmcalendar;
 
 const SHOW_ACTIVITIES_ID = 'show-activities';
 const SHOW_APP_MENU_ID = 'show-app-menu';
@@ -343,35 +344,11 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
 
 });
 
-const MultiMonitorsDateMenuButton  = new Lang.Class({
-    Name: 'MultiMonitorsDateMenuButton',
-    Extends: PanelMenu.Button,
-
-    _init: function() {
-        let menuAlignment = 0.5;
-        if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL)
-            menuAlignment = 1.0 - menuAlignment;
-        this.parent(menuAlignment);
-
-        this._clockDisplay = new St.Label({ y_align: Clutter.ActorAlign.CENTER });
-
-        let box = new St.BoxLayout();
-        box.add_actor(this._clockDisplay);
-
-        this.actor.label_actor = this._clockDisplay;
-        this.actor.add_actor(box);
-        this.actor.add_style_class_name ('clock-display');
-
-        this._clock = new GnomeDesktop.WallClock();
-        this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
-    },
-});
-
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': MultiMonitorsActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
 	    'appMenu': MultiMonitorsAppMenuButton,
-	    'dateMenu': MultiMonitorsDateMenuButton,
+	    'dateMenu': MMCalendar.MultiMonitorsDateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
