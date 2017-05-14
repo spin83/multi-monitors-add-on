@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Alonso Lara <alonso.lara.plana@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-01-23 22:29+0100\n"
+"PO-Revision-Date: 2017-03-04 23:59+0100\n"
+"Last-Translator: Alonso Lara <alonso.lara.plana@gmail.com>\n"
+"Language-Team: Spanish <LL@li.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: prefs.js:61
+msgid "Show Multi Monitors indicator on Top Panel."
+msgstr "Mostrar indicador de monitores múltiples en el panel."
+
+#: prefs.js:62
+msgid "Show Panel on additional monitors."
+msgstr "Mostrar el panel en monitores adicionales."
+
+#: prefs.js:63
+msgid "Show Thumbnails-Slider on additional monitors."
+msgstr "Mostrar las miniaturas en los monitores adicionales."
+
+#: prefs.js:64
+msgid "Show Activities-Button on additional monitors."
+msgstr "Mostrar las actividades en los monitores adicionales."
+
+#: prefs.js:65
+msgid "Show AppMenu-Button on additional monitors."
+msgstr "Mostrar el menú de aplicaciones en los monitores adicionales."
+
+#: prefs.js:66
+msgid "Show Thumbnails-Slider on left side of additional monitors."
+msgstr "Mostrar las miniaturas en el lado izquierdo de los monitores adicionales."
+
+#: prefs.js:67
+msgid "Show DateTime-Button on additional monitors."
+msgstr "Mostrar la fecha en los monitores adicionales."
+
+#: prefs.js:75
+msgid "A list of indicators for transfer to additional monitors."
+msgstr "Un listado de indicadores para transferir a monitores adicionales."
+
+#: prefs.js:122
+msgid "Select indicator"
+msgstr "Seleccione indicador"
+
+#: prefs.js:125
+msgid "Add"
+msgstr "Añadir"
+
+#: prefs.js:139
+msgid "Indicators on Top Panel"
+msgstr "Indicadores en el panel"
+
+#: prefs.js:168
+msgid "Monitor index:"
+msgstr "Monitor número:"
+
+#: indicator.js:106
+msgid "Preferences"
+msgstr "Preferencias"
+
+#: indicator.js:107
+msgid "Test"
+msgstr "Prueba"
+
+#: indicator.js:129
+msgid "Multi Monitors Add-On"
+msgstr "Accesorio de monitores múltiples"
