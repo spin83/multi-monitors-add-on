@@ -81,7 +81,8 @@ const StatusIndicatorsController = new Lang.Class({
 	transferIndicators: function() {
 		let boxs = ['_leftBox', '_centerBox', '_rightBox'];
     	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).deep_unpack();
-
+    	let show_app_menu = this._settings.get_value(SHOW_APP_MENU_ID);
+    	
     	let transfer_back = this._transfered_indicators.filter(function(element) {
     		return !transfers.hasOwnProperty(element.iname);
 		});
@@ -99,7 +100,10 @@ const StatusIndicatorsController = new Lang.Class({
 						global.log('a '+box+ " > " + iname + " : "+ monitor);
 						this._transfered_indicators.push({iname:iname, box:box, monitor:monitor});
 						Main.panel[box].remove_child(indicator.container);
-						panel[box].insert_child_at_index(indicator.container, 0);
+						if (show_app_menu && box === '_leftBox')
+							panel[box].insert_child_at_index(indicator.container, 1);
+						else
+							panel[box].insert_child_at_index(indicator.container, 0);
 					}
 				}));
 			}
@@ -126,7 +130,10 @@ const StatusIndicatorsController = new Lang.Class({
 				if(panel[element.box].contains(indicator.container)) {
 		    		global.log("r "+element.box+ " > " + element.iname + " : "+ element.monitor);
 		    		panel[element.box].remove_child(indicator.container);
-					Main.panel[element.box].insert_child_at_index(indicator.container, 0);
+		    		if (element.box === '_leftBox')
+		    			Main.panel[element.box].insert_child_at_index(indicator.container, 1);
+		    		else
+		    			Main.panel[element.box].insert_child_at_index(indicator.container, 0);
 				}
 			}
 		}));
