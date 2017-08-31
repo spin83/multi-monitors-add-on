@@ -21,6 +21,8 @@ const Gio = imports.gi.Gio;
 
 const Main = imports.ui.main;
 
+const WorkspacesView = imports.ui.workspacesView;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
@@ -40,7 +42,6 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	_init: function() {
 		this._settings = Convenience.getSettings();
-		
 		this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
 		
 		this.mmIndicator = null;
@@ -83,47 +84,20 @@ const MultiMonitorsAddOn = new Lang.Class({
 				}
 			}
 			
-			this.orginalSetWorkspacesFullGeometry = Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry;
+			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
+	        for (let i = 0; i < workspacesDisplay._workspacesViews.length; i++)
+	        	workspacesDisplay._workspacesViews[i].destroy();
+			workspacesDisplay.hide();
+			workspacesDisplay.actor._delegate = null;
+			workspacesDisplay.actor.destroy();
+			Main.overview.viewSelector._workspacesPage.hide();
+			Main.overview.viewSelector._workspacesPage.destroy();
 			
-			Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry = function(geom) {
-		        this._fullGeometry = geom;
-		        if (this._workspacesViews.length) {
-		        	this._workspacesViews[this._primaryIndex].setFullGeometry(geom);
-		        }
-		    };
-		    
-		    this.orginal_updateWorkspacesFullGeometry = Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry;
-		    Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry = function() {
-		        if (!this._workspacesViews.length)
-		            return;
-
-		        let monitors = Main.layoutManager.monitors;
-		        for (let i = 0; i < monitors.length; i++) {
-		            let geometry = (i == this._primaryIndex) ? this._fullGeometry : Main.mmOverview[i].getWorkspacesGeometry();
-		            this._workspacesViews[i].setFullGeometry(geometry);
-		        }
-		    };
-		    
-		    this.orginal_updateWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry;
-		    Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry = function() {
-		        if (!this._workspacesViews.length)
-		            return;
-
-		        let [x, y] = this.actor.get_transformed_position();
-		        let allocation = this.actor.allocation;
-		        let width = allocation.x2 - allocation.x1;
-		        let height = allocation.y2 - allocation.y1;
-		        let primaryGeometry = { x: x, y: y, width: width, height: height };
-
-		        let monitors = Main.layoutManager.monitors;
-		        for (let i = 0; i < monitors.length; i++) {
-		            let geometry = (i == this._primaryIndex) ? primaryGeometry : Main.mmOverview[i].getWorkspacesGeometry();
-		            this._workspacesViews[i].setActualGeometry(geometry);
-		        }
-		    };
-		    
-		    this._notif_allocationId = Main.overview.viewSelector._workspacesDisplay.actor.connect('notify::allocation', Lang.bind(Main.overview.viewSelector._workspacesDisplay, Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry));
-			
+			workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay();
+			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+			Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
+	                                             _("Windows"), 'focus-windows-symbolic');
+			Main.overview._controls._updateWorkspacesGeometry();
 		}
 		else{
 			this._hideThumbnailsSlider();
@@ -131,20 +105,26 @@ const MultiMonitorsAddOn = new Lang.Class({
 	},
 	
 	_hideThumbnailsSlider: function() {
-		if(Main.mmOverview){
-			Main.overview.viewSelector._workspacesDisplay.actor.disconnect(this._notif_allocationId);
-			Main.overview.viewSelector._workspacesDisplay.setWorkspacesFullGeometry = this.orginalSetWorkspacesFullGeometry;
-			this.orginalSetWorkspacesFullGeometry = null;
-			Main.overview.viewSelector._workspacesDisplay._updateWorkspacesFullGeometry = this.orginal_updateWorkspacesFullGeometry;
-			this.orginal_updateWorkspacesFullGeometry = null;
-			Main.overview.viewSelector._workspacesDisplay._updateWorkspacesActualGeometry = this.orginal_updateWorkspacesActualGeometry;
-			this.orginal_updateWorkspacesActualGeometry = null;
+		if (Main.mmOverview) {
+			
+			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
+	        for (let i = 0; i < workspacesDisplay._workspacesViews.length; i++)
+	        	workspacesDisplay._workspacesViews[i].destroy();
+			workspacesDisplay.hide();
+			workspacesDisplay.actor._delegate = null;
+			workspacesDisplay.actor.destroy();
+			Main.overview.viewSelector._workspacesPage.hide();
+			Main.overview.viewSelector._workspacesPage.destroy();
+			
+			workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
+			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+			Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
+	                                             _("Windows"), 'focus-windows-symbolic');
 			
 			for (let i = 0; i < Main.mmOverview.length; i++) {
 				if(Main.mmOverview[i])
 					Main.mmOverview[i].destroy();
 			}
-
 			Main.mmOverview = null;
 		}
 	},
@@ -173,6 +153,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 		
 		if(Main.panel.statusArea.MultiMonitorsAddOn)
 			disable();
+		
+		this._mmMonitors = 0;
 
 		this._switchOffThumbnailsId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	Lang.bind(this, this._switchOffThumbnails));
@@ -191,28 +173,47 @@ const MultiMonitorsAddOn = new Lang.Class({
 
 	},
 	
-	disable: function() {
+	disable: function() {		
 		Main.layoutManager.disconnect(this._relayoutId);
+		this._ov_settings.disconnect(this._switchOffThumbnailsId);
 		
 		this._settings.disconnect(this._showPanelId);
 		this._settings.disconnect(this._showThumbnailsSliderId);
+		this._settings.disconnect(this._showIndicatorId);
 
-		this._hideThumbnailsSlider();
-		this._mmMonitors = 0;
 		
 		this._hideIndicator();
 		
 		Main.mmLayoutManager.hidePanel();
 		Main.mmLayoutManager = null;
 		
-		this._ov_settings.disconnect(this._switchOffThumbnailsId);
+		this._hideThumbnailsSlider();
+		this._mmMonitors = 0;
+		
 		global.log("Disable Multi Monitors Add-On ...")
 	}
 });
+
+let multiMonitorsAddOn = null;
 
 function init(extensionMeta) {
 	Convenience.initTranslations();
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
-	return new MultiMonitorsAddOn();
+}
+
+function enable() {
+	if (multiMonitorsAddOn !== null)
+		return;
+	
+	multiMonitorsAddOn = new MultiMonitorsAddOn();
+	multiMonitorsAddOn.enable();
+}
+
+function disable() {
+	if (multiMonitorsAddOn == null)
+		return;
+	
+	multiMonitorsAddOn.disable();
+	multiMonitorsAddOn = null;
 }

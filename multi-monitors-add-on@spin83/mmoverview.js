@@ -33,6 +33,7 @@ const Overview = imports.ui.overview;
 const ViewSelector = imports.ui.viewSelector;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
+const WorkspacesView = imports.ui.workspacesView;
 
 const Config = imports.misc.config;
 
@@ -559,15 +560,6 @@ const MultiMonitorsControlsManager = new Lang.Class({
     show: function() {
 		this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
     },
-    zoomFromOverview: function() {
-    	
-//        this._workspacesViews.hide();
-    	
-//        this._workspacesDisplay.zoomFromOverview();
-//
-//        if (!this._workspacesDisplay.activeWorkspaceHasMaximizedWindows())
-//            Main.overview.fadeInDesktop();
-    },
     setWorkspacesFullGeometry: function(geom) {
     	if(!this._workspacesViews)
     		return;
@@ -589,8 +581,6 @@ const MultiMonitorsOverview = new Lang.Class({
 	_init: function(index) {
 		this.monitorIndex = index;
 		this._settings = Convenience.getSettings();
-		
-		let monitor = Main.layoutManager.monitors[this.monitorIndex];
 		
         this._overview = new St.BoxLayout({ name: 'overview'+this.monitorIndex,
 							                    accessible_name: _("Overview"+this.monitorIndex),
@@ -634,8 +624,6 @@ const MultiMonitorsOverview = new Lang.Class({
 	    if(this._hidingId)
 	    	Main.overview.disconnect(this._hidingId);
 	    
-	    Tweener.removeTweens(actor);
-	    
 	    Main.layoutManager.overviewGroup.remove_child(this._overview);
 	    
 	    this._overview._delegate = null;
@@ -643,34 +631,9 @@ const MultiMonitorsOverview = new Lang.Class({
 	
 	_show: function() {
 	    this._controls.show();
-		
-	    this._overview.opacity = 0;
-	    Tweener.addTween(this._overview,
-	                     { opacity: 255,
-	                       transition: 'easeOutQuad',
-	                       time: Overview.ANIMATION_TIME,
-	                       onComplete: Lang.bind(this, this._showDone),
-	                       onCompleteScope: this
-	                     });
-
-	},
-	
-	_showDone: function() {
 	},
 	
 	_hide: function() {
-        this._controls.zoomFromOverview();
-
-        Tweener.addTween(this._overview,
-                         { opacity: 0,
-                           transition: 'easeOutQuad',
-                           time: Overview.ANIMATION_TIME,
-                           onComplete: Lang.bind(this, this._hideDone),
-                           onCompleteScope: this
-                         });
-	},
-	
-	_hideDone: function() {
 		this._controls.hide();
 	},
 	
@@ -690,5 +653,68 @@ const MultiMonitorsOverview = new Lang.Class({
 		if(action.get_actor())
 			this._overview.remove_action(action);
 	}
+
+});
+
+
+const MultiMonitorsWorkspacesDisplay = new Lang.Class({
+	Name: 'MultiMonitorsWorkspacesDisplay',
+    Extends: WorkspacesView.WorkspacesDisplay,
+    
+    _updateWorkspacesFullGeometry: function() {
+        if (!this._workspacesViews.length)
+            return;
+
+        let monitors = Main.layoutManager.monitors;
+        for (let i = 0; i < monitors.length; i++) {
+            let geometry;
+            if (i == this._primaryIndex) {
+            	geometry = this._fullGeometry;
+            }
+            else if (Main.mmOverview && Main.mmOverview[i]) {
+            	geometry = Main.mmOverview[i].getWorkspacesGeometry();
+                if (geometry.x<0 || geometry.y<0 || geometry.width<0 || geometry.height<0)
+                	geometry = monitors[i];
+            }
+            else {
+            	geometry = monitors[i];
+            }
+            if (!geometry)
+            	continue;
+       //     global.log("fulllG i: "+i+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height)
+            this._workspacesViews[i].setFullGeometry(geometry);
+        }
+    },
+    
+    _updateWorkspacesActualGeometry: function() {
+        if (!this._workspacesViews.length)
+            return;
+
+        let [x, y] = this.actor.get_transformed_position();
+        let allocation = this.actor.allocation;
+        let width = allocation.x2 - allocation.x1;
+        let height = allocation.y2 - allocation.y1;
+        let primaryGeometry = { x: x, y: y, width: width, height: height };
+
+        let monitors = Main.layoutManager.monitors;
+        for (let i = 0; i < monitors.length; i++) {
+            let geometry;
+            if (i == this._primaryIndex) {
+            	geometry = primaryGeometry;
+            }
+            else if (Main.mmOverview && Main.mmOverview[i]) {
+            	geometry = Main.mmOverview[i].getWorkspacesGeometry();
+                if (geometry.x<0 || geometry.y<0 || geometry.width<0 || geometry.height<0)
+                	geometry = monitors[i];
+            }
+            else {
+            	geometry = monitors[i];
+            }
+            if (!geometry)
+            	continue;
+           // global.log("actualG i: "+i+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height)
+            this._workspacesViews[i].setActualGeometry(geometry);
+        }
+    }
 
 });
