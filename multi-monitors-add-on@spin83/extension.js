@@ -85,8 +85,9 @@ const MultiMonitorsAddOn = new Lang.Class({
 			}
 			
 			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
-	        for (let i = 0; i < workspacesDisplay._workspacesViews.length; i++)
-	        	workspacesDisplay._workspacesViews[i].destroy();
+			if (workspacesDisplay._restackedNotifyId === undefined) {
+				workspacesDisplay._restackedNotifyId = 0;
+			}
 			workspacesDisplay.hide();
 			workspacesDisplay.actor._delegate = null;
 			workspacesDisplay.actor.destroy();
@@ -97,7 +98,11 @@ const MultiMonitorsAddOn = new Lang.Class({
 			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
 			Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
 	                                             _("Windows"), 'focus-windows-symbolic');
-			Main.overview._controls._updateWorkspacesGeometry();
+			if (Main.overview.visible) {
+				Main.overview._controls._updateWorkspacesGeometry();
+				Main.overview.viewSelector._workspacesPage.show();
+				workspacesDisplay.show();
+			}
 		}
 		else{
 			this._hideThumbnailsSlider();
@@ -108,8 +113,6 @@ const MultiMonitorsAddOn = new Lang.Class({
 		if (Main.mmOverview) {
 			
 			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
-	        for (let i = 0; i < workspacesDisplay._workspacesViews.length; i++)
-	        	workspacesDisplay._workspacesViews[i].destroy();
 			workspacesDisplay.hide();
 			workspacesDisplay.actor._delegate = null;
 			workspacesDisplay.actor.destroy();
@@ -159,18 +162,16 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._switchOffThumbnailsId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	Lang.bind(this, this._switchOffThumbnails));
 		
-		this._relayoutId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._relayout));
-		Main.mmLayoutManager = new MMLayout.MultiMonitorsLayoutManager();
-		
-		this._showIndicator();
-
 		this._showIndicatorId = this._settings.connect('changed::'+SHOW_INDICATOR_ID, Lang.bind(this, this._showIndicator));
+		this._showIndicator();
+		
+		Main.mmLayoutManager = new MMLayout.MultiMonitorsLayoutManager();
 		this._showPanelId = this._settings.connect('changed::'+MMLayout.SHOW_PANEL_ID, Lang.bind(Main.mmLayoutManager, Main.mmLayoutManager.showPanel));
-		this._showThumbnailsSliderId = this._settings.connect('changed::'+SHOW_THUMBNAILS_SLIDER_ID, Lang.bind(this, this._showThumbnailsSlider));
-
-		this._relayout();
 		Main.mmLayoutManager.showPanel();
-
+		
+		this._showThumbnailsSliderId = this._settings.connect('changed::'+SHOW_THUMBNAILS_SLIDER_ID, Lang.bind(this, this._showThumbnailsSlider));
+		this._relayoutId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._relayout));
+		this._relayout();
 	},
 	
 	disable: function() {		
