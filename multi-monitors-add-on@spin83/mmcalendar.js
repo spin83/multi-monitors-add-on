@@ -260,7 +260,7 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
     }
 });
 
-const MultiMonitorsDateMenuButton = new Lang.Class({
+var MultiMonitorsDateMenuButton = new Lang.Class({
     Name: 'MultiMonitorsDateMenuButton',
     Extends: PanelMenu.Button,
 

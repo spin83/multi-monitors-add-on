@@ -599,7 +599,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
     }
 });
 
-const MultiMonitorsOverview = new Lang.Class({
+var MultiMonitorsOverview = new Lang.Class({
 	Name: 'MultiMonitorsOverview',
 	
 	_init: function(index) {
@@ -685,7 +685,7 @@ const MultiMonitorsOverview = new Lang.Class({
 });
 
 
-const MultiMonitorsWorkspacesDisplay = new Lang.Class({
+var MultiMonitorsWorkspacesDisplay = new Lang.Class({
 	Name: 'MultiMonitorsWorkspacesDisplay',
     Extends: WorkspacesView.WorkspacesDisplay,
     

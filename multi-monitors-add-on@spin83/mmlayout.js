@@ -17,7 +17,7 @@ const Convenience = MultiMonitors.imports.convenience;
 
 const MMPanel = MultiMonitors.imports.mmpanel;
 
-const SHOW_PANEL_ID = 'show-panel';
+var SHOW_PANEL_ID = 'show-panel';
 
 const MultiMonitorsPanelBox = new Lang.Class({
 	Name: 'MultiMonitorsPanelBox',
@@ -66,7 +66,7 @@ const MultiMonitorsPanelBox = new Lang.Class({
 	},
 });
 
-const MultiMonitorsLayoutManager = new Lang.Class({
+var MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
 	_init: function () {
 	
