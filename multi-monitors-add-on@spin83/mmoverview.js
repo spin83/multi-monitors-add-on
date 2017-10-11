@@ -114,6 +114,8 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     
     _init: function(monitorIndex) {
     	this._monitorIndex = monitorIndex;
+    	
+    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
 
         this.actor = new Shell.GenericContainer({ reactive: true,
 									            style_class: 'workspace-thumbnails',
@@ -173,6 +175,14 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
 		this._changedDynamicWorkspacesId = this._settings.connect('changed::dynamic-workspaces',
 												Lang.bind(this, this._updateSwitcherVisibility));
+		
+		if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+	        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, function() {
+	            this._destroyThumbnails();
+	            if (Main.overview.visible)
+	                this._createThumbnails();
+	        }));
+		}
     },
     
     _onDestroy: function(actor) {
@@ -189,6 +199,9 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		Main.overview.disconnect(this._windowDragCancelledId);
 
         this._settings.disconnect(this._changedDynamicWorkspacesId);
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+        	Main.layoutManager.disconnect(this._monitorsChangedId);
+        }
         //TODO drag end ??
 
         Tweener.removeTweens(actor);
@@ -197,7 +210,14 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     },
 
     addThumbnails: function(start, count) {
-    	this._ensurePorthole();
+    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+	        if (!this._ensurePorthole())
+	            return;
+    	}
+    	else {
+    		this._ensurePorthole24();
+    	}
+        
         for (let k = start; k < start + count; k++) {
             let metaWorkspace = global.screen.get_workspace_by_index(k);
 
@@ -231,6 +251,15 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     // The "porthole" is the portion of the screen that we show in the
     // workspaces
     _ensurePorthole: function() {
+        if (!Main.layoutManager.monitors.length>this._monitorIndex)
+            return false;
+        
+        if (!this._porthole)
+            this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
+        
+        return true;
+    },
+    _ensurePorthole24: function() {
         if (!this._porthole)
             this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
     },
@@ -288,6 +317,8 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
     _init: function(thumbnailsBox) {
         this.parent({ slideDirection: OverviewControls.SlideDirection.RIGHT });
 
+        this._currentVersion = Config.PACKAGE_VERSION.split('.');
+        
         this._thumbnailsBox = thumbnailsBox;
 
         this.actor.request_mode = Clutter.RequestMode.WIDTH_FOR_HEIGHT;
@@ -297,71 +328,26 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         
         this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._updateSlide));
         this.actor.connect('notify::hover', Lang.bind(this, this._updateSlide));
-        this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSlide));
-
+        
+        if(this._currentVersion[0]==3 && this._currentVersion[1]<26) {
+        	this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSlide));
+        }
+        
         this._thumbnailsBox.actor.bind_property('visible', this.actor, 'visible', GObject.BindingFlags.SYNC_CREATE);
     },
     
     _onDestroy: function() {
     	Main.layoutManager.disconnect(this._monitorsChangedId);
-    	global.window_manager.disconnect(this._switchWorkspaceId);
+    	if(this._currentVersion[0]==3 && this._currentVersion[1]<26) {
+    		global.window_manager.disconnect(this._switchWorkspaceId);
+    	}
     	this.parent();
 	},
-
-    _getAlwaysZoomOut: function() {
-        // Always show the pager when hover, during a drag, or if workspaces are
-        // actually used, e.g. there are windows on any non-active workspace
-        let alwaysZoomOut = this.actor.hover ||
-                            this._inDrag ||
-                            !Meta.prefs_get_dynamic_workspaces() ||
-                            global.screen.n_workspaces > 2 ||
-                            global.screen.get_active_workspace_index() != 0;
-
-        if (!alwaysZoomOut) {
-            let monitors = Main.layoutManager.monitors;
-            let primary = Main.layoutManager.primaryMonitor;
-
-            /* Look for any monitor to the right of the primary, if there is
-             * one, we always keep zoom out, otherwise its hard to reach
-             * the thumbnail area without passing into the next monitor. */
-            for (let i = 0; i < monitors.length; i++) {
-                if (monitors[i].x >= primary.x + primary.width) {
-                    alwaysZoomOut = true;
-                    break;
-                }
-            }
-        }
-
-        return alwaysZoomOut;
-    },
-
-    getNonExpandedWidth: function() {
-        let child = this.actor.get_first_child();
-        return child.get_theme_node().get_length('visible-width');
-    },
-
-    _getSlide: function() {
-        if (!this._visible)
-            return 0;
-
-        let alwaysZoomOut = this._getAlwaysZoomOut();
-        if (alwaysZoomOut)
-            return 1;
-
-        let child = this.actor.get_first_child();
-        let preferredHeight = child.get_preferred_height(-1)[1];
-        let expandedWidth = child.get_preferred_width(preferredHeight)[1];
-
-        return this.getNonExpandedWidth() / expandedWidth;
-    },
-
-    getVisibleWidth: function() {
-        let alwaysZoomOut = this._getAlwaysZoomOut();
-        if (alwaysZoomOut)
-            return this.parent();
-        else
-            return this.getNonExpandedWidth();
-    }
+	
+	_getAlwaysZoomOut: OverviewControls.ThumbnailsSlider.prototype._getAlwaysZoomOut,
+    getNonExpandedWidth: OverviewControls.ThumbnailsSlider.prototype.getNonExpandedWidth,
+    _getSlide: OverviewControls.ThumbnailsSlider.prototype._getSlide,
+    getVisibleWidth: OverviewControls.ThumbnailsSlider.prototype.getVisibleWidth,
 });
 
 const MultiMonitorsControlsManager = new Lang.Class({
