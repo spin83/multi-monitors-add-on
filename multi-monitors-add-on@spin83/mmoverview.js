@@ -407,6 +407,14 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	    
 	    if (Main.overview.visible) {
 	    	this._thumbnailsBox._createThumbnails();
+	    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+		        let activePage = Main.overview.viewSelector.getActivePage();
+		        if (activePage != ViewSelector.ViewPage.WINDOWS) {
+		        	this._thumbnailsSlider.slideOut();
+		        	this._thumbnailsSlider.pageEmpty();
+		        }
+		    	this.show();
+	    	}
 	    }	    
 //        
 //        Main.overview.connect('item-drag-begin', Lang.bind(this,

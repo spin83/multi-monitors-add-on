@@ -31,6 +31,8 @@ const MMLayout = MultiMonitors.imports.mmlayout;
 const MMOverview = MultiMonitors.imports.mmoverview;
 const MMIndicator = MultiMonitors.imports.indicator;
 
+const Config = imports.misc.config;
+
 const OVERRIDE_SCHEMA = 'org.gnome.shell.overrides';
 const WORKSPACES_ONLY_ON_PRIMARY_ID = 'workspaces-only-on-primary';
 
@@ -43,6 +45,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 	_init: function() {
 		this._settings = Convenience.getSettings();
 		this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
+		
+		this._currentVersion = Config.PACKAGE_VERSION.split('.');
 		
 		this.mmIndicator = null;
 		Main.mmOverview = null;
@@ -84,6 +88,10 @@ const MultiMonitorsAddOn = new Lang.Class({
 				}
 			}
 			
+			if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+				if (Main.overview.visible) return;
+			}
+			
 			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
 			if (workspacesDisplay._restackedNotifyId === undefined) {
 				workspacesDisplay._restackedNotifyId = 0;
@@ -111,6 +119,19 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	_hideThumbnailsSlider: function() {
 		if (Main.mmOverview) {
+			
+			if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+				if (Main.overview.visible) {
+					
+					for (let i = 0; i < Main.mmOverview.length; i++) {
+						if(Main.mmOverview[i])
+							Main.mmOverview[i].destroy();
+					}
+					Main.mmOverview = null;
+					
+					return;
+				}
+			}
 			
 			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
 			workspacesDisplay.hide();
