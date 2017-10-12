@@ -288,6 +288,12 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         
         let layout = new DateMenu.FreezableBinLayout();
         let bin = new St.Widget({ layout_manager: layout });
+        
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+        	// For some minimal compatibility with PopupMenuItem
+        	bin._delegate = this;
+        }
+        
         this.menu.box.add_child(bin);
 
         hbox = new St.BoxLayout({ name: 'calendarArea' });
@@ -333,6 +339,9 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
 
         this._clock = new GnomeDesktop.WallClock();
         this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+        	this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', Lang.bind(this, this._updateTimeZone));
+        }
         
         this._sessionModeUpdatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._sessionUpdated));
         
@@ -343,6 +352,9 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
     
     _onDestroy: function(actor) {
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+        	this._clock.disconnect(this._clockNotifyTimezoneId);
+        }
     },
     
     _getEventSource: function() {
@@ -358,6 +370,8 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
 
         this._eventSource = eventSource;
     },
+    
+    _updateTimeZone: DateMenu.DateMenuButton.prototype._updateTimeZone,
 
     _sessionUpdated: function() {
         let eventSource;
