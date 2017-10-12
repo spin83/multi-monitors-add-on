@@ -354,7 +354,7 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'activities': MultiMonitorsActivitiesButton,
 //	    'aggregateMenu': Panel.AggregateMenu,
-//	    'appMenu': MultiMonitorsAppMenuButton,
+	    'appMenu': MultiMonitorsAppMenuButton,
 	    'dateMenu': MMCalendar.MultiMonitorsDateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
 //	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
@@ -365,7 +365,7 @@ var MultiMonitorsPanel = new Lang.Class({
     Name: 'MultiMonitorsPanel',
     Extends: Panel.Panel,
 
-    _init : function(monitorIndex) {
+    _init : function(monitorIndex, mmPanelBox) {
     	this.monitorIndex = monitorIndex;
     	
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
@@ -411,6 +411,8 @@ var MultiMonitorsPanel = new Lang.Class({
             }
         }));
 
+        mmPanelBox.panelBox.add(this.actor);
+        
         Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'focus-top-bar-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
                                         
@@ -502,22 +504,22 @@ var MultiMonitorsPanel = new Lang.Class({
 	},
 	
 	_showAppMenu: function() {
-//		let name = 'appMenu';
-//    	if(this._settings.get_boolean(SHOW_APP_MENU_ID)){
-//    		if(!this.statusArea[name]){
-//    			let indicator = new MultiMonitorsAppMenuButton(this);
-//    			this.statusArea[name] = indicator;
-//    			let box = this._leftBox;
-//    			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
-//    		}
-//    	}
-//    	else{
-//    		if(this.statusArea[name]){
-//    			let indicator = this.statusArea[name];
-//    			this.menuManager.removeMenu(indicator.menu);
-//    			indicator.destroy();
-//    		}
-//    	}
+		let name = 'appMenu';
+    	if(this._settings.get_boolean(SHOW_APP_MENU_ID)){
+    		if(!this.statusArea[name]){
+    			let indicator = new MultiMonitorsAppMenuButton(this);
+    			this.statusArea[name] = indicator;
+    			let box = this._leftBox;
+    			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
+    		}
+    	}
+    	else{
+    		if(this.statusArea[name]){
+    			let indicator = this.statusArea[name];
+    			this.menuManager.removeMenu(indicator.menu);
+    			indicator.destroy();
+    		}
+    	}
 	},
 
     _getPreferredWidth: function(actor, forHeight, alloc) {
