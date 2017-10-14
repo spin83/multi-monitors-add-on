@@ -251,7 +251,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     // The "porthole" is the portion of the screen that we show in the
     // workspaces
     _ensurePorthole: function() {
-        if (!Main.layoutManager.monitors.length>this._monitorIndex)
+        if (!(Main.layoutManager.monitors.length>this._monitorIndex))
             return false;
         
         if (!this._porthole)
@@ -483,6 +483,9 @@ const MultiMonitorsControlsManager = new Lang.Class({
     },
 
     getWorkspacesGeometry: function() {
+    	if (!(Main.layoutManager.monitors.length>this._monitorIndex)) {
+    		return { x: -1, y: -1, width: -1, height: -1 };
+    	}
 		let spacer_height = Main.layoutManager.primaryMonitor.height;
 
 		let panelGhost_height = 0;
@@ -701,7 +704,7 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
     },
     
     _updateWorkspacesFullGeometry: function() {
-        if (!this._workspacesViews.length)
+        if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
             return;
 
         let monitors = Main.layoutManager.monitors;
@@ -722,7 +725,7 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
     },
     
     _updateWorkspacesActualGeometry: function() {
-        if (!this._workspacesViews.length)
+        if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
             return;
 
         let [x, y] = this.actor.get_transformed_position();

@@ -536,7 +536,7 @@ var MultiMonitorsPanel = new Lang.Class({
             return;
         }
 
-        if (!Main.layoutManager.monitors.length>this.monitorIndex)
+        if (!(Main.layoutManager.monitors.length>this.monitorIndex))
             return;
 
         /* Get all the windows in the active workspace that are in the primary monitor and visible */
