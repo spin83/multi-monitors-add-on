@@ -17,11 +17,11 @@ const Convenience = MultiMonitors.imports.convenience;
 
 const MMPanel = MultiMonitors.imports.mmpanel;
 
-const SHOW_PANEL_ID = 'show-panel';
+var SHOW_PANEL_ID = 'show-panel';
 
 const MultiMonitorsPanelBox = new Lang.Class({
 	Name: 'MultiMonitorsPanelBox',
-	_init: function (panel, monitor) {
+	_init: function (monitor) {
 		this._rightPanelBarrier = null;
 	
 		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
@@ -31,7 +31,6 @@ const MultiMonitorsPanelBox = new Lang.Class({
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
         
 		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', Lang.bind(this, this._panelBoxChanged));
-		this.panelBox.add(panel.actor);
 	},
 	
 	destroy: function () {
@@ -66,7 +65,7 @@ const MultiMonitorsPanelBox = new Lang.Class({
 	},
 });
 
-const MultiMonitorsLayoutManager = new Lang.Class({
+var MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
 	_init: function () {
 	
@@ -199,8 +198,8 @@ const MultiMonitorsLayoutManager = new Lang.Class({
 	},
 	
 	_pushPanel: function(i, monitor) {
-		let panel = new MMPanel.MultiMonitorsPanel(i);
-		let mmPanelBox = new MultiMonitorsPanelBox(panel, monitor);
+		let mmPanelBox = new MultiMonitorsPanelBox(monitor);
+		let panel = new MMPanel.MultiMonitorsPanel(i, mmPanelBox);
 		
 		Main.mmPanel.push(panel);
 		this.mmPanelBox.push(mmPanelBox);

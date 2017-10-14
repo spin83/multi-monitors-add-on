@@ -29,7 +29,7 @@ const Gettext = imports.gettext.domain('multi-monitors-add-on');
 const _ = Gettext.gettext;
 const Convenience = imports.misc.extensionUtils.getCurrentExtension().imports.convenience;
 
-const MultiMonitorsIndicator = new Lang.Class({
+var MultiMonitorsIndicator = new Lang.Class({
 	Name: 'MultiMonitorsIndicator',
 	Extends: PanelMenu.Button,
 	

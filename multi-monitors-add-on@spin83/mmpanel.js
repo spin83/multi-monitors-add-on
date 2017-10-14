@@ -41,12 +41,12 @@ const Convenience = MultiMonitors.imports.convenience;
 const MMCalendar = MultiMonitors.imports.mmcalendar;
 
 const SHOW_ACTIVITIES_ID = 'show-activities';
-const SHOW_APP_MENU_ID = 'show-app-menu';
+var SHOW_APP_MENU_ID = 'show-app-menu';
 const SHOW_DATE_TIME_ID = 'show-date-time';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 
-const StatusIndicatorsController = new Lang.Class({
+var StatusIndicatorsController = new Lang.Class({
 	Name: 'StatusIndicatorController',
 	
 	_init: function() {
@@ -176,7 +176,7 @@ const StatusIndicatorsController = new Lang.Class({
 	}
 });
 
-const MultiMonitorsAppMenuButton = new Lang.Class({
+var MultiMonitorsAppMenuButton = new Lang.Class({
     Name: 'MultiMonitorsAppMenuButton',
     Extends: Panel.AppMenuButton,
     
@@ -361,12 +361,14 @@ const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
 	};
 
-const MultiMonitorsPanel = new Lang.Class({
+var MultiMonitorsPanel = new Lang.Class({
     Name: 'MultiMonitorsPanel',
     Extends: Panel.Panel,
 
-    _init : function(monitorIndex) {
+    _init : function(monitorIndex, mmPanelBox) {
     	this.monitorIndex = monitorIndex;
+    	
+    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
         this.actor = new Shell.GenericContainer({ name: 'panel', reactive: true });
         this.actor._delegate = this;
@@ -398,15 +400,36 @@ const MultiMonitorsPanel = new Lang.Class({
         
         this._showingId = Main.overview.connect('showing', Lang.bind(this, function () {
             this.actor.add_style_pseudo_class('overview');
+            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+            	this._updateSolidStyle();
+            }
         }));
         this._hidingId = Main.overview.connect('hiding', Lang.bind(this, function () {
             this.actor.remove_style_pseudo_class('overview');
+            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+            	this._updateSolidStyle();
+            }
         }));
 
+        mmPanelBox.panelBox.add(this.actor);
+        
         Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'focus-top-bar-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
                                         
         this._updatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
+        
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+            this._trackedWindows = new Map();
+            this._actorAddedId = global.window_group.connect('actor-added', Lang.bind(this, this._onWindowActorAdded));
+            this._actorRemovedId = global.window_group.connect('actor-removed', Lang.bind(this, this._onWindowActorRemoved));
+            this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSolidStyle));
+            
+            global.window_group.get_children().forEach(metaWindowActor => {
+        		if (metaWindowActor['get_meta_window'] && metaWindowActor.get_meta_window().get_window_type() != Meta.WindowType.DESKTOP)
+        			this._onWindowActorAdded(null, metaWindowActor);
+            });
+        }
+        
         this._updatePanel();
         
         this._settings = Convenience.getSettings();
@@ -425,6 +448,19 @@ const MultiMonitorsPanel = new Lang.Class({
     },
     
     _onDestroy: function(actor) {
+    	
+    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+            global.window_group.disconnect(this._actorAddedId);
+            global.window_group.disconnect(this._actorRemovedId);
+            global.window_manager.disconnect(this._switchWorkspaceId);
+            
+            this._trackedWindows.forEach(function (value, key, map) {
+            	value.forEach(id => {
+            		key.disconnect(id);
+                });
+            });
+    	}
+    	
 	    Main.overview.disconnect(this._showingId);
 	    Main.overview.disconnect(this._hidingId);
 	    this._settings.disconnect(this._showActivitiesId);
@@ -491,16 +527,52 @@ const MultiMonitorsPanel = new Lang.Class({
         if(Main.layoutManager.monitors.length>this.monitorIndex)
         	alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
         else
-        	alloc.natural_size = 0;
+        	alloc.natural_size = -1;
     },
+    
+    _updateSolidStyle: function() {
+        if (this.actor.has_style_pseudo_class('overview') || !Main.sessionMode.hasWindows) {
+            this._removeStyleClassName('solid');
+            return;
+        }
+
+        if (!(Main.layoutManager.monitors.length>this.monitorIndex))
+            return;
+
+        /* Get all the windows in the active workspace that are in the primary monitor and visible */
+        let activeWorkspace = global.screen.get_active_workspace();
+        let monitorIndex = this.monitorIndex;
+        let windows = activeWorkspace.list_windows().filter(function(metaWindow) {
+            return metaWindow.get_monitor() == monitorIndex &&
+                   metaWindow.showing_on_its_workspace() &&
+                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP;
+        });
+
+        /* Check if at least one window is near enough to the panel */
+        let [, panelTop] = this.actor.get_transformed_position();
+        let panelBottom = panelTop + this.actor.get_height();
+        let scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        let isNearEnough = windows.some(Lang.bind(this, function(metaWindow) {
+            let verticalPosition = metaWindow.get_frame_rect().y;
+            return verticalPosition < panelBottom + 5 * scale;
+        }));
+
+        if (isNearEnough)
+            this._addStyleClassName('solid');
+        else
+            this._removeStyleClassName('solid');
+    },
+
     
     _hideIndicators: function() {
         for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
             let indicator = this.statusArea[role];
             if (!indicator)
                 continue;
-            if (indicator.menu)
-                indicator.menu.close();
+            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+	            if (indicator.menu)
+	                indicator.menu.close();
+            }
             indicator.container.hide();
         }
     },
