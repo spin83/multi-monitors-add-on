@@ -180,8 +180,8 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
     Name: 'MultiMonitorsAppMenuButton',
     Extends: Panel.AppMenuButton,
     
-    _init: function(panel){
-    	if(!panel.monitorIndex)
+    _init: function(panel) {
+    	if (panel.monitorIndex==undefined)
     		this._monitorIndex = Main.layoutManager.primaryIndex;
     	else	
     		this._monitorIndex = panel.monitorIndex;
