@@ -121,7 +121,7 @@ var StatusIndicatorsController = new Lang.Class({
 	
 	_transferBack: function(transfer_back, panel) {
     	transfer_back.forEach(Lang.bind(this, function(element) {
-    		this._transfered_indicators.slice(this._transfered_indicators.indexOf(element));
+    		this._transfered_indicators.splice(this._transfered_indicators.indexOf(element));
 			if(Main.panel.statusArea[element.iname]) {
 				let indicator = Main.panel.statusArea[element.iname];
 				if(!panel) {
