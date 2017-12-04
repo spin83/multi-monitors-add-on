@@ -88,9 +88,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 				}
 			}
 			
-			if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-				if (Main.overview.visible) return;
-			}
+			if (Main.overview.visible)
+				return;
 			
 			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
 			if (workspacesDisplay._restackedNotifyId === undefined) {
@@ -120,30 +119,19 @@ const MultiMonitorsAddOn = new Lang.Class({
 	_hideThumbnailsSlider: function() {
 		if (Main.mmOverview) {
 			
-			if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-				if (Main.overview.visible) {
-					
-					for (let i = 0; i < Main.mmOverview.length; i++) {
-						if(Main.mmOverview[i])
-							Main.mmOverview[i].destroy();
-					}
-					Main.mmOverview = null;
-					
-					return;
-				}
+			if (!Main.overview.visible) {
+				let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
+				workspacesDisplay.hide();
+				workspacesDisplay.actor._delegate = null;
+				workspacesDisplay.actor.destroy();
+				Main.overview.viewSelector._workspacesPage.hide();
+				Main.overview.viewSelector._workspacesPage.destroy();
+				
+				workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
+				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+				Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
+		                                             _("Windows"), 'focus-windows-symbolic');
 			}
-			
-			let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
-			workspacesDisplay.hide();
-			workspacesDisplay.actor._delegate = null;
-			workspacesDisplay.actor.destroy();
-			Main.overview.viewSelector._workspacesPage.hide();
-			Main.overview.viewSelector._workspacesPage.destroy();
-			
-			workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
-			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
-			Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
-	                                             _("Windows"), 'focus-windows-symbolic');
 			
 			for (let i = 0; i < Main.mmOverview.length; i++) {
 				if(Main.mmOverview[i])
@@ -195,7 +183,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._relayout();
 	},
 	
-	disable: function() {		
+	disable: function() {
 		Main.layoutManager.disconnect(this._relayoutId);
 		this._ov_settings.disconnect(this._switchOffThumbnailsId);
 		

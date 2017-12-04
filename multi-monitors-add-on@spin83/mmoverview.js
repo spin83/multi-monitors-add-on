@@ -293,6 +293,9 @@ const MultiMonitorsSlidingControl = new Lang.Class({
         this._windowDragBeginId = Main.overview.connect('window-drag-begin', Lang.bind(this, this._onWindowDragBegin));
         this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', Lang.bind(this, this._onWindowDragEnd));
         this._windowDragEndId = Main.overview.connect('window-drag-end', Lang.bind(this, this._onWindowDragEnd));
+        
+        this.onAnimationBegin = null;
+        this.onAnimationEnd = null;
     },
     
     _onDestroy: function(actor) {
@@ -307,6 +310,32 @@ const MultiMonitorsSlidingControl = new Lang.Class({
     	Main.overview.disconnect(this._windowDragEndId);
     	
     	Tweener.removeTweens(actor);
+    },
+    
+    _updateTranslation: function() {
+        let translationStart = 0;
+        let translationEnd = 0;
+        let translation = this._getTranslation();
+
+        let shouldShow = (this._getSlide() > 0);
+        if (shouldShow) {
+            translationStart = translation;
+        } else {
+            translationEnd = translation;
+        }
+
+        if (this.layout.translationX == translationEnd)
+            return;
+
+        this.layout.translationX = translationStart;
+        if (this.onAnimationBegin) this.onAnimationBegin();
+        Tweener.addTween(this.layout, { translationX: translationEnd,
+                                        time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
+                                        transition: 'easeOutQuad',
+                                        onComplete: function() {
+                                      	  if (this.onAnimationEnd) this.onAnimationEnd();
+                                        },
+                                        onCompleteScope: this});
     },
 });
 
@@ -357,10 +386,25 @@ const MultiMonitorsControlsManager = new Lang.Class({
     	this._monitorIndex = index;
     	this._workspacesViews = null;
     	
+    	this._fullGeometry = null;
+    	this._animationInProgress = false;
+    	
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
         this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
+        
+        this._thumbnailsSlider.onAnimationBegin = Lang.bind(this, function() {
+        	this._animationInProgress = true;
+        });
+        this._thumbnailsSlider.onAnimationEnd = Lang.bind(this, function() {
+        	this._animationInProgress = false;
+        	if(!this._workspacesViews)
+        		return;
+        	let geometry = this.getWorkspacesActualGeometry();
+//        	global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
+        	this._workspacesViews.setActualGeometry(geometry);
+		});
 
         let reactiveFlag = false;
         if(this._currentVersion[0]==3 && this._currentVersion[1]<22)
@@ -404,33 +448,18 @@ const MultiMonitorsControlsManager = new Lang.Class({
         }));
 	    
 	    Main.mmOverview[this._monitorIndex].addAction(this._clickAction);
-	    
+    },
+    
+    inOverviewInit: function() {
 	    if (Main.overview.visible) {
 	    	this._thumbnailsBox._createThumbnails();
-	    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-		        let activePage = Main.overview.viewSelector.getActivePage();
-		        if (activePage != ViewSelector.ViewPage.WINDOWS) {
-		        	this._thumbnailsSlider.slideOut();
-		        	this._thumbnailsSlider.pageEmpty();
-		        }
-		    	this.show();
-	    	}
-	    }	    
-//        
-//        Main.overview.connect('item-drag-begin', Lang.bind(this,
-//            function() {
-//                let activePage = this.viewSelector.getActivePage();
-//                if (activePage != ViewSelector.ViewPage.WINDOWS)
-//                    this.viewSelector.fadeHalf();
-//            }));
-//        Main.overview.connect('item-drag-end', Lang.bind(this,
-//            function() {
-//                this.viewSelector.fadeIn();
-//            }));
-//        Main.overview.connect('item-drag-cancelled', Lang.bind(this,
-//            function() {
-//                this.viewSelector.fadeIn();
-//            }));
+	        let activePage = Main.overview.viewSelector.getActivePage();
+	        if (activePage != ViewSelector.ViewPage.WINDOWS) {
+	        	this._thumbnailsSlider.slideOut();
+	        	this._thumbnailsSlider.pageEmpty();
+	        }
+	    	this.show();
+	    }	
     },
     
 	_onScrollEvent: function(actor, event) {
@@ -534,8 +563,30 @@ const MultiMonitorsControlsManager = new Lang.Class({
         return geometry;
     },
     
+    isAnimationInProgress: function() {
+    	return this._animationInProgress;
+    },
+    
+    getWorkspacesFullGeometry: function() {
+    	if (this._fullGeometry)
+    		return this._fullGeometry;
+    	else
+    		return Main.layoutManager.monitors[this._monitorIndex];
+    },
+    
+    getWorkspacesActualGeometry: function() {
+        let [x, y] = this._viewActor.get_transformed_position();
+        let allocation = this._viewActor.allocation;
+        let width = allocation.x2 - allocation.x1;
+        let height = allocation.y2 - allocation.y1;
+        return { x: x, y: y, width: width, height: height };
+    },
+    
     _updateWorkspacesGeometry: function() {
-        this.setWorkspacesFullGeometry(this.getWorkspacesGeometry());
+    	this._fullGeometry = this.getWorkspacesGeometry();
+    	if(!this._workspacesViews)
+    		return;
+        this._workspacesViews.setFullGeometry(this._fullGeometry);
     },
 
     _setVisibility: function() {
@@ -567,26 +618,21 @@ const MultiMonitorsControlsManager = new Lang.Class({
     		return;
 
         this._workspacesViews.actor.visible = opacity != 0;
-        Tweener.addTween(this._workspacesViews.actor,
+        Tweener.addTween((this._workspacesViews.actor, this._viewActor),
                 { opacity: opacity,
                   time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
                   transition: 'easeOutQuad'
                 });
     },
 
-
     _onPageEmpty: function() {
-        this._thumbnailsSlider.pageEmpty();     
+        this._thumbnailsSlider.pageEmpty();
     },
+    
     show: function() {
 		this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
     },
-    setWorkspacesFullGeometry: function(geom) {
-    	if(!this._workspacesViews)
-    		return;
 
-        this._workspacesViews.setActualGeometry(geom);	
-    },
     hide: function() {
     	if (this._workspacesViews && (!this._workspacesViews.actor.visible)) {
     		this._workspacesViews.actor.opacity = 255;
@@ -634,13 +680,20 @@ var MultiMonitorsOverview = new Lang.Class({
 		
 		this._controls = new MultiMonitorsControlsManager(this.monitorIndex);
 		this._overview.add(this._controls.actor, { y_fill: true, expand: true });
+		this._controls.inOverviewInit();
 		
 		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._show));
 		this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this._hide));
 	},
 	
-	getWorkspacesGeometry: function() {
-		return this._controls.getWorkspacesGeometry();
+	getWorkspacesFullGeometry: function() {
+		return this._controls.getWorkspacesFullGeometry();
+	},
+	
+	getWorkspacesActualGeometry: function() {
+		if (this._controls.isAnimationInProgress())
+			return null;
+		return this._controls.getWorkspacesActualGeometry();
 	},
 	
     _onDestroy: function(actor) {
@@ -653,7 +706,7 @@ var MultiMonitorsOverview = new Lang.Class({
 	    
 	    this._overview._delegate = null;
     },
-	
+
 	_show: function() {
 	    this._controls.show();
 	},
@@ -714,7 +767,7 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
             	geometry = this._fullGeometry;
             }
             else if (Main.mmOverview && Main.mmOverview[i]) {
-            	geometry = Main.mmOverview[i].getWorkspacesGeometry();
+            	geometry = Main.mmOverview[i].getWorkspacesFullGeometry();
             }
             else {
             	geometry = monitors[i];
@@ -741,13 +794,15 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
             	geometry = primaryGeometry;
             }
             else if (Main.mmOverview && Main.mmOverview[i]) {
-            	geometry = Main.mmOverview[i].getWorkspacesGeometry();
+            	geometry = Main.mmOverview[i].getWorkspacesActualGeometry();
             }
             else {
             	geometry = monitors[i];
             }
-//            global.log("actualG i: "+i+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
-            this._workspacesViews[i].setActualGeometry(geometry);
+            if (geometry) {
+//                global.log("actualG i: "+i+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
+            	this._workspacesViews[i].setActualGeometry(geometry);
+            }
         }
     }
 
