@@ -212,6 +212,14 @@ function init(extensionMeta) {
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
     
+//    for gnome-shell<3.26
+    if (!Math.trunc) {
+    	Math.trunc = function(v) {
+    		v = +v;
+    		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
+    	};
+    }
+    
     let metaVersion = MultiMonitors.metadata['version'];
     if (Number.isFinite(metaVersion)) {
     	version = 'v'+Math.trunc(metaVersion);
