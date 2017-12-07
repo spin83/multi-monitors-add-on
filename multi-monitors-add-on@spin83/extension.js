@@ -160,8 +160,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
 	},
 	
-	enable: function() {
-		global.log("Enable Multi Monitors Add-On ...")
+	enable: function(version) {
+		global.log("Enable Multi Monitors Add-On ("+version+")...")
 		
 		if(Main.panel.statusArea.MultiMonitorsAddOn)
 			disable();
@@ -205,11 +205,32 @@ const MultiMonitorsAddOn = new Lang.Class({
 });
 
 let multiMonitorsAddOn = null;
+let version = null;
 
 function init(extensionMeta) {
 	Convenience.initTranslations();
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
+    
+    let metaVersion = MultiMonitors.metadata['version'];
+    if (Number.isFinite(metaVersion)) {
+    	version = 'v'+Math.trunc(metaVersion);
+    	switch(Math.round((metaVersion%1)*10)) {
+    		case 0:
+    	    	break;
+    		case 1:
+    	    	version += '+bugfix';
+    	    	break;
+    		case 2:
+    	    	version += '+develop';
+    	    	break;
+    		default:
+    	    	version += '+modified';
+    	    	break;
+    	}
+    }
+    else
+    	version = metaVersion;
 }
 
 function enable() {
@@ -217,7 +238,7 @@ function enable() {
 		return;
 	
 	multiMonitorsAddOn = new MultiMonitorsAddOn();
-	multiMonitorsAddOn.enable();
+	multiMonitorsAddOn.enable(version);
 }
 
 function disable() {
