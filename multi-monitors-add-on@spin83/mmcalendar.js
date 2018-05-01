@@ -57,19 +57,25 @@ const MultiMonitorsCalendar = new Lang.Class({
         this._showWeekdateKeyId = this._settings.connect('changed::' + Calendar.SHOW_WEEKDATE_KEY, Lang.bind(this, this._onSettingsChange));
         this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
 
-        // Find the ordering for month/year in the calendar heading
-        this._headerFormatWithoutYear = '%B';
-        switch (gtk30_('calendar:MY')) {
-        case 'calendar:MY':
-            this._headerFormat = '%B %Y';
-            break;
-        case 'calendar:YM':
-            this._headerFormat = '%Y %B';
-            break;
-        default:
-            log('Translation of "calendar:MY" in GTK+ is not correct');
-            this._headerFormat = '%B %Y';
-            break;
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
+        	this._headerFormatWithoutYear = _('%OB');
+        	this._headerFormat = _('%OB %Y');
+        }
+        else {
+	        // Find the ordering for month/year in the calendar heading
+	        this._headerFormatWithoutYear = '%B';
+	        switch (gtk30_('calendar:MY')) {
+	        case 'calendar:MY':
+	            this._headerFormat = '%B %Y';
+	            break;
+	        case 'calendar:YM':
+	            this._headerFormat = '%Y %B';
+	            break;
+	        default:
+	            log('Translation of "calendar:MY" in GTK+ is not correct');
+	            this._headerFormat = '%B %Y';
+	            break;
+	        }
         }
 
         // Start off with the current date
@@ -252,11 +258,19 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
 
         this._sessionModeUpdatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._sync));
         
+        this._destroy = false;
+        
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
     },
     
     _onDestroy: function(actor) {
+    	this._destroy = true;
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
+    },
+    
+    _sync: function() {
+    	if (this._destroy) return;
+    	this.parent();
     }
 });
 

@@ -220,6 +220,25 @@ function init(extensionMeta) {
     	};
     }
     
+    // fix bug in panel: Destroy function many time added to this same indicator.
+    Main.panel._ensureIndicator = function(role) {
+        let indicator = this.statusArea[role];
+        if (indicator) {
+            indicator.container.show();
+            return null;
+        }
+        else {
+            let constructor = PANEL_ITEM_IMPLEMENTATIONS[role];
+            if (!constructor) {
+                // This icon is not implemented (this is a bug)
+                return null;
+            }
+            indicator = new constructor(this);
+            this.statusArea[role] = indicator;
+        }
+        return indicator;
+    };
+    
     let metaVersion = MultiMonitors.metadata['version'];
     if (Number.isFinite(metaVersion)) {
     	version = 'v'+Math.trunc(metaVersion);

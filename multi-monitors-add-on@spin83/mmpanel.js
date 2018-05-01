@@ -357,7 +357,6 @@ const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 	    'appMenu': MultiMonitorsAppMenuButton,
 	    'dateMenu': MMCalendar.MultiMonitorsDateMenuButton,
 //	    'a11y': imports.ui.status.accessibility.ATIndicator,
-//	    'a11yGreeter': imports.ui.status.accessibility.ATGreeterIndicator,
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
 	};
 
@@ -398,6 +397,10 @@ var MultiMonitorsPanel = new Lang.Class({
         this.actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
         
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
+        	this.actor.connect('key-press-event', Lang.bind(this, this._onKeyPress));
+        }
+        
         this._showingId = Main.overview.connect('showing', Lang.bind(this, function () {
             this.actor.add_style_pseudo_class('overview');
             if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
@@ -430,6 +433,10 @@ var MultiMonitorsPanel = new Lang.Class({
             });
         }
         
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
+        	this._workareasChangedId = global.screen.connect('workareas-changed', () => { this.actor.queue_relayout(); });
+        }
+        
         this._updatePanel();
         
         this._settings = Convenience.getSettings();
@@ -448,6 +455,10 @@ var MultiMonitorsPanel = new Lang.Class({
     },
     
     _onDestroy: function(actor) {
+    	
+    	if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
+    		global.screen.disconnect(this._workareasChangedId);
+        }
     	
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             global.window_group.disconnect(this._actorAddedId);
@@ -471,9 +482,10 @@ var MultiMonitorsPanel = new Lang.Class({
 	    
 	    Main.sessionMode.disconnect(this._updatedId);
 	    
-	    for(let name in this.statusArea){
+	    for (let name in this.statusArea) {
 	    	if(this.statusArea.hasOwnProperty(name))
 	    		this.statusArea[name].destroy();
+	    	    delete this.statusArea[name];
 	    }
 	    
 	    this.actor._delegate = null;
