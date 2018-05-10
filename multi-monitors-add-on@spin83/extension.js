@@ -34,6 +34,7 @@ const MMIndicator = MultiMonitors.imports.indicator;
 const Config = imports.misc.config;
 
 const OVERRIDE_SCHEMA = 'org.gnome.shell.overrides';
+const MUTTER_SCHEMA = 'org.gnome.mutter';
 const WORKSPACES_ONLY_ON_PRIMARY_ID = 'workspaces-only-on-primary';
 
 const SHOW_INDICATOR_ID = 'show-indicator';
@@ -45,6 +46,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 	_init: function() {
 		this._settings = Convenience.getSettings();
 		this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
+		this._mu_settings = new Gio.Settings({ schema: MUTTER_SCHEMA });
 		
 		this._currentVersion = Config.PACKAGE_VERSION.split('.');
 		
@@ -78,6 +80,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 			
 			if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 				this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
+			if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+				this._mu_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 			
 			Main.mmOverview = [];
 			for (let i = 0; i < Main.layoutManager.monitors.length; i++) {
@@ -158,6 +162,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 	_switchOffThumbnails: function() {
 		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
+		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
 	},
 	
 	enable: function(version) {
@@ -168,9 +174,11 @@ const MultiMonitorsAddOn = new Lang.Class({
 		
 		this._mmMonitors = 0;
 
-		this._switchOffThumbnailsId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
+		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	Lang.bind(this, this._switchOffThumbnails));
-		
+		this._switchOffThumbnailsMuId = this._mu_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
+				Lang.bind(this, this._switchOffThumbnails));
+
 		this._showIndicatorId = this._settings.connect('changed::'+SHOW_INDICATOR_ID, Lang.bind(this, this._showIndicator));
 		this._showIndicator();
 		
@@ -185,7 +193,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 	
 	disable: function() {
 		Main.layoutManager.disconnect(this._relayoutId);
-		this._ov_settings.disconnect(this._switchOffThumbnailsId);
+		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
+		this._mu_settings.disconnect(this._switchOffThumbnailsMuId);
 		
 		this._settings.disconnect(this._showPanelId);
 		this._settings.disconnect(this._showThumbnailsSliderId);

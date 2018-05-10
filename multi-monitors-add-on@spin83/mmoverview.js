@@ -77,6 +77,9 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
 
         // Create clones for windows that should be visible in the Overview
         this._windows = [];
+        //--- fix Ubuntu changes from js-fix-invalid-access-errors.patch
+        this._windowsDestroyedIds = [];
+        //---
         this._allWindows = [];
         this._minimizedChangedIds = [];
         for (let i = 0; i < windows.length; i++) {
