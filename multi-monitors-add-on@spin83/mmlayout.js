@@ -11,6 +11,8 @@ const Main = imports.ui.main;
 const Panel = imports.ui.panel;
 const Layout = imports.ui.layout;
 
+const Config = imports.misc.config;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
@@ -68,7 +70,8 @@ const MultiMonitorsPanelBox = new Lang.Class({
 var MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
 	_init: function () {
-	
+		this._currentVersion = Config.PACKAGE_VERSION.split('.');
+		
 		this._settings = Convenience.getSettings();
 	
 		Main.mmPanel = [];
@@ -82,6 +85,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		
 		this.statusIndicatorsController = null;
 		this._layoutManager_updateHotCorners = null;
+		this._changedEnableHotCornersId = null;
 	},
 	
 	showPanel: function() {
@@ -100,13 +104,22 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 			
 			if (!this._layoutManager_updateHotCorners) {
 				this._layoutManager_updateHotCorners = Main.layoutManager['_updateHotCorners'];
+				
+				let enable_hot_corners = (Main.sessionMode.currentMode == 'ubuntu' && this._currentVersion[0]==3 && this._currentVersion[1]==28);
 				Main.layoutManager['_updateHotCorners'] = function() {
 			        this.hotCorners.forEach(function(corner) {
 			            if (corner)
 			                corner.destroy();
 			        });
 			        this.hotCorners = [];
-
+			        
+			        if (enable_hot_corners) {
+				        if (!global.settings.get_boolean('enable-hot-corners')) {
+				            this.emit('hot-corners-changed');
+				            return;
+				        }
+			        }
+			        
 			        let size = this.panelBox.height;
 
 			        for (let i = 0; i < this.monitors.length; i++) {
@@ -121,6 +134,14 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 
 			        this.emit('hot-corners-changed');
 				};
+				
+				if (!this._changedEnableHotCornersId) {
+					if (enable_hot_corners) {
+						this._changedEnableHotCornersId = global.settings.connect('changed::enable-hot-corners',
+								Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
+					}
+				}
+				
 				Main.layoutManager._updateHotCorners();
 			}
 		}
@@ -130,6 +151,11 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 	},
 	
 	hidePanel: function() {
+		if (this._changedEnableHotCornersId) {
+			global.settings.disconnect(this._changedEnableHotCornersId);
+			this._changedEnableHotCornersId = null;
+		}
+		
 		if (this._layoutManager_updateHotCorners) {
 			Main.layoutManager['_updateHotCorners'] = this._layoutManager_updateHotCorners;
 			this._layoutManager_updateHotCorners = null;
