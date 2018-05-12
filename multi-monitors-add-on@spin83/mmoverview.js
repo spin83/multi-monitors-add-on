@@ -518,25 +518,22 @@ const MultiMonitorsControlsManager = new Lang.Class({
     	if (!(Main.layoutManager.monitors.length>this._monitorIndex)) {
     		return { x: -1, y: -1, width: -1, height: -1 };
     	}
-		let spacer_height = Main.layoutManager.primaryMonitor.height;
-
+		let top_spacer_height = Main.layoutManager.primaryMonitor.height;
+		
 		let panelGhost_height = 0;
 		if(Main.mmOverview[this._monitorIndex]._panelGhost)
 			panelGhost_height = Main.mmOverview[this._monitorIndex]._panelGhost.get_height();
 		
-		let primaryControl_height = Main.overview._controls.actor.get_transformed_size()[1];
-		
-		if (primaryControl_height > spacer_height) {
-	        let allocation = Main.overview._controls.actor.allocation;
-	        primaryControl_height = allocation.y2 - allocation.y1; 
-		}
-		
-		spacer_height -= primaryControl_height + panelGhost_height;
-		spacer_height = Math.round(spacer_height);
+		let allocation = Main.overview._controls.actor.allocation;
+		let primaryControl_height = allocation.y2 - allocation.y1;
+		let bottom_spacer_height = Main.layoutManager.primaryMonitor.height - allocation.y2;
+
+		top_spacer_height -= primaryControl_height + panelGhost_height + bottom_spacer_height;
+		top_spacer_height = Math.round(top_spacer_height);
 
 		let spacer = Main.mmOverview[this._monitorIndex]._spacer;
-		if (spacer.get_height()!=spacer_height)
-			spacer.set_height(spacer_height);
+		if (spacer.get_height()!=top_spacer_height)
+			spacer.set_height(top_spacer_height);
 	
         let [x, y] = this.actor.get_transformed_position();
         let [width, height] = this.actor.get_transformed_size();
@@ -544,10 +541,10 @@ const MultiMonitorsControlsManager = new Lang.Class({
         if (width < Main.layoutManager.monitors[this._monitorIndex].width*0.05) {
         	width = Main.layoutManager.monitors[this._monitorIndex].width;
         	height = Main.layoutManager.monitors[this._monitorIndex].height;
-        	height -= spacer_height + panelGhost_height;
+        	height -= top_spacer_height + panelGhost_height + bottom_spacer_height;
         	let _y = Main.layoutManager.monitors[this._monitorIndex].y;
-        	if ((y-_y)<(spacer_height+panelGhost_height)) {
-        		y +=  spacer_height;
+        	if ((y-_y)<(top_spacer_height+panelGhost_height)) {
+        		y +=  top_spacer_height;
         		x = Main.layoutManager.monitors[this._monitorIndex].x
         	}
         }
