@@ -43,7 +43,7 @@ const gtk30_ = Gettext_gtk30.gettext;
 const MultiMonitorsCalendar = new Lang.Class({
 	Name: 'MultiMonitorsCalendar',
     Extends: Calendar.Calendar,
-
+    
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._weekStart = Shell.util_get_week_start();
@@ -53,7 +53,7 @@ const MultiMonitorsCalendar = new Lang.Class({
         else {
         	this._settings = new Gio.Settings({ schema_id: 'org.gnome.shell.calendar' });
         }
-
+        
         this._showWeekdateKeyId = this._settings.connect('changed::' + Calendar.SHOW_WEEKDATE_KEY, Lang.bind(this, this._onSettingsChange));
         this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
 
@@ -89,12 +89,12 @@ const MultiMonitorsCalendar = new Lang.Class({
 
         this.actor.connect('scroll-event',
                            Lang.bind(this, this._onScroll));
-
+        
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
 
         this._buildHeader ();
     },
-
+    
     _onDestroy: function(actor) {
     	this._settings.disconnect(this._showWeekdateKeyId);
     }
@@ -126,14 +126,14 @@ const MultiMonitorsEventsSection = new Lang.Class({
         	this.parent('');
         }
 
-        this._defaultAppSystem = Shell.AppSystem.get_default();
+        this._defaultAppSystem = Shell.AppSystem.get_default(); 
         this._appInstalledChangedId = this._defaultAppSystem.connect('installed-changed',
                                               Lang.bind(this, this._appInstalledChanged));
-
+        
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
         this._appInstalledChanged();
     },
-
+    
     _onDestroy: function(actor) {
     	this._desktopSettings.disconnect(this._reloadEventsId);
     	this._defaultAppSystem.disconnect(this._appInstalledChangedId);
@@ -162,7 +162,7 @@ const MultiMonitorsNotificationSection = new Lang.Class({
 
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
-
+    	
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
     		this.parent();
     	}
@@ -180,7 +180,7 @@ const MultiMonitorsNotificationSection = new Lang.Class({
         this.actor.connect('notify::mapped', Lang.bind(this, this._onMapped));
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
     },
-
+    
     _onDestroy: function(actor) {
     	Main.messageTray.disconnect(this._sourceAddedId);
     	let source, obj;
@@ -204,10 +204,10 @@ const MultiMonitorsNotificationSection = new Lang.Class({
 const MultiMonitorsCalendarMessageList = new Lang.Class({
     Name: 'MultiMonitorsCalendarMessageList',
     Extends: Calendar.CalendarMessageList,
-
+    
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
-
+    	
         this.actor = new St.Widget({ style_class: 'message-list',
                                      layout_manager: new Clutter.BinLayout(),
                                      x_expand: true, y_expand: true });
@@ -220,14 +220,14 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
                                                x_expand: true, y_expand: true,
                                                x_fill: true, y_fill: true });
         this._scrollView.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-
+        
         if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
 	        let box = new St.BoxLayout({ vertical: true,
 	                                     x_expand: true, y_expand: true });
 	        this.actor.add_actor(box);
 
 	        box.add_actor(this._scrollView);
-
+	
 	        this._clearButton = new St.Button({ style_class: 'message-list-clear-button button',
 	                                            label: _("Clear All"),
 	                                            can_focus: true });
@@ -257,17 +257,17 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
         this._addSection(this._eventsSection);
 
         this._sessionModeUpdatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._sync));
-
+        
         this._destroy = false;
-
+        
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
     },
-
+    
     _onDestroy: function(actor) {
     	this._destroy = true;
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
     },
-
+    
     _sync: function() {
     	if (this._destroy) return;
     	this.parent();
@@ -282,7 +282,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	let hbox;
     	let vbox;
-
+    	
         let menuAlignment = 0.5;
         if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL)
             menuAlignment = 1.0 - menuAlignment;
@@ -299,15 +299,15 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         this.actor.label_actor = this._clockDisplay;
         this.actor.add_actor(box);
         this.actor.add_style_class_name ('clock-display');
-
+        
         let layout = new DateMenu.FreezableBinLayout();
         let bin = new St.Widget({ layout_manager: layout });
-
+        
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
         	// For some minimal compatibility with PopupMenuItem
         	bin._delegate = this;
         }
-
+        
         this.menu.box.add_child(bin);
 
         hbox = new St.BoxLayout({ name: 'calendarArea' });
@@ -345,7 +345,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
                 vertical: true });
         }
         hbox.add(vbox);
-
+        
         this._date = new DateMenu.TodayButton(this._calendar);
         vbox.add_actor(this._date.actor);
 
@@ -356,21 +356,21 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
         	this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', Lang.bind(this, this._updateTimeZone));
         }
-
+        
         this._sessionModeUpdatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._sessionUpdated));
-
+        
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
-
+        
         this._sessionUpdated();
     },
-
+    
     _onDestroy: function(actor) {
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
         	this._clock.disconnect(this._clockNotifyTimezoneId);
         }
     },
-
+    
     _getEventSource: function() {
         return new Calendar.DBusEventSource();
     },
@@ -384,7 +384,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
 
         this._eventSource = eventSource;
     },
-
+    
     _updateTimeZone: DateMenu.DateMenuButton.prototype._updateTimeZone,
 
     _sessionUpdated: function() {
@@ -402,5 +402,5 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         // that display-specific settings, so re-use "allowSettings" here ...
 //        this._displaysSection.visible = Main.sessionMode.allowSettings;
     }
-
+    
 });
