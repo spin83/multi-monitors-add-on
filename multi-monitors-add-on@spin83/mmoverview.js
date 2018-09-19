@@ -100,9 +100,11 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
                                                           Lang.bind(this, this._windowAdded));
         this._windowRemovedId = this.metaWorkspace.connect('window-removed',
                                                            Lang.bind(this, this._windowRemoved));
-        this._windowEnteredMonitorId = global.screen.connect('window-entered-monitor',
+        let display;
+        display = global.screen || global.display;
+        this._windowEnteredMonitorId = display.connect('window-entered-monitor',
                                                            Lang.bind(this, this._windowEnteredMonitor));
-        this._windowLeftMonitorId = global.screen.connect('window-left-monitor',
+        this._windowLeftMonitorId = display.connect('window-left-monitor',
                                                            Lang.bind(this, this._windowLeftMonitor));
 
         this.state = WorkspaceThumbnail.ThumbnailState.NORMAL;
@@ -220,9 +222,13 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     	else {
     		this._ensurePorthole24();
     	}
-        
+
+        let display;
+        display = global.screen || global.workspace_manager;
+
         for (let k = start; k < start + count; k++) {
-            let metaWorkspace = global.screen.get_workspace_by_index(k);
+
+            let metaWorkspace = display.get_workspace_by_index(k);
 
             let thumbnail = new MultiMonitorsWorkspaceThumbnail(metaWorkspace, this._monitorIndex);
 
@@ -468,7 +474,10 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	_onScrollEvent: function(actor, event) {
 		if (!this.actor.mapped)
 			return Clutter.EVENT_PROPAGATE;
-		let activeWs = global.screen.get_active_workspace();
+		let display;
+		display = global.screen || global.workspace_manager;
+
+		let activeWs = display.get_active_workspace();
 		let ws;
 		switch (event.get_scroll_direction()) {
 		case Clutter.ScrollDirection.UP:

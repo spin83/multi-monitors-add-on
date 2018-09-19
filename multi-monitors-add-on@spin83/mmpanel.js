@@ -189,10 +189,13 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
     	this._targetAppGroup = null;
     	this._lastFocusedWindow = null;
     	this.parent(panel);
-    	
-        this._windowEnteredMonitorId = global.screen.connect('window-entered-monitor',
+
+	let display;
+	display = global.screen || global.display;
+
+	this._windowEnteredMonitorId = display.connect('window-entered-monitor',
 		                					Lang.bind(this, this._windowEnteredMonitor));
-		this._windowLeftMonitorId = global.screen.connect('window-left-monitor',
+	this._windowLeftMonitorId = display.connect('window-left-monitor',
 		                					Lang.bind(this, this._windowLeftMonitor));
     },
     
@@ -231,8 +234,11 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
         }
         let groupWindow = false;
         let groupFocus = false;
-    	
-        let workspace = global.screen.get_active_workspace();
+
+        let display;
+        display = global.screen || global.workspace_manager;
+
+        let workspace = display.get_active_workspace();
         let tracker = Shell.WindowTracker.get_default();
         let focusedApp = tracker.focus_app;
         if (focusedApp && focusedApp.is_on_workspace(workspace)){
@@ -278,7 +284,8 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 			return tracker.get_window_app(this._lastFocusedWindow);
         }
 
-        let windows = global.screen.get_display().get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
+        display = global.screen || global.display;
+        let windows = display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
 
         for (let i = 0; i < windows.length; i++) {
         	if(windows[i].get_monitor() == this._monitorIndex){
@@ -295,10 +302,13 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
             this._targetApp.disconnect(this._actionGroupNotifyId);
             this._actionGroupNotifyId = 0;
         }
-    	
-        global.screen.disconnect(this._windowEnteredMonitorId);
-        global.screen.disconnect(this._windowLeftMonitorId);
-        
+
+        let display;
+        display = global.screen || global.display;
+
+        display.disconnect(this._windowEnteredMonitorId);
+        display.disconnect(this._windowLeftMonitorId);
+
     	this.parent();
 	}
 });
@@ -434,7 +444,10 @@ var MultiMonitorsPanel = new Lang.Class({
         }
         
         if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-        	this._workareasChangedId = global.screen.connect('workareas-changed', () => { this.actor.queue_relayout(); });
+		let display;
+		display = global.screen || global.display;
+
+		this._workareasChangedId = display.connect('workareas-changed', () => { this.actor.queue_relayout(); });
         }
         
         this._updatePanel();
@@ -457,7 +470,10 @@ var MultiMonitorsPanel = new Lang.Class({
     _onDestroy: function(actor) {
     	
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-    		global.screen.disconnect(this._workareasChangedId);
+		let display;
+		display = global.screen || global.display;
+
+		display.disconnect(this._workareasChangedId);
         }
     	
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
@@ -552,7 +568,9 @@ var MultiMonitorsPanel = new Lang.Class({
             return;
 
         /* Get all the windows in the active workspace that are in the primary monitor and visible */
-        let activeWorkspace = global.screen.get_active_workspace();
+        let display;
+        display = global.screen || global.workspace_manager;
+        let activeWorkspace = display.get_active_workspace();
         let monitorIndex = this.monitorIndex;
         let windows = activeWorkspace.list_windows().filter(function(metaWindow) {
             return metaWindow.get_monitor() == monitorIndex &&
