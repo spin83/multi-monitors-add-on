@@ -109,6 +109,8 @@ const MultiMonitorsEventsSection = new Lang.Class({
         this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this._reloadEventsId = this._desktopSettings.connect('changed', Lang.bind(this, this._reloadEvents));
         this._eventSource = new Calendar.EmptyEventSource();
+        
+        this._messageById = new Map();
 
         if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
         	this.parent();
