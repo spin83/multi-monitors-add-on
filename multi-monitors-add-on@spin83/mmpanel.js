@@ -284,7 +284,11 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 			return tracker.get_window_app(this._lastFocusedWindow);
         }
 
-        display = global.screen || global.display;
+        if (global.screen) 
+        	display = global.screen.get_display();
+        else 
+        	display = global.display;
+        	
         let windows = display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
 
         for (let i = 0; i < windows.length; i++) {
