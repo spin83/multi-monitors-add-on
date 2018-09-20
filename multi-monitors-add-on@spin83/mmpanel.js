@@ -53,13 +53,13 @@ var StatusIndicatorsController = new Lang.Class({
 		this._transfered_indicators = []; //{iname:, box:, monitor:}
 		this._settings = Convenience.getSettings();
 		
-        this._updatedSessionId = Main.sessionMode.connect('updated', Lang.bind(this, this._updateSessionIndicators));
+        this._updatedSessionId = Main.sessionMode.connect('updated', this._updateSessionIndicators.bind(this));
         this._updateSessionIndicators();
         this._extensionStateChangedId = ExtensionSystem.connect('extension-state-changed', 
-        										Lang.bind(this, this._extensionStateChanged));
+        										this._extensionStateChanged.bind(this));
 
         this._transferIndicatorsId = this._settings.connect('changed::'+TRANSFER_INDICATORS_ID,
-																		Lang.bind(this, this.transferIndicators));
+																		this.transferIndicators.bind(this));
 	},
 	
 	destroy: function() {
@@ -95,7 +95,7 @@ var StatusIndicatorsController = new Lang.Class({
 				
 				let indicator = Main.panel.statusArea[iname];
 				let panel = this._findPanel(monitor);
-				boxs.forEach(Lang.bind(this, function(box) {
+				boxs.forEach(function(box) {
 					if(Main.panel[box].contains(indicator.container) && panel) {
 						global.log('a '+box+ " > " + iname + " : "+ monitor);
 						this._transfered_indicators.push({iname:iname, box:box, monitor:monitor});
@@ -105,7 +105,7 @@ var StatusIndicatorsController = new Lang.Class({
 						else
 							panel[box].insert_child_at_index(indicator.container, 0);
 					}
-				}));
+				}.bind(this));
 			}
 		}
 	},
@@ -120,7 +120,7 @@ var StatusIndicatorsController = new Lang.Class({
 	},
 	
 	_transferBack: function(transfer_back, panel) {
-    	transfer_back.forEach(Lang.bind(this, function(element) {
+    	transfer_back.forEach(function(element) {
     		this._transfered_indicators.splice(this._transfered_indicators.indexOf(element));
 			if(Main.panel.statusArea[element.iname]) {
 				let indicator = Main.panel.statusArea[element.iname];
@@ -136,7 +136,7 @@ var StatusIndicatorsController = new Lang.Class({
 		    			Main.panel[element.box].insert_child_at_index(indicator.container, 0);
 				}
 			}
-		}));
+		}.bind(this));
 	},
     
 	_extensionStateChanged: function() {
@@ -194,9 +194,9 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 	display = global.screen || global.display;
 
 	this._windowEnteredMonitorId = display.connect('window-entered-monitor',
-		                					Lang.bind(this, this._windowEnteredMonitor));
+		                					this._windowEnteredMonitor.bind(this));
 	this._windowLeftMonitorId = display.connect('window-left-monitor',
-		                					Lang.bind(this, this._windowLeftMonitor));
+		                					this._windowLeftMonitor.bind(this));
     },
     
     _windowEnteredMonitor : function(metaScreen, monitorIndex, metaWin) {
@@ -263,7 +263,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 						if(focusedApp != this._targetApp){
     				        this._targetAppGroup = focusedApp;
     				        this._actionOnWorkspaceGroupNotifyId = this._targetAppGroup.connect('notify::action-group', 
-    				        																Lang.bind(this, this._sync));
+    				        																this._sync.bind(this));
 //    				        global.log(this._monitorIndex+": gConnect :"+win.get_title()+" : "+win.has_focus());
 						}
         				break;
@@ -341,19 +341,19 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
 
         this.actor.label_actor = this._label;
 
-        this.actor.connect('captured-event', Lang.bind(this, this._onCapturedEvent));
-        this.actor.connect_after('key-release-event', Lang.bind(this, this._onKeyRelease));
+        this.actor.connect('captured-event', this._onCapturedEvent.bind(this));
+        this.actor.connect_after('key-release-event', this._onKeyRelease.bind(this));
 
-        this._showingId = Main.overview.connect('showing', Lang.bind(this, function() {
+        this._showingId = Main.overview.connect('showing', function() {
             this.actor.add_style_pseudo_class('overview');
             this.actor.add_accessible_state (Atk.StateType.CHECKED);
-        }));
-        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, function() {
+        }.bind(this));
+        this._hidingId = Main.overview.connect('hiding', function() {
             this.actor.remove_style_pseudo_class('overview');
             this.actor.remove_accessible_state (Atk.StateType.CHECKED);
-        }));
+        }.bind(this));
         
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
 
         this._xdndTimeOut = 0;
     },
@@ -405,41 +405,41 @@ var MultiMonitorsPanel = new Lang.Class({
         this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
         this.actor.add_actor(this._rightCorner.actor);
 
-        this.actor.connect('get-preferred-width', Lang.bind(this, this._getPreferredWidth));
-        this.actor.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
-        this.actor.connect('allocate', Lang.bind(this, this._allocate));
-        this.actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('get-preferred-width', this._getPreferredWidth.bind(this));
+        this.actor.connect('get-preferred-height', this._getPreferredHeight.bind(this));
+        this.actor.connect('allocate', this._allocate.bind(this));
+        this.actor.connect('button-press-event', this._onButtonPress.bind(this));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
         
         if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-        	this.actor.connect('key-press-event', Lang.bind(this, this._onKeyPress));
+        	this.actor.connect('key-press-event', this._onKeyPress.bind(this));
         }
         
-        this._showingId = Main.overview.connect('showing', Lang.bind(this, function () {
+        this._showingId = Main.overview.connect('showing', function () {
             this.actor.add_style_pseudo_class('overview');
             if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             	this._updateSolidStyle();
             }
-        }));
-        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, function () {
+        }.bind(this));
+        this._hidingId = Main.overview.connect('hiding', function () {
             this.actor.remove_style_pseudo_class('overview');
             if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             	this._updateSolidStyle();
             }
-        }));
+        }.bind(this));
 
         mmPanelBox.panelBox.add(this.actor);
         
         Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'focus-top-bar-symbolic',
                                         { sortGroup: CtrlAltTab.SortGroup.TOP });
                                         
-        this._updatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._updatePanel));
+        this._updatedId = Main.sessionMode.connect('updated', this._updatePanel.bind(this));
         
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             this._trackedWindows = new Map();
-            this._actorAddedId = global.window_group.connect('actor-added', Lang.bind(this, this._onWindowActorAdded));
-            this._actorRemovedId = global.window_group.connect('actor-removed', Lang.bind(this, this._onWindowActorRemoved));
-            this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSolidStyle));
+            this._actorAddedId = global.window_group.connect('actor-added', this._onWindowActorAdded.bind(this));
+            this._actorRemovedId = global.window_group.connect('actor-removed', this._onWindowActorRemoved.bind(this));
+            this._switchWorkspaceId = global.window_manager.connect('switch-workspace', this._updateSolidStyle.bind(this));
             
             global.window_group.get_children().forEach(metaWindowActor => {
         		if (metaWindowActor['get_meta_window'] && metaWindowActor.get_meta_window().get_window_type() != Meta.WindowType.DESKTOP)
@@ -458,15 +458,15 @@ var MultiMonitorsPanel = new Lang.Class({
         
         this._settings = Convenience.getSettings();
         this._showActivitiesId = this._settings.connect('changed::'+SHOW_ACTIVITIES_ID,
-        													Lang.bind(this, this._showActivities));
+        													this._showActivities.bind(this));
         this._showActivities();
 
         this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
-															Lang.bind(this, this._showAppMenu));
+															this._showAppMenu.bind(this));
         this._showAppMenu();
         
         this._showDateTimeId = this._settings.connect('changed::'+SHOW_DATE_TIME_ID,
-				Lang.bind(this, this._showDateTime));
+															this._showDateTime.bind(this));
         this._showDateTime();
 
     },
@@ -586,10 +586,10 @@ var MultiMonitorsPanel = new Lang.Class({
         let [, panelTop] = this.actor.get_transformed_position();
         let panelBottom = panelTop + this.actor.get_height();
         let scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let isNearEnough = windows.some(Lang.bind(this, function(metaWindow) {
+        let isNearEnough = windows.some(function(metaWindow) {
             let verticalPosition = metaWindow.get_frame_rect().y;
             return verticalPosition < panelBottom + 5 * scale;
-        }));
+        }.bind(this));
 
         if (isNearEnough)
             this._addStyleClassName('solid');

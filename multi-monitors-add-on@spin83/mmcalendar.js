@@ -47,14 +47,9 @@ const MultiMonitorsCalendar = new Lang.Class({
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._weekStart = Shell.util_get_week_start();
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>20) {
-        	this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
-        }
-        else {
-        	this._settings = new Gio.Settings({ schema_id: 'org.gnome.shell.calendar' });
-        }
+        this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
         
-        this._showWeekdateKeyId = this._settings.connect('changed::' + Calendar.SHOW_WEEKDATE_KEY, Lang.bind(this, this._onSettingsChange));
+        this._showWeekdateKeyId = this._settings.connect('changed::' + Calendar.SHOW_WEEKDATE_KEY, this._onSettingsChange.bind(this));
         this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
 
         if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
@@ -87,10 +82,9 @@ const MultiMonitorsCalendar = new Lang.Class({
                                      layout_manager: new Clutter.TableLayout(),
                                      reactive: true });
 
-        this.actor.connect('scroll-event',
-                           Lang.bind(this, this._onScroll));
+        this.actor.connect('scroll-event', this._onScroll.bind(this));
         
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
 
         this._buildHeader ();
     },
@@ -107,32 +101,27 @@ const MultiMonitorsEventsSection = new Lang.Class({
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-        this._reloadEventsId = this._desktopSettings.connect('changed', Lang.bind(this, this._reloadEvents));
+        this._reloadEventsId = this._desktopSettings.connect('changed', this._reloadEvents.bind(this));
         this._eventSource = new Calendar.EmptyEventSource();
         
         this._messageById = new Map();
 
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
-        	this.parent();
+    	this.parent();
 
-            this._title = new St.Button({ style_class: 'events-section-title',
-                                          label: '',
-                                          x_align: St.Align.START,
-                                          can_focus: true });
-            this.actor.insert_child_below(this._title, null);
+        this._title = new St.Button({ style_class: 'events-section-title',
+                                      label: '',
+                                      x_align: St.Align.START,
+                                      can_focus: true });
+        this.actor.insert_child_below(this._title, null);
 
-            this._title.connect('clicked', Lang.bind(this, this._onTitleClicked));
-            this._title.connect('key-focus-in', Lang.bind(this, this._onKeyFocusIn));
-        }
-        else {
-        	this.parent('');
-        }
+        this._title.connect('clicked', this._onTitleClicked.bind(this));
+        this._title.connect('key-focus-in', this._onKeyFocusIn.bind(this));
 
         this._defaultAppSystem = Shell.AppSystem.get_default(); 
         this._appInstalledChangedId = this._defaultAppSystem.connect('installed-changed',
-                                              Lang.bind(this, this._appInstalledChanged));
+                                              this._appInstalledChanged.bind(this));
         
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
         this._appInstalledChanged();
     },
     
@@ -165,22 +154,17 @@ const MultiMonitorsNotificationSection = new Lang.Class({
     _init: function() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
-    	if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
-    		this.parent();
-    	}
-    	else {
-    		this.parent(_("Notifications"));
-    	}
+    	this.parent();
         this._sources = new Map();
         this._nUrgent = 0;
 
-        this._sourceAddedId = Main.messageTray.connect('source-added', Lang.bind(this, this._sourceAdded));
-        Main.messageTray.getSources().forEach(Lang.bind(this, function(source) {
+        this._sourceAddedId = Main.messageTray.connect('source-added', this._sourceAdded.bind(this));
+        Main.messageTray.getSources().forEach(function(source) {
             this._sourceAdded(Main.messageTray, source);
-        }));
+        }.bind(this));
 
-        this.actor.connect('notify::mapped', Lang.bind(this, this._onMapped));
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('notify::mapped', this._onMapped.bind(this));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
     },
     
     _onDestroy: function(actor) {
@@ -223,26 +207,21 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
                                                x_fill: true, y_fill: true });
         this._scrollView.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
         
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
-	        let box = new St.BoxLayout({ vertical: true,
-	                                     x_expand: true, y_expand: true });
-	        this.actor.add_actor(box);
+        let box = new St.BoxLayout({ vertical: true,
+                                     x_expand: true, y_expand: true });
+        this.actor.add_actor(box);
 
-	        box.add_actor(this._scrollView);
-	
-	        this._clearButton = new St.Button({ style_class: 'message-list-clear-button button',
-	                                            label: _("Clear All"),
-	                                            can_focus: true });
-	        this._clearButton.set_x_align(Clutter.ActorAlign.END);
-	        this._clearButton.connect('clicked', () => {
-	            let sections = [...this._sections.keys()];
-	            sections.forEach((s) => { s.clear(); });
-	        });
-	        box.add_actor(this._clearButton);
-    	}
-        else {
-        	this.actor.add_actor(this._scrollView);
-        }
+        box.add_actor(this._scrollView);
+
+        this._clearButton = new St.Button({ style_class: 'message-list-clear-button button',
+                                            label: _("Clear All"),
+                                            can_focus: true });
+        this._clearButton.set_x_align(Clutter.ActorAlign.END);
+        this._clearButton.connect('clicked', () => {
+            let sections = [...this._sections.keys()];
+            sections.forEach((s) => { s.clear(); });
+        });
+        box.add_actor(this._clearButton);
         this._sectionList = new St.BoxLayout({ style_class: 'message-list-sections',
                                                vertical: true,
                                                y_expand: true,
@@ -262,7 +241,7 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
         
         this._destroy = false;
         
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
     },
     
     _onDestroy: function(actor) {
@@ -316,12 +295,12 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         bin.add_actor(hbox);
         this._calendar = new MultiMonitorsCalendar();
         this._calendar.connect('selected-date-changed',
-                               Lang.bind(this, function(calendar, date) {
+                               function(calendar, date) {
                                    layout.frozen = !DateMenu._isToday(date);
                                    this._messageList.setDate(date);
-                               }));
+                               }.bind(this));
 
-        this.menu.connect('open-state-changed', Lang.bind(this, function(menu, isOpen) {
+        this.menu.connect('open-state-changed', function(menu, isOpen) {
             // Whenever the menu is opened, select today
             if (isOpen) {
                 let now = new Date();
@@ -329,23 +308,17 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
                 this._date.setDate(now);
                 this._messageList.setDate(now);
             }
-        }));
+        }.bind(this));
 
         // Fill up the first column
         this._messageList = new MultiMonitorsCalendarMessageList();
         hbox.add(this._messageList.actor, { expand: true, y_fill: false, y_align: St.Align.START });
 
         // Fill up the second column
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>22) {
-	        let boxLayout = new DateMenu.CalendarColumnLayout(this._calendar.actor);
-	        vbox = new St.Widget({ style_class: 'datemenu-calendar-column',
-	                               layout_manager: boxLayout });
-	        boxLayout.hookup_style(vbox);
-        }
-        else {
-            vbox = new St.BoxLayout({ style_class: 'datemenu-calendar-column',
-                vertical: true });
-        }
+        let boxLayout = new DateMenu.CalendarColumnLayout(this._calendar.actor);
+        vbox = new St.Widget({ style_class: 'datemenu-calendar-column',
+                               layout_manager: boxLayout });
+        boxLayout.hookup_style(vbox);
         hbox.add(vbox);
         
         this._date = new DateMenu.TodayButton(this._calendar);
@@ -356,12 +329,12 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         this._clock = new GnomeDesktop.WallClock();
         this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-        	this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', Lang.bind(this, this._updateTimeZone));
+        	this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', this._updateTimeZone.bind(this));
         }
         
-        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', Lang.bind(this, this._sessionUpdated));
+        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sessionUpdated.bind(this));
         
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
         
         this._sessionUpdated();
     },

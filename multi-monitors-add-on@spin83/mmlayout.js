@@ -32,7 +32,7 @@ const MultiMonitorsPanelBox = new Lang.Class({
         this.panelBox.set_size(monitor.width, -1);
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
         
-		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', Lang.bind(this, this._panelBoxChanged));
+		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', this._panelBoxChanged.bind(this));
 	},
 	
 	destroy: function () {
@@ -91,11 +91,11 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 	showPanel: function() {
 		if (this._settings.get_boolean(SHOW_PANEL_ID)) {
 			if (!this._monitorsChangedId) {
-				this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._monitorsChanged));
+				this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
 				this._monitorsChanged();
 			}
 			if (!this._showAppMenuId) {
-				this._showAppMenuId = this._settings.connect('changed::'+MMPanel.SHOW_APP_MENU_ID, Lang.bind(this, this._showAppMenu));
+				this._showAppMenuId = this._settings.connect('changed::'+MMPanel.SHOW_APP_MENU_ID, this._showAppMenu.bind(this));
 			}
 			
 			if (!this.statusIndicatorsController) {

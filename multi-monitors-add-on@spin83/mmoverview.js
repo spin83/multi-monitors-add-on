@@ -60,7 +60,7 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
         this._contents = new Clutter.Actor();
         this.actor.add_child(this._contents);
 
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
 
 //        this._createBackground();
         this._bgManager = new Background.BackgroundManager({ monitorIndex: this.monitorIndex,
@@ -70,10 +70,10 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
         let monitor = Main.layoutManager.monitors[this.monitorIndex];
         this.setPorthole(monitor.x, monitor.y, monitor.width, monitor.height);
 
-        let windows = global.get_window_actors().filter(Lang.bind(this, function(actor) {
+        let windows = global.get_window_actors().filter(function(actor) {
             let win = actor.meta_window;
             return win.located_on_workspace(metaWorkspace);
-        }));
+        }.bind(this));
 
         // Create clones for windows that should be visible in the Overview
         this._windows = [];
@@ -84,9 +84,7 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
         this._minimizedChangedIds = [];
         for (let i = 0; i < windows.length; i++) {
             let minimizedChangedId =
-                windows[i].meta_window.connect('notify::minimized',
-                                               Lang.bind(this,
-                                                         this._updateMinimized));
+                windows[i].meta_window.connect('notify::minimized', this._updateMinimized.bind(this));
             this._allWindows.push(windows[i].meta_window);
             this._minimizedChangedIds.push(minimizedChangedId);
 
@@ -96,16 +94,12 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
         }
 
         // Track window changes
-        this._windowAddedId = this.metaWorkspace.connect('window-added',
-                                                          Lang.bind(this, this._windowAdded));
-        this._windowRemovedId = this.metaWorkspace.connect('window-removed',
-                                                           Lang.bind(this, this._windowRemoved));
+        this._windowAddedId = this.metaWorkspace.connect('window-added', this._windowAdded.bind(this));
+        this._windowRemovedId = this.metaWorkspace.connect('window-removed', this._windowRemoved.bind(this));
         let display;
         display = global.screen || global.display;
-        this._windowEnteredMonitorId = display.connect('window-entered-monitor',
-                                                           Lang.bind(this, this._windowEnteredMonitor));
-        this._windowLeftMonitorId = display.connect('window-left-monitor',
-                                                           Lang.bind(this, this._windowLeftMonitor));
+        this._windowEnteredMonitorId = display.connect('window-entered-monitor', this._windowEnteredMonitor.bind(this));
+        this._windowLeftMonitorId = display.connect('window-left-monitor', this._windowLeftMonitor.bind(this));
 
         this.state = WorkspaceThumbnail.ThumbnailState.NORMAL;
         this._slidePosition = 0; // Fully slid in
@@ -125,10 +119,10 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         this.actor = new Shell.GenericContainer({ reactive: true,
 									            style_class: 'workspace-thumbnails',
 									            request_mode: Clutter.RequestMode.WIDTH_FOR_HEIGHT });
-		this.actor.connect('get-preferred-width', Lang.bind(this, this._getPreferredWidth));
-		this.actor.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
-		this.actor.connect('allocate', Lang.bind(this, this._allocate));
-		this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+		this.actor.connect('get-preferred-width', this._getPreferredWidth.bind(this));
+		this.actor.connect('get-preferred-height', this._getPreferredHeight.bind(this));
+		this.actor.connect('allocate', this._allocate.bind(this));
+		this.actor.connect('destroy', this._onDestroy.bind(this));
 		this.actor._delegate = this;
 		
 		let indicator = new St.Bin({ style_class: 'workspace-thumbnail-indicator' });
@@ -163,30 +157,30 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         this._porthole = null;
 		
 		this.actor.connect('button-press-event', function() { return Clutter.EVENT_STOP; });
-		this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
+		this.actor.connect('button-release-event', this._onButtonRelease.bind(this));
 		
-		this.actor.connect('touch-event', Lang.bind(this, this._onTouchEvent));
+		this.actor.connect('touch-event', this._onTouchEvent.bind(this));
 		
-		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._createThumbnails));
-		this._hiddenId = Main.overview.connect('hidden', Lang.bind(this, this._destroyThumbnails));
+		this._showingId = Main.overview.connect('showing', this._createThumbnails.bind(this));
+		this._hiddenId = Main.overview.connect('hidden', this._destroyThumbnails.bind(this));
 		
-		this._itemDragBeginId = Main.overview.connect('item-drag-begin', Lang.bind(this, this._onDragBegin));
-		this._itemDragEndId = Main.overview.connect('item-drag-end', Lang.bind(this, this._onDragEnd));
-		this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', Lang.bind(this, this._onDragCancelled));
-		this._windowDragBeginId = Main.overview.connect('window-drag-begin', Lang.bind(this, this._onDragBegin));
-		this._windowDragEndId = Main.overview.connect('window-drag-end', Lang.bind(this, this._onDragEnd));
-		this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', Lang.bind(this, this._onDragCancelled));
+		this._itemDragBeginId = Main.overview.connect('item-drag-begin', this._onDragBegin.bind(this));
+		this._itemDragEndId = Main.overview.connect('item-drag-end', this._onDragEnd.bind(this));
+		this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', this._onDragCancelled.bind(this));
+		this._windowDragBeginId = Main.overview.connect('window-drag-begin', this._onDragBegin.bind(this));
+		this._windowDragEndId = Main.overview.connect('window-drag-end', this._onDragEnd.bind(this));
+		this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onDragCancelled.bind(this));
 		
 		this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
 		this._changedDynamicWorkspacesId = this._settings.connect('changed::dynamic-workspaces',
-												Lang.bind(this, this._updateSwitcherVisibility));
+												this._updateSwitcherVisibility.bind(this));
 		
 		if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-	        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, function() {
+	        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', function() {
 	            this._destroyThumbnails();
 	            if (Main.overview.visible)
 	                this._createThumbnails();
-	        }));
+	        }.bind(this));
 		}
     },
     
@@ -291,17 +285,17 @@ const MultiMonitorsSlidingControl = new Lang.Class({
                                      style_class: 'overview-controls',
                                      clip_to_allocation: true });
 
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
         
-        this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this._onOverviewHiding));
+        this._hidingId = Main.overview.connect('hiding', this._onOverviewHiding.bind(this));
 
-        this._itemDragBeginId = Main.overview.connect('item-drag-begin', Lang.bind(this, this._onDragBegin));
-        this._itemDragEndId = Main.overview.connect('item-drag-end', Lang.bind(this, this._onDragEnd));
-        this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', Lang.bind(this, this._onDragEnd));
+        this._itemDragBeginId = Main.overview.connect('item-drag-begin', this._onDragBegin.bind(this));
+        this._itemDragEndId = Main.overview.connect('item-drag-end', this._onDragEnd.bind(this));
+        this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', this._onDragEnd.bind(this));
 
-        this._windowDragBeginId = Main.overview.connect('window-drag-begin', Lang.bind(this, this._onWindowDragBegin));
-        this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', Lang.bind(this, this._onWindowDragEnd));
-        this._windowDragEndId = Main.overview.connect('window-drag-end', Lang.bind(this, this._onWindowDragEnd));
+        this._windowDragBeginId = Main.overview.connect('window-drag-begin', this._onWindowDragBegin.bind(this));
+        this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onWindowDragEnd.bind(this));
+        this._windowDragEndId = Main.overview.connect('window-drag-end', this._onWindowDragEnd.bind(this));
         
         this.onAnimationBegin = null;
         this.onAnimationEnd = null;
@@ -364,11 +358,11 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         this.actor.track_hover = true;
         this.actor.add_actor(this._thumbnailsBox.actor);
         
-        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._updateSlide));
-        this.actor.connect('notify::hover', Lang.bind(this, this._updateSlide));
+        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateSlide.bind(this));
+        this.actor.connect('notify::hover', this._updateSlide.bind(this));
         
         if(this._currentVersion[0]==3 && this._currentVersion[1]<26) {
-        	this._switchWorkspaceId = global.window_manager.connect('switch-workspace', Lang.bind(this, this._updateSlide));
+        	this._switchWorkspaceId = global.window_manager.connect('switch-workspace', this._updateSlide.bind(this));
         }
         
         this._thumbnailsBox.actor.bind_property('visible', this.actor, 'visible', GObject.BindingFlags.SYNC_CREATE);
@@ -403,28 +397,26 @@ const MultiMonitorsControlsManager = new Lang.Class({
         this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
         
-        this._thumbnailsSlider.onAnimationBegin = Lang.bind(this, function() {
+        this._thumbnailsSlider.onAnimationBegin = function() {
         	this._animationInProgress = true;
-        });
-        this._thumbnailsSlider.onAnimationEnd = Lang.bind(this, function() {
+        }.bind(this);
+        this._thumbnailsSlider.onAnimationEnd = function() {
         	this._animationInProgress = false;
         	if(!this._workspacesViews)
         		return;
         	let geometry = this.getWorkspacesActualGeometry();
 //        	global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
         	this._workspacesViews.setActualGeometry(geometry);
-		});
+		}.bind(this);
 
         let reactiveFlag = false;
-        if(this._currentVersion[0]==3 && this._currentVersion[1]<22)
-        	reactiveFlag = true;
         
         let layout = new OverviewControls.ControlsLayout();
         this.actor = new St.Widget({ layout_manager: layout,
                                      reactive: reactiveFlag,
                                      x_expand: true, y_expand: true,
                                      clip_to_allocation: true });
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
+        this.actor.connect('destroy', this._onDestroy.bind(this));
         
         
         this._group = new St.BoxLayout({ name: 'mm-overview-group',
@@ -438,23 +430,23 @@ const MultiMonitorsControlsManager = new Lang.Class({
         
         this._group.add_actor(this._thumbnailsSlider.actor);
 
-        layout.connect('allocation-changed', Lang.bind(this, this._updateWorkspacesGeometry));
-        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
+        layout.connect('allocation-changed', this._updateWorkspacesGeometry.bind(this));
+        this.actor.connect('scroll-event', this._onScrollEvent.bind(this));
         
         this._settings = Convenience.getSettings();
         this._thumbnailsOnLeftSideId = this._settings.connect('changed::'+THUMBNAILS_ON_LEFT_SIDE_ID,
-        													Lang.bind(this, this._thumbnailsOnLeftSide));
+        													this._thumbnailsOnLeftSide.bind(this));
         this._thumbnailsOnLeftSide();
         
-	    this._pageChangedId = Main.overview.viewSelector.connect('page-changed', Lang.bind(this, this._setVisibility));
-	    this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', Lang.bind(this, this._onPageEmpty));
+	    this._pageChangedId = Main.overview.viewSelector.connect('page-changed', this._setVisibility.bind(this));
+	    this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
 	    
 	    this._clickAction = new Clutter.ClickAction()
-        this._clickedId = this._clickAction.connect('clicked', Lang.bind(this, function(action) {
+        this._clickedId = this._clickAction.connect('clicked', function(action) {
             if (action.get_button() == 1 && this._workspacesViews &&
             								this._workspacesViews.getActiveWorkspace().isEmpty())
                 Main.overview.hide();
-        }));
+        }.bind(this));
 	    
 	    Main.mmOverview[this._monitorIndex].addAction(this._clickAction);
     },
@@ -662,7 +654,7 @@ var MultiMonitorsOverview = new Lang.Class({
 							                    accessible_name: _("Overview"+this.monitorIndex),
 							                    vertical: true});
         this._overview.add_constraint(new LayoutManager.MonitorConstraint({ index: this.monitorIndex }));
-        this._overview.connect('destroy', Lang.bind(this, this._onDestroy));
+        this._overview.connect('destroy', this._onDestroy.bind(this));
         this._overview._delegate = this;
 
         Main.layoutManager.overviewGroup.add_child(this._overview);
@@ -691,8 +683,8 @@ var MultiMonitorsOverview = new Lang.Class({
 		this._overview.add(this._controls.actor, { y_fill: true, expand: true });
 		this._controls.inOverviewInit();
 		
-		this._showingId = Main.overview.connect('showing', Lang.bind(this, this._show));
-		this._hidingId = Main.overview.connect('hiding', Lang.bind(this, this._hide));
+		this._showingId = Main.overview.connect('showing', this._show.bind(this));
+		this._hidingId = Main.overview.connect('hiding', this._hide.bind(this));
 	},
 	
 	getWorkspacesFullGeometry: function() {

@@ -45,11 +45,10 @@ var MultiMonitorsIndicator = new Lang.Class({
 		this.actor.add_child(this._mmStatusIcon);
 		this._leftRightIcon = true;
 
-		this.menu.addAction(_("Preferences"), Lang.bind(this, this._onPreferences));
-//		this.menu.addAction(_("Init 2nd monitor"), Lang.bind(this, this._onInit2ndMonitor));
+		this.menu.addAction(_("Preferences"), this._onPreferences.bind(this));
 		
-		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._viewMonitors));
-		this.connect('destroy', Lang.bind(this, this._onDestroy));
+		this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', this._viewMonitors.bind(this));
+		this.connect('destroy', this._onDestroy.bind(this));
 		this._viewMonitors();
 	},	
 		
@@ -73,7 +72,7 @@ var MultiMonitorsIndicator = new Lang.Class({
 				let icon;
 				icon = new St.Icon({style_class: 'system-status-icon multimonitor-status-icon'});
 				this._mmStatusIcon.add_child(icon);
-				icon.connect('notify::visible', Lang.bind(this, this._syncIndicatorsVisible));
+				icon.connect('notify::visible', this._syncIndicatorsVisible.bind(this));
 				
 				if(this._leftRightIcon)
 					icon.icon_name = 'multi-monitors-l-symbolic';
@@ -128,7 +127,7 @@ var MultiMonitorsIndicator = new Lang.Class({
 	                     { opacity: 0,
 	                       time: 4,
 	                       transition: 'easeOutQuad',
-	                       onComplete: Lang.bind(this, this._hideHello) });
+	                       onComplete: this._hideHello.bind(this) });
 
 	},
 });

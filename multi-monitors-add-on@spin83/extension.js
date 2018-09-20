@@ -175,19 +175,19 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._mmMonitors = 0;
 
 		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
-																	Lang.bind(this, this._switchOffThumbnails));
+																	this._switchOffThumbnails.bind(this));
 		this._switchOffThumbnailsMuId = this._mu_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
-				Lang.bind(this, this._switchOffThumbnails));
+																	this._switchOffThumbnails.bind(this));
 
-		this._showIndicatorId = this._settings.connect('changed::'+SHOW_INDICATOR_ID, Lang.bind(this, this._showIndicator));
+		this._showIndicatorId = this._settings.connect('changed::'+SHOW_INDICATOR_ID, this._showIndicator.bind(this));
 		this._showIndicator();
 		
 		Main.mmLayoutManager = new MMLayout.MultiMonitorsLayoutManager();
-		this._showPanelId = this._settings.connect('changed::'+MMLayout.SHOW_PANEL_ID, Lang.bind(Main.mmLayoutManager, Main.mmLayoutManager.showPanel));
+		this._showPanelId = this._settings.connect('changed::'+MMLayout.SHOW_PANEL_ID, Main.mmLayoutManager.showPanel.bind(Main.mmLayoutManager));
 		Main.mmLayoutManager.showPanel();
 		
-		this._showThumbnailsSliderId = this._settings.connect('changed::'+SHOW_THUMBNAILS_SLIDER_ID, Lang.bind(this, this._showThumbnailsSlider));
-		this._relayoutId = Main.layoutManager.connect('monitors-changed', Lang.bind(this, this._relayout));
+		this._showThumbnailsSliderId = this._settings.connect('changed::'+SHOW_THUMBNAILS_SLIDER_ID, this._showThumbnailsSlider.bind(this));
+		this._relayoutId = Main.layoutManager.connect('monitors-changed', this._relayout.bind(this));
 		this._relayout();
 	},
 	
@@ -220,14 +220,6 @@ function init(extensionMeta) {
 	Convenience.initTranslations();
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
-    
-//    for gnome-shell<3.26
-    if (!Math.trunc) {
-    	Math.trunc = function(v) {
-    		v = +v;
-    		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
-    	};
-    }
     
     // fix bug in panel: Destroy function many time added to this same indicator.
     Main.panel._ensureIndicator = function(role) {
