@@ -33,7 +33,7 @@ var MultiMonitorsIndicator = new Lang.Class({
 	Name: 'MultiMonitorsIndicator',
 	Extends: PanelMenu.Button,
 	
-	_init: function() {
+	_init() {
 		this.parent(0.0, "MultiMonitorsAddOn", false);
 		
 		Convenience.initTranslations();
@@ -52,17 +52,17 @@ var MultiMonitorsIndicator = new Lang.Class({
 		this._viewMonitors();
 	},	
 		
-	_onDestroy: function(actor) {
+	_onDestroy(actor) {
 		Main.layoutManager.disconnect(this._viewMonitorsId);
 	},
 	
-	_syncIndicatorsVisible: function() {
-        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some(function(actor) {
+	_syncIndicatorsVisible() {
+        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some((actor) => {
             return actor.visible;
         });
     },
 	
-	_viewMonitors: function() {
+	_viewMonitors() {
 		let monitors = this._mmStatusIcon.get_children();
 	
 		let monitorChange = Main.layoutManager.monitors.length - monitors.length;
@@ -95,22 +95,22 @@ var MultiMonitorsIndicator = new Lang.Class({
 		}
 	},
 	
-	_onPreferences: function()
+	_onPreferences()
 	{
 		Util.spawn(["gnome-shell-extension-prefs", "multi-monitors-add-on@spin83"]);
 	},
 	
-	_onInit2ndMonitor: function()
+	_onInit2ndMonitor()
 	{
 		Util.spawn(["intel-virtual-output"]);
 	},
 	
-	_hideHello: function() {
+	_hideHello() {
 	    Main.uiGroup.remove_actor(this.text);
 	    this.text = null;
 	},
 	
-	_showHello: function() {
+	_showHello() {
 	    if (!this.text) {
 	        this.text = new St.Label({ style_class: 'helloworld-label', text: _("Multi Monitors Add-On") });
 	        Main.uiGroup.add_actor(this.text);

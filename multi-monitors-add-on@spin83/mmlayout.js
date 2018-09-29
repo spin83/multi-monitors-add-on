@@ -23,7 +23,7 @@ var SHOW_PANEL_ID = 'show-panel';
 
 const MultiMonitorsPanelBox = new Lang.Class({
 	Name: 'MultiMonitorsPanelBox',
-	_init: function (monitor) {
+	_init (monitor) {
 		this._rightPanelBarrier = null;
 	
 		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
@@ -35,7 +35,7 @@ const MultiMonitorsPanelBox = new Lang.Class({
 		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', this._panelBoxChanged.bind(this));
 	},
 	
-	destroy: function () {
+	destroy () {
 		if (this._rightPanelBarrier) {
 	        this._rightPanelBarrier.destroy();
 	        this._rightPanelBarrier = null;
@@ -45,12 +45,12 @@ const MultiMonitorsPanelBox = new Lang.Class({
 		this.panelBox.destroy();
 	},
 	
-	updatePanel: function(monitor) {
+	updatePanel(monitor) {
 	    this.panelBox.set_position(monitor.x, monitor.y);
 	    this.panelBox.set_size(monitor.width, -1);
 	},
 
-	_panelBoxChanged: function(self, box, flags) {
+	_panelBoxChanged(self, box, flags) {
 //		global.log(box.get_x()+" "+box.get_y()+" "+box.get_height()+" "+box.get_width())
 		
 	    if (this._rightPanelBarrier) {
@@ -69,7 +69,7 @@ const MultiMonitorsPanelBox = new Lang.Class({
 
 var MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
-	_init: function () {
+	_init () {
 		this._currentVersion = Config.PACKAGE_VERSION.split('.');
 		
 		this._settings = Convenience.getSettings();
@@ -88,7 +88,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		this._changedEnableHotCornersId = null;
 	},
 	
-	showPanel: function() {
+	showPanel() {
 		if (this._settings.get_boolean(SHOW_PANEL_ID)) {
 			if (!this._monitorsChangedId) {
 				this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
@@ -103,11 +103,11 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 			}
 			
 			if (!this._layoutManager_updateHotCorners) {
-				this._layoutManager_updateHotCorners = Main.layoutManager['_updateHotCorners'];
+				this._layoutManager_updateHotCorners = Main.layoutManager._updateHotCorners;
 				
 				let enable_hot_corners = (Main.sessionMode.currentMode == 'ubuntu' && this._currentVersion[0]==3 && this._currentVersion[1]==28);
-				Main.layoutManager['_updateHotCorners'] = function() {
-			        this.hotCorners.forEach(function(corner) {
+				Main.layoutManager._updateHotCorners = function() {
+			        this.hotCorners.forEach((corner) => {
 			            if (corner)
 			                corner.destroy();
 			        });
@@ -150,7 +150,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		}
 	},
 	
-	hidePanel: function() {
+	hidePanel() {
 		if (this._changedEnableHotCornersId) {
 			global.settings.disconnect(this._changedEnableHotCornersId);
 			this._changedEnableHotCornersId = null;
@@ -186,7 +186,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		}
 	},
 	
-	_monitorsChanged: function () {
+	_monitorsChanged () {
 		let monitorChange = Main.layoutManager.monitors.length - this._monitorIds.length -1;
 		if (monitorChange<0) {
 			for (let idx = 0; idx<-monitorChange; idx++) {
@@ -223,7 +223,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		}
 	},
 	
-	_pushPanel: function(i, monitor) {
+	_pushPanel(i, monitor) {
 		let mmPanelBox = new MultiMonitorsPanelBox(monitor);
 		let panel = new MMPanel.MultiMonitorsPanel(i, mmPanelBox);
 		
@@ -231,7 +231,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		this.mmPanelBox.push(mmPanelBox);
 	},
 	
-	_popPanel: function() {
+	_popPanel() {
 		let panel = Main.mmPanel.pop();
 		if (this.statusIndicatorsController) {
 			this.statusIndicatorsController.transferBack(panel);
@@ -240,7 +240,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		mmPanelBox.destroy();
     },
     	
-	_changeMainPanelAppMenuButton: function(appMenuButton) {
+	_changeMainPanelAppMenuButton(appMenuButton) {
 		let role = "appMenu";
 		let panel = Main.panel;
 		let indicator = panel.statusArea[role];
@@ -256,7 +256,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		panel._addToPanelBox(role, indicator, box.get_n_children()+1, box);
 	},
 		
-	_showAppMenu: function() {
+	_showAppMenu() {
 		if (this._settings.get_boolean(MMPanel.SHOW_APP_MENU_ID) && Main.mmPanel.length>0) {
 			if (!this.mmappMenu) {
 				this._changeMainPanelAppMenuButton(MMPanel.MultiMonitorsAppMenuButton);
@@ -268,7 +268,7 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		}
 	},
 	
-	_hideAppMenu: function() {
+	_hideAppMenu() {
 		if (this.mmappMenu) {
 			this._changeMainPanelAppMenuButton(Panel.AppMenuButton);
 			this.mmappMenu = false;

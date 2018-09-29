@@ -47,7 +47,7 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
     Name: 'MultiMonitorsWorkspaceThumbnail',
     Extends: WorkspaceThumbnail.WorkspaceThumbnail,
 
-    _init : function(metaWorkspace, monitorIndex) {
+    _init (metaWorkspace, monitorIndex) {
         this.metaWorkspace = metaWorkspace;
         this.monitorIndex = monitorIndex;
 
@@ -70,10 +70,10 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
         let workArea = Main.layoutManager.getWorkAreaForMonitor(this.monitorIndex);
         this.setPorthole(workArea.x, workArea.y, workArea.width, workArea.height);
 
-        let windows = global.get_window_actors().filter(function(actor) {
+        let windows = global.get_window_actors().filter((actor) => {
             let win = actor.meta_window;
             return win.located_on_workspace(metaWorkspace);
-        }.bind(this));
+        });
 
         // Create clones for windows that should be visible in the Overview
         this._windows = [];
@@ -111,7 +111,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     Name: 'MultiMonitorsThumbnailsBox',
     Extends: WorkspaceThumbnail.ThumbnailsBox,
     
-    _init: function(monitorIndex) {
+    _init(monitorIndex) {
     	this._monitorIndex = monitorIndex;
     	
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
@@ -156,7 +156,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         this._syncStackingId = 0;
         this._porthole = null;
 		
-		this.actor.connect('button-press-event', function() { return Clutter.EVENT_STOP; });
+		this.actor.connect('button-press-event', () => { return Clutter.EVENT_STOP; });
 		this.actor.connect('button-release-event', this._onButtonRelease.bind(this));
 		
 		this.actor.connect('touch-event', this._onTouchEvent.bind(this));
@@ -176,11 +176,11 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 												this._updateSwitcherVisibility.bind(this));
 		
 		if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-	        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', function() {
+	        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', () => {
 	            this._destroyThumbnails();
 	            if (Main.overview.visible)
 	                this._createThumbnails();
-	        }.bind(this));
+	        });
 		}
 		
         this._switchWorkspaceNotifyId = 0;
@@ -189,7 +189,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         this._workareasChangedId = 0;
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
         this._destroyThumbnails();
 
 		Main.overview.disconnect(this._showingId);
@@ -213,7 +213,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         this.actor._delegate = null;
     },
 
-    addThumbnails: function(start, count) {
+    addThumbnails(start, count) {
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
 	        if (!this._ensurePorthole())
 	            return;
@@ -258,7 +258,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
     },
     // The "porthole" is the portion of the screen that we show in the
     // workspaces
-    _ensurePorthole: function() {
+    _ensurePorthole() {
         if (!(Main.layoutManager.monitors.length>this._monitorIndex))
             return false;
         
@@ -267,7 +267,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
         
         return true;
     },
-    _ensurePorthole24: function() {
+    _ensurePorthole24() {
         if (!this._porthole)
             this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
     },
@@ -277,7 +277,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
     Name: 'MultiMonitorsSlidingControl',
     Extends: OverviewControls.SlidingControl,
     
-    _init: function(params) {
+    _init(params) {
         params = Params.parse(params, { slideDirection: OverviewControls.SlideDirection.LEFT });
 
         this._visible = true;
@@ -306,7 +306,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
         this.onAnimationEnd = null;
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	Main.overview.disconnect(this._hidingId);
 	    
     	Main.overview.disconnect(this._itemDragBeginId);
@@ -320,7 +320,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
     	Tweener.removeTweens(actor);
     },
     
-    _updateTranslation: function() {
+    _updateTranslation() {
         let translationStart = 0;
         let translationEnd = 0;
         let translation = this._getTranslation();
@@ -340,7 +340,7 @@ const MultiMonitorsSlidingControl = new Lang.Class({
         Tweener.addTween(this.layout, { translationX: translationEnd,
                                         time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
                                         transition: 'easeOutQuad',
-                                        onComplete: function() {
+                                        onComplete() {
                                       	  if (this.onAnimationEnd) this.onAnimationEnd();
                                         },
                                         onCompleteScope: this});
@@ -351,7 +351,7 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
     Name: 'MultiMonitorsThumbnailsSlider',
     Extends: MultiMonitorsSlidingControl,
 
-    _init: function(thumbnailsBox) {
+    _init(thumbnailsBox) {
         this.parent({ slideDirection: OverviewControls.SlideDirection.RIGHT });
 
         this._currentVersion = Config.PACKAGE_VERSION.split('.');
@@ -380,7 +380,7 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         this._thumbnailsBox.actor.bind_property('visible', this.actor, 'visible', GObject.BindingFlags.SYNC_CREATE);
     },
     
-    _onDestroy: function() {
+    _onDestroy() {
     	Main.layoutManager.disconnect(this._monitorsChangedId);
     	if(this._currentVersion[0]==3 && this._currentVersion[1]<26) {
     		global.window_manager.disconnect(this._switchWorkspaceId);
@@ -401,7 +401,7 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
 const MultiMonitorsControlsManager = new Lang.Class({
     Name: 'MultiMonitorsControlsManager',
 
-    _init: function(index) {
+    _init(index) {
     	this._monitorIndex = index;
     	this._workspacesViews = null;
     	
@@ -413,17 +413,17 @@ const MultiMonitorsControlsManager = new Lang.Class({
         this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
         
-        this._thumbnailsSlider.onAnimationBegin = function() {
+        this._thumbnailsSlider.onAnimationBegin = () => {
         	this._animationInProgress = true;
-        }.bind(this);
-        this._thumbnailsSlider.onAnimationEnd = function() {
+        };
+        this._thumbnailsSlider.onAnimationEnd = () => {
         	this._animationInProgress = false;
         	if(!this._workspacesViews)
         		return;
         	let geometry = this.getWorkspacesActualGeometry();
 //        	global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
         	this._workspacesViews.setActualGeometry(geometry);
-		}.bind(this);
+		};
 
         let reactiveFlag = false;
         
@@ -458,16 +458,16 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	    this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
 	    
 	    this._clickAction = new Clutter.ClickAction()
-        this._clickedId = this._clickAction.connect('clicked', function(action) {
+        this._clickedId = this._clickAction.connect('clicked', (action) => {
             if (action.get_button() == 1 && this._workspacesViews &&
             								this._workspacesViews.getActiveWorkspace().isEmpty())
                 Main.overview.hide();
-        }.bind(this));
+        });
 	    
 	    Main.mmOverview[this._monitorIndex].addAction(this._clickAction);
     },
     
-    inOverviewInit: function() {
+    inOverviewInit() {
 	    if (Main.overview.visible) {
 	    	this._thumbnailsBox._createThumbnails();
 	        let activePage = Main.overview.viewSelector.getActivePage();
@@ -479,7 +479,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	    }	
     },
     
-	_onScrollEvent: function(actor, event) {
+	_onScrollEvent(actor, event) {
 		if (!this.actor.mapped)
 			return Clutter.EVENT_PROPAGATE;
 		let display;
@@ -501,7 +501,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
 		return Clutter.EVENT_STOP;
 	},
 	
-    _onDestroy: function() {
+    _onDestroy() {
 	    Main.overview.viewSelector.disconnect(this._pageChangedId);
 	    Main.overview.viewSelector.disconnect(this._pageEmptyId);
 	    this._settings.disconnect(this._thumbnailsOnLeftSideId);
@@ -510,7 +510,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
 	    Main.mmOverview[this._monitorIndex].removeAction(this._clickAction);
     },
     
-    _thumbnailsOnLeftSide: function() {
+    _thumbnailsOnLeftSide() {
     	if(this._settings.get_boolean(THUMBNAILS_ON_LEFT_SIDE_ID)){
     		let first = this._group.get_first_child();
     		if(first != this._thumbnailsSlider.actor){
@@ -531,7 +531,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
     	}
     },
 
-    getWorkspacesGeometry: function() {
+    getWorkspacesGeometry() {
     	if (!(Main.layoutManager.monitors.length>this._monitorIndex)) {
     		return { x: -1, y: -1, width: -1, height: -1 };
     	}
@@ -580,18 +580,18 @@ const MultiMonitorsControlsManager = new Lang.Class({
         return geometry;
     },
     
-    isAnimationInProgress: function() {
+    isAnimationInProgress() {
     	return this._animationInProgress;
     },
     
-    getWorkspacesFullGeometry: function() {
+    getWorkspacesFullGeometry() {
     	if (this._fullGeometry)
     		return this._fullGeometry;
     	else
     		return Main.layoutManager.monitors[this._monitorIndex];
     },
     
-    getWorkspacesActualGeometry: function() {
+    getWorkspacesActualGeometry() {
         let [x, y] = this._viewActor.get_transformed_position();
         let allocation = this._viewActor.allocation;
         let width = allocation.x2 - allocation.x1;
@@ -599,14 +599,14 @@ const MultiMonitorsControlsManager = new Lang.Class({
         return { x: x, y: y, width: width, height: height };
     },
     
-    _updateWorkspacesGeometry: function() {
+    _updateWorkspacesGeometry() {
     	this._fullGeometry = this.getWorkspacesGeometry();
     	if(!this._workspacesViews)
     		return;
         this._workspacesViews.setFullGeometry(this._fullGeometry);
     },
 
-    _setVisibility: function() {
+    _setVisibility() {
         // Ignore the case when we're leaving the overview, since
         // actors will be made visible again when entering the overview
         // next time, and animating them while doing so is just
@@ -642,15 +642,15 @@ const MultiMonitorsControlsManager = new Lang.Class({
                 });
     },
 
-    _onPageEmpty: function() {
+    _onPageEmpty() {
         this._thumbnailsSlider.pageEmpty();
     },
     
-    show: function() {
+    show() {
 		this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
     },
 
-    hide: function() {
+    hide() {
     	if (this._workspacesViews && (!this._workspacesViews.actor.visible)) {
     		this._workspacesViews.actor.opacity = 255;
     		this._workspacesViews.actor.visible = true;
@@ -662,7 +662,7 @@ const MultiMonitorsControlsManager = new Lang.Class({
 var MultiMonitorsOverview = new Lang.Class({
 	Name: 'MultiMonitorsOverview',
 	
-	_init: function(index) {
+	_init(index) {
 		this.monitorIndex = index;
 		this._settings = Convenience.getSettings();
 		
@@ -679,7 +679,7 @@ var MultiMonitorsOverview = new Lang.Class({
         this._hidingId = null;
 	},
 	
-	init: function() {
+	init() {
 		this._panelGhost = null;
 		
 	    if (Main.mmPanel) {
@@ -703,17 +703,17 @@ var MultiMonitorsOverview = new Lang.Class({
 		this._hidingId = Main.overview.connect('hiding', this._hide.bind(this));
 	},
 	
-	getWorkspacesFullGeometry: function() {
+	getWorkspacesFullGeometry() {
 		return this._controls.getWorkspacesFullGeometry();
 	},
 	
-	getWorkspacesActualGeometry: function() {
+	getWorkspacesActualGeometry() {
 		if (this._controls.isAnimationInProgress())
 			return null;
 		return this._controls.getWorkspacesActualGeometry();
 	},
 	
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
 		if(this._showingId)
 			Main.overview.disconnect(this._showingId);
 	    if(this._hidingId)
@@ -724,19 +724,19 @@ var MultiMonitorsOverview = new Lang.Class({
 	    this._overview._delegate = null;
     },
 
-	_show: function() {
+	_show() {
 	    this._controls.show();
 	},
 	
-	_hide: function() {
+	_hide() {
 		this._controls.hide();
 	},
 	
-	destroy: function() {
+	destroy() {
 		this._overview.destroy();
 	},
 	
-	addAction: function(action) {
+	addAction(action) {
 //	    if (this.isDummy)
 //	        return;
 	
@@ -744,7 +744,7 @@ var MultiMonitorsOverview = new Lang.Class({
 //	    _overview >> _backgroundGroup
 	},
 
-	removeAction: function(action) {
+	removeAction(action) {
 		if(action.get_actor())
 			this._overview.remove_action(action);
 	}
@@ -756,12 +756,12 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
 	Name: 'MultiMonitorsWorkspacesDisplay',
     Extends: WorkspacesView.WorkspacesDisplay,
     
-    _init: function() {
+    _init() {
     	this.parent();
     	this._restackedNotifyId = 0;
     },
     
-    _workspacesOnlyOnPrimaryChanged: function() {
+    _workspacesOnlyOnPrimaryChanged() {
         this._workspacesOnlyOnPrimary = this._settings.get_boolean('workspaces-only-on-primary');
 
         if (!Main.overview.visible)
@@ -773,7 +773,7 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
         this._updateWorkspacesViews();
     },
     
-    _updateWorkspacesFullGeometry: function() {
+    _updateWorkspacesFullGeometry() {
         if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
             return;
 
@@ -794,7 +794,7 @@ var MultiMonitorsWorkspacesDisplay = new Lang.Class({
         }
     },
     
-    _updateWorkspacesActualGeometry: function() {
+    _updateWorkspacesActualGeometry() {
         if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
             return;
 

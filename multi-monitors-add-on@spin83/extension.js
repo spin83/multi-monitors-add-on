@@ -44,7 +44,7 @@ const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
 const MultiMonitorsAddOn = new Lang.Class({
 	Name: 'MultiMonitorsAddOn',
 	
-	_init: function() {
+	_init() {
 		this._settings = Convenience.getSettings();
 		this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
 		this._mu_settings = new Gio.Settings({ schema: MUTTER_SCHEMA });
@@ -58,7 +58,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._mmMonitors = 0;
 	},
 	
-	_showIndicator: function() {
+	_showIndicator() {
 		if(this._settings.get_boolean(SHOW_INDICATOR_ID)) {
 			if(!this.mmIndicator) {
 				this.mmIndicator = Main.panel.addToStatusArea('MultiMonitorsAddOn', new MMIndicator.MultiMonitorsIndicator());
@@ -69,14 +69,14 @@ const MultiMonitorsAddOn = new Lang.Class({
 		}
 	},
 	
-	_hideIndicator: function() {
+	_hideIndicator() {
 		if(this.mmIndicator) {
 			this.mmIndicator.destroy();
 			this.mmIndicator = null;
 		}
 	},
 	
-	_showThumbnailsSlider: function() {
+	_showThumbnailsSlider() {
 		if(this._settings.get_boolean(SHOW_THUMBNAILS_SLIDER_ID)){
 			
 			if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
@@ -122,7 +122,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		}
 	},
 	
-	_hideThumbnailsSlider: function() {
+	_hideThumbnailsSlider() {
 		if (Main.mmOverview) {
 			
 			if (!Main.overview.visible) {
@@ -148,7 +148,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		}
 	},
 	
-	_relayout: function() {
+	_relayout() {
 //		global.log(".....................................................................")
 		if(this._mmMonitors!=Main.layoutManager.monitors.length){
 			this._mmMonitors = Main.layoutManager.monitors.length;
@@ -162,14 +162,14 @@ const MultiMonitorsAddOn = new Lang.Class({
 		}
 	},
 	
-	_switchOffThumbnails: function() {
+	_switchOffThumbnails() {
 		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
 		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
 	},
 	
-	enable: function(version) {
+	enable(version) {
 		global.log("Enable Multi Monitors Add-On ("+version+")...")
 		
 		if(Main.panel.statusArea.MultiMonitorsAddOn)
@@ -194,7 +194,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 		this._relayout();
 	},
 	
-	disable: function() {
+	disable() {
 		Main.layoutManager.disconnect(this._relayoutId);
 		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
 		this._mu_settings.disconnect(this._switchOffThumbnailsMuId);

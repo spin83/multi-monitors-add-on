@@ -49,7 +49,7 @@ const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 var StatusIndicatorsController = new Lang.Class({
 	Name: 'StatusIndicatorController',
 	
-	_init: function() {
+	_init() {
 		this._transfered_indicators = []; //{iname:, box:, monitor:}
 		this._settings = Convenience.getSettings();
 		
@@ -62,7 +62,7 @@ var StatusIndicatorsController = new Lang.Class({
 																		this.transferIndicators.bind(this));
 	},
 	
-	destroy: function() {
+	destroy() {
 		this._settings.disconnect(this._transferIndicatorsId);
 		ExtensionSystem.disconnect(this._extensionStateChangedId);
 		Main.sessionMode.disconnect(this._updatedSessionId);
@@ -70,20 +70,20 @@ var StatusIndicatorsController = new Lang.Class({
 		this._transferBack(this._transfered_indicators);
 	},
 	
-	transferBack: function(panel) {
-		let transfer_back = this._transfered_indicators.filter(function(element) {
+	transferBack(panel) {
+		let transfer_back = this._transfered_indicators.filter((element) => {
 			return element.monitor==panel.monitorIndex;
 		});
 		
 		this._transferBack(transfer_back, panel);
 	},
 	
-	transferIndicators: function() {
+	transferIndicators() {
 		let boxs = ['_leftBox', '_centerBox', '_rightBox'];
     	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).deep_unpack();
     	let show_app_menu = this._settings.get_value(SHOW_APP_MENU_ID);
     	
-    	let transfer_back = this._transfered_indicators.filter(function(element) {
+    	let transfer_back = this._transfered_indicators.filter((element) => {
     		return !transfers.hasOwnProperty(element.iname);
 		});
     	
@@ -95,7 +95,7 @@ var StatusIndicatorsController = new Lang.Class({
 				
 				let indicator = Main.panel.statusArea[iname];
 				let panel = this._findPanel(monitor);
-				boxs.forEach(function(box) {
+				boxs.forEach((box) => {
 					if(Main.panel[box].contains(indicator.container) && panel) {
 						global.log('a '+box+ " > " + iname + " : "+ monitor);
 						this._transfered_indicators.push({iname:iname, box:box, monitor:monitor});
@@ -105,12 +105,12 @@ var StatusIndicatorsController = new Lang.Class({
 						else
 							panel[box].insert_child_at_index(indicator.container, 0);
 					}
-				}.bind(this));
+				});
 			}
 		}
 	},
 	
-	_findPanel: function(monitor) {
+	_findPanel(monitor) {
 		for (let i = 0; i < Main.mmPanel.length; i++) {
 			if (Main.mmPanel[i].monitorIndex == monitor) {
 				return Main.mmPanel[i];
@@ -119,8 +119,8 @@ var StatusIndicatorsController = new Lang.Class({
 		return null;
 	},
 	
-	_transferBack: function(transfer_back, panel) {
-    	transfer_back.forEach(function(element) {
+	_transferBack(transfer_back, panel) {
+    	transfer_back.forEach((element) => {
     		this._transfered_indicators.splice(this._transfered_indicators.indexOf(element));
 			if(Main.panel.statusArea[element.iname]) {
 				let indicator = Main.panel.statusArea[element.iname];
@@ -136,20 +136,20 @@ var StatusIndicatorsController = new Lang.Class({
 		    			Main.panel[element.box].insert_child_at_index(indicator.container, 0);
 				}
 			}
-		}.bind(this));
+		});
 	},
     
-	_extensionStateChanged: function() {
+	_extensionStateChanged() {
 		this._findAvailableIndicators();
         this.transferIndicators();
 	},
 	
-	_updateSessionIndicators: function() {
+	_updateSessionIndicators() {
         let session_indicators = [];
         session_indicators.push('MultiMonitorsAddOn');
         let sessionPanel = Main.sessionMode.panel;
         for (let sessionBox in sessionPanel){
-        	sessionPanel[sessionBox].forEach(function(sesionIndicator){
+        	sessionPanel[sessionBox].forEach((sesionIndicator) => {
         		session_indicators.push(sesionIndicator);
             });
         }
@@ -160,7 +160,7 @@ var StatusIndicatorsController = new Lang.Class({
         this.transferIndicators();
 	},
 	
-    _findAvailableIndicators: function() {
+    _findAvailableIndicators() {
 		let available_indicators = [];
 		let statusArea = Main.panel.statusArea;
 		for(let indicator in statusArea) {
@@ -180,7 +180,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
     Name: 'MultiMonitorsAppMenuButton',
     Extends: Panel.AppMenuButton,
     
-    _init: function(panel) {
+    _init(panel) {
     	if (panel.monitorIndex==undefined)
     		this._monitorIndex = Main.layoutManager.primaryIndex;
     	else	
@@ -199,7 +199,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 		                					this._windowLeftMonitor.bind(this));
     },
     
-    _windowEnteredMonitor : function(metaScreen, monitorIndex, metaWin) {
+    _windowEnteredMonitor (metaScreen, monitorIndex, metaWin) {
         if (monitorIndex == this._monitorIndex) {
         	switch(metaWin.get_window_type()){
         	case Meta.WindowType.NORMAL:
@@ -212,7 +212,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
         }
     },
 
-    _windowLeftMonitor : function(metaScreen, monitorIndex, metaWin) {
+    _windowLeftMonitor (metaScreen, monitorIndex, metaWin) {
         if (monitorIndex == this._monitorIndex) {
         	switch(metaWin.get_window_type()){
         	case Meta.WindowType.NORMAL:
@@ -225,7 +225,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
         }
     },
     
-    _findTargetApp: function() {
+    _findTargetApp() {
     	
         if (this._actionOnWorkspaceGroupNotifyId) {
             this._targetAppGroup.disconnect(this._actionOnWorkspaceGroupNotifyId);
@@ -301,7 +301,7 @@ var MultiMonitorsAppMenuButton = new Lang.Class({
 
         return null;
     },
-    destroy: function() {
+    destroy() {
     	if (this._actionGroupNotifyId) {
             this._targetApp.disconnect(this._actionGroupNotifyId);
             this._actionGroupNotifyId = 0;
@@ -327,7 +327,7 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
 	_onKeyRelease: Panel.ActivitiesButton.prototype["_onKeyRelease"],
 	_xdndToggleOverview: Panel.ActivitiesButton.prototype["_xdndToggleOverview"],
 
-    _init: function() {
+    _init() {
         this.parent(0.0, null, true);
         this.actor.accessible_role = Atk.Role.TOGGLE_BUTTON;
 
@@ -344,21 +344,21 @@ const MultiMonitorsActivitiesButton = new Lang.Class({
         this.actor.connect('captured-event', this._onCapturedEvent.bind(this));
         this.actor.connect_after('key-release-event', this._onKeyRelease.bind(this));
 
-        this._showingId = Main.overview.connect('showing', function() {
+        this._showingId = Main.overview.connect('showing', () => {
             this.actor.add_style_pseudo_class('overview');
             this.actor.add_accessible_state (Atk.StateType.CHECKED);
-        }.bind(this));
-        this._hidingId = Main.overview.connect('hiding', function() {
+        });
+        this._hidingId = Main.overview.connect('hiding', () => {
             this.actor.remove_style_pseudo_class('overview');
             this.actor.remove_accessible_state (Atk.StateType.CHECKED);
-        }.bind(this));
+        });
         
         this.actor.connect('destroy', this._onDestroy.bind(this));
 
         this._xdndTimeOut = 0;
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
 	    Main.overview.disconnect(this._showingId);
 	    Main.overview.disconnect(this._hidingId);
     }
@@ -378,7 +378,7 @@ var MultiMonitorsPanel = new Lang.Class({
     Name: 'MultiMonitorsPanel',
     Extends: Panel.Panel,
 
-    _init : function(monitorIndex, mmPanelBox) {
+    _init (monitorIndex, mmPanelBox) {
     	this.monitorIndex = monitorIndex;
     	
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
@@ -420,18 +420,18 @@ var MultiMonitorsPanel = new Lang.Class({
         	this.actor.connect('key-press-event', this._onKeyPress.bind(this));
         }
         
-        this._showingId = Main.overview.connect('showing', function () {
+        this._showingId = Main.overview.connect('showing', () => {
             this.actor.add_style_pseudo_class('overview');
             if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             	this._updateSolidStyle();
             }
-        }.bind(this));
-        this._hidingId = Main.overview.connect('hiding', function () {
+        });
+        this._hidingId = Main.overview.connect('hiding', () => {
             this.actor.remove_style_pseudo_class('overview');
             if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
             	this._updateSolidStyle();
             }
-        }.bind(this));
+        });
 
         mmPanelBox.panelBox.add(this.actor);
         
@@ -477,7 +477,7 @@ var MultiMonitorsPanel = new Lang.Class({
 
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	
     	if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
 		let display;
@@ -491,7 +491,7 @@ var MultiMonitorsPanel = new Lang.Class({
             global.window_group.disconnect(this._actorRemovedId);
             global.window_manager.disconnect(this._switchWorkspaceId);
             
-            this._trackedWindows.forEach(function (value, key, map) {
+            this._trackedWindows.forEach((value, key, map) => {
             	value.forEach(id => {
             		key.disconnect(id);
                 });
@@ -517,7 +517,7 @@ var MultiMonitorsPanel = new Lang.Class({
 	    this.actor._delegate = null;
     },
     
-    _showActivities: function() {
+    _showActivities() {
     	let name = 'activities';
     	if(this._settings.get_boolean(SHOW_ACTIVITIES_ID)){
     		if(this.statusArea[name])
@@ -529,7 +529,7 @@ var MultiMonitorsPanel = new Lang.Class({
     	}
 	},
 	
-	_showDateTime: function() {
+	_showDateTime() {
     	let name = 'dateMenu';
     	if(this._settings.get_boolean(SHOW_DATE_TIME_ID)){
     		if(this.statusArea[name])
@@ -541,7 +541,7 @@ var MultiMonitorsPanel = new Lang.Class({
     	}
 	},
 	
-	_showAppMenu: function() {
+	_showAppMenu() {
 		let name = 'appMenu';
     	if(this._settings.get_boolean(SHOW_APP_MENU_ID)){
     		if(!this.statusArea[name]){
@@ -560,7 +560,7 @@ var MultiMonitorsPanel = new Lang.Class({
     	}
 	},
 
-    _getPreferredWidth: function(actor, forHeight, alloc) {
+    _getPreferredWidth(actor, forHeight, alloc) {
         alloc.min_size = -1;
         if(Main.layoutManager.monitors.length>this.monitorIndex)
         	alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
@@ -568,7 +568,7 @@ var MultiMonitorsPanel = new Lang.Class({
         	alloc.natural_size = -1;
     },
     
-    _updateSolidStyle: function() {
+    _updateSolidStyle() {
         if (this.actor.has_style_pseudo_class('overview') || !Main.sessionMode.hasWindows) {
             this._removeStyleClassName('solid');
             return;
@@ -582,7 +582,7 @@ var MultiMonitorsPanel = new Lang.Class({
         display = global.screen || global.workspace_manager;
         let activeWorkspace = display.get_active_workspace();
         let monitorIndex = this.monitorIndex;
-        let windows = activeWorkspace.list_windows().filter(function(metaWindow) {
+        let windows = activeWorkspace.list_windows().filter((metaWindow) => {
             return metaWindow.get_monitor() == monitorIndex &&
                    metaWindow.showing_on_its_workspace() &&
                    metaWindow.get_window_type() != Meta.WindowType.DESKTOP;
@@ -592,10 +592,10 @@ var MultiMonitorsPanel = new Lang.Class({
         let [, panelTop] = this.actor.get_transformed_position();
         let panelBottom = panelTop + this.actor.get_height();
         let scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let isNearEnough = windows.some(function(metaWindow) {
+        let isNearEnough = windows.some((metaWindow) => {
             let verticalPosition = metaWindow.get_frame_rect().y;
             return verticalPosition < panelBottom + 5 * scale;
-        }.bind(this));
+        });
 
         if (isNearEnough)
             this._addStyleClassName('solid');
@@ -604,7 +604,7 @@ var MultiMonitorsPanel = new Lang.Class({
     },
 
     
-    _hideIndicators: function() {
+    _hideIndicators() {
         for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
             let indicator = this.statusArea[role];
             if (!indicator)
@@ -617,7 +617,7 @@ var MultiMonitorsPanel = new Lang.Class({
         }
     },
 
-    _ensureIndicator: function(role) {
+    _ensureIndicator(role) {
         let indicator = this.statusArea[role];
         if (!indicator) {
             let constructor = MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS[role];

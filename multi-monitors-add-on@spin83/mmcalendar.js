@@ -44,7 +44,7 @@ const MultiMonitorsCalendar = new Lang.Class({
 	Name: 'MultiMonitorsCalendar',
     Extends: Calendar.Calendar,
     
-    _init: function() {
+    _init() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._weekStart = Shell.util_get_week_start();
         this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
@@ -89,7 +89,7 @@ const MultiMonitorsCalendar = new Lang.Class({
         this._buildHeader ();
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	this._settings.disconnect(this._showWeekdateKeyId);
     }
 });
@@ -98,7 +98,7 @@ const MultiMonitorsEventsSection = new Lang.Class({
     Name: 'MultiMonitorsEventsSection',
     Extends: MessageList.MessageListSection,
 
-    _init: function() {
+    _init() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this._reloadEventsId = this._desktopSettings.connect('changed', this._reloadEvents.bind(this));
@@ -125,7 +125,7 @@ const MultiMonitorsEventsSection = new Lang.Class({
         this._appInstalledChanged();
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	this._desktopSettings.disconnect(this._reloadEventsId);
     	this._defaultAppSystem.disconnect(this._appInstalledChangedId);
     },
@@ -151,7 +151,7 @@ const MultiMonitorsNotificationSection = new Lang.Class({
     Name: 'MultiMonitorsNotificationSection',
     Extends: MessageList.MessageListSection,
 
-    _init: function() {
+    _init() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
     	this.parent();
@@ -159,15 +159,15 @@ const MultiMonitorsNotificationSection = new Lang.Class({
         this._nUrgent = 0;
 
         this._sourceAddedId = Main.messageTray.connect('source-added', this._sourceAdded.bind(this));
-        Main.messageTray.getSources().forEach(function(source) {
+        Main.messageTray.getSources().forEach((source) => {
             this._sourceAdded(Main.messageTray, source);
-        }.bind(this));
+        });
 
         this.actor.connect('notify::mapped', this._onMapped.bind(this));
         this.actor.connect('destroy', this._onDestroy.bind(this));
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	Main.messageTray.disconnect(this._sourceAddedId);
     	let source, obj;
     	for ([source, obj] of this._sources.entries()) {
@@ -191,7 +191,7 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
     Name: 'MultiMonitorsCalendarMessageList',
     Extends: Calendar.CalendarMessageList,
     
-    _init: function() {
+    _init() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
         this.actor = new St.Widget({ style_class: 'message-list',
@@ -244,12 +244,12 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
         this.actor.connect('destroy', this._onDestroy.bind(this));
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	this._destroy = true;
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
     },
     
-    _sync: function() {
+    _sync() {
     	if (this._destroy) return;
     	this.parent();
     }
@@ -259,7 +259,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
     Name: 'MultiMonitorsDateMenuButton',
     Extends: PanelMenu.Button,
 
-    _init: function() {
+    _init() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	let hbox;
     	let vbox;
@@ -295,12 +295,12 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         bin.add_actor(hbox);
         this._calendar = new MultiMonitorsCalendar();
         this._calendar.connect('selected-date-changed',
-                               function(calendar, date) {
+                               (calendar, date) => {
                                    layout.frozen = !DateMenu._isToday(date);
                                    this._messageList.setDate(date);
-                               }.bind(this));
+                               });
 
-        this.menu.connect('open-state-changed', function(menu, isOpen) {
+        this.menu.connect('open-state-changed', (menu, isOpen) => {
             // Whenever the menu is opened, select today
             if (isOpen) {
                 let now = new Date();
@@ -308,7 +308,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
                 this._date.setDate(now);
                 this._messageList.setDate(now);
             }
-        }.bind(this));
+        });
 
         // Fill up the first column
         this._messageList = new MultiMonitorsCalendarMessageList();
@@ -339,18 +339,18 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
         this._sessionUpdated();
     },
     
-    _onDestroy: function(actor) {
+    _onDestroy(actor) {
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
         if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
         	this._clock.disconnect(this._clockNotifyTimezoneId);
         }
     },
     
-    _getEventSource: function() {
+    _getEventSource() {
         return new Calendar.DBusEventSource();
     },
 
-    _setEventSource: function(eventSource) {
+    _setEventSource(eventSource) {
         if (this._eventSource)
             this._eventSource.destroy();
 
@@ -362,7 +362,7 @@ var MultiMonitorsDateMenuButton = new Lang.Class({
     
     _updateTimeZone: DateMenu.DateMenuButton.prototype._updateTimeZone,
 
-    _sessionUpdated: function() {
+    _sessionUpdated() {
         let eventSource;
         let showEvents = Main.sessionMode.showCalendarEvents;
         if (showEvents) {

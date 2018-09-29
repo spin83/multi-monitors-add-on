@@ -50,7 +50,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
     Name: 'MultiMonitorsPrefsWidget',
     Extends: Gtk.Grid,
 
-    _init: function(params) {
+    _init(params) {
 		this.parent(params);
 		
 		this.set_orientation(Gtk.Orientation.VERTICAL);
@@ -105,7 +105,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 
     },
     
-    _updateIndicators: function() {
+    _updateIndicators() {
     	this._store.clear();
     	
     	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).deep_unpack();
@@ -119,7 +119,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 		}
 	},
     
-    _addIndicator: function() {
+    _addIndicator() {
 	
     	let dialog = new Gtk.Dialog({ title: _("Select indicator"),
             									transient_for: this.get_toplevel(), modal: true });
@@ -146,10 +146,10 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 
         dialog._treeView.append_column(appColumn);
         
-        let availableIndicators = function() {
+        let availableIndicators = () => {
         	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).unpack();
     		dialog._store.clear();
-    		this._settings.get_strv(AVAILABLE_INDICATORS_ID).forEach(function(indicator){
+    		this._settings.get_strv(AVAILABLE_INDICATORS_ID).forEach((indicator) => {
     			if(!transfers.hasOwnProperty(indicator)){
         			let iter = dialog._store.append();
         			dialog._store.set(iter, [Columns.INDICATOR_NAME], [indicator]);
@@ -158,9 +158,9 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
         };
         
         let availableIndicatorsId = this._settings.connect('changed::'+AVAILABLE_INDICATORS_ID,
-        													Lang.bind(this, availableIndicators));
+        													availableIndicators);
         let transferIndicatorsId = this._settings.connect('changed::'+TRANSFER_INDICATORS_ID,
-															Lang.bind(this, availableIndicators));
+															availableIndicators);
         
         availableIndicators.apply(this);
 //    	grid.attach(dialog._treeView, 0, 0, 2, 1);
@@ -173,20 +173,20 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 		let spinButton = new Gtk.SpinButton({halign: Gtk.Align.END, adjustment: dialog._adjustment, numeric: 1});
 		gHBox.add(spinButton);
 		
-		let monitorsChanged = function() {
+		let monitorsChanged = () => {
 			let n_monitors = this._screen.get_n_monitors() -1;
 			dialog._adjustment.set_upper(n_monitors)
 			dialog._adjustment.set_value(n_monitors);
 		};
 		
-		let monitorsChangedId = this._screen.connect('monitors-changed', Lang.bind(this, monitorsChanged));
+		let monitorsChangedId = this._screen.connect('monitors-changed', monitorsChanged);
 
 		monitorsChanged.apply(this);
 		grid.add(gHBox);
     	
     	dialog.get_content_area().add(grid);
 
-    	dialog.connect('response', Lang.bind(this, function(dialog, id) {
+    	dialog.connect('response', (dialog, id) => {
     		this._screen.disconnect(monitorsChangedId);
     		this._settings.disconnect(availableIndicatorsId);
     		this._settings.disconnect(transferIndicatorsId);
@@ -207,12 +207,12 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 	        }
 
 			dialog.destroy();
-		}));
+		});
     	
 		dialog.show_all();
     },
     
-    _removeIndicator: function() {
+    _removeIndicator() {
         let [any, model, iter] = this._treeView.get_selection().get_selected();
         if (any) {
         	let indicator = model.get_value(iter, Columns.INDICATOR_NAME);
@@ -225,7 +225,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
         }
     },
 
-    _addBooleanSwitch: function(label, schema_id) {
+    _addBooleanSwitch(label, schema_id) {
 		let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});
 		let gLabel = new Gtk.Label({label: _(label), halign: Gtk.Align.START});
 		gHBox.add(gLabel);
