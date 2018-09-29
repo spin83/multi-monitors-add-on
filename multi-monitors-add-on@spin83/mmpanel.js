@@ -385,6 +385,8 @@ var MultiMonitorsPanel = new Lang.Class({
     	
         this.actor = new Shell.GenericContainer({ name: 'panel', reactive: true });
         this.actor._delegate = this;
+        
+        this.actor.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
 
         this._sessionStyle = null;
 
@@ -409,6 +411,9 @@ var MultiMonitorsPanel = new Lang.Class({
         this.actor.connect('get-preferred-height', this._getPreferredHeight.bind(this));
         this.actor.connect('allocate', this._allocate.bind(this));
         this.actor.connect('button-press-event', this._onButtonPress.bind(this));
+        if (this._currentVersion[0]==3 && this._currentVersion[1]>28) {
+        	this.actor.connect('touch-event', this._onButtonPress.bind(this));
+        }
         this.actor.connect('destroy', this._onDestroy.bind(this));
         
         if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
@@ -449,6 +454,7 @@ var MultiMonitorsPanel = new Lang.Class({
         
         if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
 		let display;
+		//global.screen < 3.30
 		display = global.screen || global.display;
 
 		this._workareasChangedId = display.connect('workareas-changed', () => { this.actor.queue_relayout(); });

@@ -18,6 +18,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 const Lang = imports.lang;
 
 const Gio = imports.gi.Gio;
+const Meta = imports.gi.Meta;
 
 const Main = imports.ui.main;
 
@@ -104,6 +105,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 			workspacesDisplay.actor.destroy();
 			Main.overview.viewSelector._workspacesPage.hide();
 			Main.overview.viewSelector._workspacesPage.destroy();
+			workspacesDisplay.actor = null;
 			
 			workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay();
 			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
@@ -130,6 +132,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 				workspacesDisplay.actor.destroy();
 				Main.overview.viewSelector._workspacesPage.hide();
 				Main.overview.viewSelector._workspacesPage.destroy();
+				workspacesDisplay.actor = null;
 				
 				workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
 				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
@@ -238,6 +241,33 @@ function init(extensionMeta) {
             this.statusArea[role] = indicator;
         }
         return indicator;
+    };
+    
+    // fix bug in workspacesView: Object, has been already deallocated — impossible to access it.
+    WorkspacesView.WorkspacesDisplay.prototype._parentSet = function(actor, oldParent) {
+        if (oldParent && this._notifyOpacityId)
+            oldParent.disconnect(this._notifyOpacityId);
+        this._notifyOpacityId = 0;
+
+        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
+        	if (!this.actor)
+        		return;
+            let newParent = this.actor.get_parent();
+            if (!newParent)
+                return;
+
+            // This is kinda hackish - we want the primary view to
+            // appear as parent of this.actor, though in reality it
+            // is added directly to Main.layoutManager.overviewGroup
+            this._notifyOpacityId = newParent.connect('notify::opacity', () => {
+                let opacity = this.actor.get_parent().opacity;
+                let primaryView = this._getPrimaryView();
+                if (!primaryView)
+                    return;
+                primaryView.actor.opacity = opacity;
+                primaryView.actor.visible = opacity != 0;
+            });
+        });
     };
     
     let metaVersion = MultiMonitors.metadata['version'];

@@ -67,8 +67,8 @@ const MultiMonitorsWorkspaceThumbnail = new Lang.Class({
 														        container: this._contents,
 														        vignette: false });
 
-        let monitor = Main.layoutManager.monitors[this.monitorIndex];
-        this.setPorthole(monitor.x, monitor.y, monitor.width, monitor.height);
+        let workArea = Main.layoutManager.getWorkAreaForMonitor(this.monitorIndex);
+        this.setPorthole(workArea.x, workArea.y, workArea.width, workArea.height);
 
         let windows = global.get_window_actors().filter(function(actor) {
             let win = actor.meta_window;
@@ -182,6 +182,11 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 	                this._createThumbnails();
 	        }.bind(this));
 		}
+		
+        this._switchWorkspaceNotifyId = 0;
+        this._nWorkspacesNotifyId = 0;
+        this._syncStackingId = 0;
+        this._workareasChangedId = 0;
     },
     
     _onDestroy: function(actor) {
@@ -358,6 +363,13 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
         this.actor.track_hover = true;
         this.actor.add_actor(this._thumbnailsBox.actor);
         
+        if(this._currentVersion[0]==3 && this._currentVersion[1]>28) {
+        	this._activeWorkspaceChangedId = global.workspace_manager.connect('active-workspace-changed',
+                    this._updateSlide.bind(this));
+            this._notifyNWorkspacesId = global.workspace_manager.connect('notify::n-workspaces',
+                    this._updateSlide.bind(this));
+        }
+        
         this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateSlide.bind(this));
         this.actor.connect('notify::hover', this._updateSlide.bind(this));
         
@@ -373,6 +385,10 @@ const MultiMonitorsThumbnailsSlider = new Lang.Class({
     	if(this._currentVersion[0]==3 && this._currentVersion[1]<26) {
     		global.window_manager.disconnect(this._switchWorkspaceId);
     	}
+    	if(this._currentVersion[0]==3 && this._currentVersion[1]>28) {
+    		global.workspace_manager.disconnect(this._activeWorkspaceChangedId);
+    		global.workspace_manager.disconnect(this._notifyNWorkspacesId);
+        }
     	this.parent();
 	},
 	
