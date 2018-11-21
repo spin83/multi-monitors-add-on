@@ -171,7 +171,13 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		this._windowDragEndId = Main.overview.connect('window-drag-end', this._onDragEnd.bind(this));
 		this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onDragCancelled.bind(this));
 		
-		this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
+		if (this._currentVersion[0]==3 && this._currentVersion[1]<30) {
+			this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
+		}
+		else {
+			this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.MUTTER_SCHEMA });
+		}
+		
 		this._changedDynamicWorkspacesId = this._settings.connect('changed::dynamic-workspaces',
 												this._updateSwitcherVisibility.bind(this));
 		
