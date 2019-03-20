@@ -16,6 +16,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 */
 
 const Lang = imports.lang;
+const Signals = imports.signals;
 
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
@@ -34,17 +35,15 @@ const DateMenu = imports.ui.dateMenu;
 const Calendar = imports.ui.calendar;
 
 const ExtensionUtils = imports.misc.extensionUtils;
-const MultiMonitors = ExtensionUtils.getCurrentExtension();
-const Convenience = MultiMonitors.imports.convenience;
+const CE = ExtensionUtils.getCurrentExtension();
+const MultiMonitors = CE.imports.extension;
+const Convenience = CE.imports.convenience;
 
 const Gettext_gtk30 = imports.gettext.domain('gtk30');
 const gtk30_ = Gettext_gtk30.gettext;
 
-const MultiMonitorsCalendar = new Lang.Class({
-	Name: 'MultiMonitorsCalendar',
-    Extends: Calendar.Calendar,
-    
-    _init() {
+const MultiMonitorsCalendar = class MultiMonitorsCalendar {
+    constructor() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._weekStart = Shell.util_get_week_start();
         this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
@@ -87,26 +86,24 @@ const MultiMonitorsCalendar = new Lang.Class({
         this.actor.connect('destroy', this._onDestroy.bind(this));
 
         this._buildHeader ();
-    },
+    }
     
     _onDestroy(actor) {
     	this._settings.disconnect(this._showWeekdateKeyId);
     }
-});
+};
+Signals.addSignalMethods(MultiMonitorsCalendar.prototype);
+MultiMonitors.copyClass(Calendar.Calendar, MultiMonitorsCalendar);
 
-const MultiMonitorsEventsSection = new Lang.Class({
-    Name: 'MultiMonitorsEventsSection',
-    Extends: MessageList.MessageListSection,
-
-    _init() {
-    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
+const MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends MessageList.MessageListSection {
+	constructor() {
+		super();
+		this._currentVersion = Config.PACKAGE_VERSION.split('.');
         this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this._reloadEventsId = this._desktopSettings.connect('changed', this._reloadEvents.bind(this));
         this._eventSource = new Calendar.EmptyEventSource();
         
         this._messageById = new Map();
-
-    	this.parent();
 
         this._title = new St.Button({ style_class: 'events-section-title',
                                       label: '',
@@ -123,39 +120,22 @@ const MultiMonitorsEventsSection = new Lang.Class({
         
         this.actor.connect('destroy', this._onDestroy.bind(this));
         this._appInstalledChanged();
-    },
+    }
     
     _onDestroy(actor) {
     	this._desktopSettings.disconnect(this._reloadEventsId);
     	this._defaultAppSystem.disconnect(this._appInstalledChangedId);
-    },
+    }
+};
+MultiMonitors.copyClass(Calendar.EventsSection, MultiMonitorsEventsSection);
 
-    _ignoreEvent: Calendar.EventsSection.prototype._ignoreEvent,
-    setEventSource: Calendar.EventsSection.prototype.setEventSource,
-
-    get allowed() {
-        return Main.sessionMode.showCalendarEvents;
-    },
-
-    _updateTitle: Calendar.EventsSection.prototype._updateTitle,
-    _reloadEvents: Calendar.EventsSection.prototype._reloadEvents,
-    _appInstalledChanged: Calendar.EventsSection.prototype._appInstalledChanged,
-    _getCalendarApp: Calendar.EventsSection.prototype._getCalendarApp,
-    _onTitleClicked: Calendar.EventsSection.prototype._onTitleClicked,
-    setDate: Calendar.EventsSection.prototype.setDate,
-    _shouldShow: Calendar.EventsSection.prototype._shouldShow,
-    _sync: Calendar.EventsSection.prototype._sync
-});
-
-const MultiMonitorsNotificationSection = new Lang.Class({
-    Name: 'MultiMonitorsNotificationSection',
-    Extends: MessageList.MessageListSection,
-
-    _init() {
+const MultiMonitorsNotificationSection = class MultiMonitorsNotificationSectione extends MessageList.MessageListSection {
+    constructor() {
+    	super();
+    	
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
-    	this.parent();
-        this._sources = new Map();
+    	this._sources = new Map();
         this._nUrgent = 0;
 
         this._sourceAddedId = Main.messageTray.connect('source-added', this._sourceAdded.bind(this));
@@ -165,7 +145,7 @@ const MultiMonitorsNotificationSection = new Lang.Class({
 
         this.actor.connect('notify::mapped', this._onMapped.bind(this));
         this.actor.connect('destroy', this._onDestroy.bind(this));
-    },
+    }
     
     _onDestroy(actor) {
     	Main.messageTray.disconnect(this._sourceAddedId);
@@ -173,25 +153,12 @@ const MultiMonitorsNotificationSection = new Lang.Class({
     	for ([source, obj] of this._sources.entries()) {
     		this._onSourceDestroy(source, obj);
     	}
-    },
+    }
+};
+MultiMonitors.copyClass(Calendar.NotificationSection, MultiMonitorsNotificationSection);
 
-    get allowed() {
-        return Main.sessionMode.hasNotifications &&
-               !Main.sessionMode.isGreeter;
-    },
-
-    _createTimeLabel: Calendar.NotificationSection.prototype._createTimeLabel,
-    _sourceAdded: Calendar.NotificationSection.prototype._sourceAdded,
-    _onNotificationAdded: Calendar.NotificationSection.prototype._onNotificationAdded,
-    _onSourceDestroy: Calendar.NotificationSection.prototype._onSourceDestroy,
-    _onMapped: Calendar.NotificationSection.prototype._onMapped
-});
-
-const MultiMonitorsCalendarMessageList = new Lang.Class({
-    Name: 'MultiMonitorsCalendarMessageList',
-    Extends: Calendar.CalendarMessageList,
-    
-    _init() {
+const MultiMonitorsCalendarMessageList = class MultiMonitorsCalendarMessageList {
+    constructor() {
     	this._currentVersion = Config.PACKAGE_VERSION.split('.');
     	
         this.actor = new St.Widget({ style_class: 'message-list',
@@ -242,18 +209,19 @@ const MultiMonitorsCalendarMessageList = new Lang.Class({
         this._destroy = false;
         
         this.actor.connect('destroy', this._onDestroy.bind(this));
-    },
+    }
     
     _onDestroy(actor) {
     	this._destroy = true;
     	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
-    },
+    }
     
     _sync() {
     	if (this._destroy) return;
-    	this.parent();
+    	Calendar.CalendarMessageList.prototype._sync.call(this);
     }
-});
+};
+MultiMonitors.copyClass(Calendar.CalendarMessageList, MultiMonitorsCalendarMessageList);
 
 var MultiMonitorsDateMenuButton = new Lang.Class({
     Name: 'MultiMonitorsDateMenuButton',

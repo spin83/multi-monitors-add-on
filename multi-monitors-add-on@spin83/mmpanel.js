@@ -36,9 +36,10 @@ const ExtensionSystem = imports.ui.extensionSystem;
 const Config = imports.misc.config;
 
 const ExtensionUtils = imports.misc.extensionUtils;
-const MultiMonitors = ExtensionUtils.getCurrentExtension();
-const Convenience = MultiMonitors.imports.convenience;
-const MMCalendar = MultiMonitors.imports.mmcalendar;
+const CE = ExtensionUtils.getCurrentExtension();
+const MultiMonitors = CE.imports.extension;
+const Convenience = CE.imports.convenience;
+const MMCalendar = CE.imports.mmcalendar;
 
 const SHOW_ACTIVITIES_ID = 'show-activities';
 var SHOW_APP_MENU_ID = 'show-app-menu';
@@ -374,259 +375,213 @@ const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 //	    'keyboard': imports.ui.status.keyboard.InputSourceIndicator,
 	};
 
-var MultiMonitorsPanel = new Lang.Class({
-    Name: 'MultiMonitorsPanel',
-    Extends: Panel.Panel,
-
-    _init (monitorIndex, mmPanelBox) {
-    	this.monitorIndex = monitorIndex;
-    	
-    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
-    	
-        this.actor = new Shell.GenericContainer({ name: 'panel', reactive: true });
-        this.actor._delegate = this;
-        
-        this.actor.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
-
-        this._sessionStyle = null;
-
-        this.statusArea = {};
-
-        this.menuManager = new PopupMenu.PopupMenuManager(this);
-
-        this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
-        this.actor.add_actor(this._leftBox);
-        this._centerBox = new St.BoxLayout({ name: 'panelCenter' });
-        this.actor.add_actor(this._centerBox);
-        this._rightBox = new St.BoxLayout({ name: 'panelRight' });
-        this.actor.add_actor(this._rightBox);
-
-        this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
-        this.actor.add_actor(this._leftCorner.actor);
-
-        this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
-        this.actor.add_actor(this._rightCorner.actor);
-
-        this.actor.connect('get-preferred-width', this._getPreferredWidth.bind(this));
-        this.actor.connect('get-preferred-height', this._getPreferredHeight.bind(this));
-        this.actor.connect('allocate', this._allocate.bind(this));
-        this.actor.connect('button-press-event', this._onButtonPress.bind(this));
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>28) {
-        	this.actor.connect('touch-event', this._onButtonPress.bind(this));
-        }
-        this.actor.connect('destroy', this._onDestroy.bind(this));
-        
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-        	this.actor.connect('key-press-event', this._onKeyPress.bind(this));
-        }
-        
-        this._showingId = Main.overview.connect('showing', () => {
-            this.actor.add_style_pseudo_class('overview');
-            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-            	this._updateSolidStyle();
-            }
-        });
-        this._hidingId = Main.overview.connect('hiding', () => {
-            this.actor.remove_style_pseudo_class('overview');
-            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-            	this._updateSolidStyle();
-            }
-        });
-
-        mmPanelBox.panelBox.add(this.actor);
-        
-        Main.ctrlAltTabManager.addGroup(this.actor, _("Top Bar")+" "+this.monitorIndex, 'focus-top-bar-symbolic',
-                                        { sortGroup: CtrlAltTab.SortGroup.TOP });
-                                        
-        this._updatedId = Main.sessionMode.connect('updated', this._updatePanel.bind(this));
-        
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-            this._trackedWindows = new Map();
-            this._actorAddedId = global.window_group.connect('actor-added', this._onWindowActorAdded.bind(this));
-            this._actorRemovedId = global.window_group.connect('actor-removed', this._onWindowActorRemoved.bind(this));
-            this._switchWorkspaceId = global.window_manager.connect('switch-workspace', this._updateSolidStyle.bind(this));
-            
-            global.window_group.get_children().forEach(metaWindowActor => {
-        		if (metaWindowActor['get_meta_window'] && metaWindowActor.get_meta_window().get_window_type() != Meta.WindowType.DESKTOP)
-        			this._onWindowActorAdded(null, metaWindowActor);
-            });
-        }
-        
-        if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-		let display;
-		//global.screen < 3.30
-		display = global.screen || global.display;
-
-		this._workareasChangedId = display.connect('workareas-changed', () => { this.actor.queue_relayout(); });
-        }
-        
-        this._updatePanel();
-        
-        this._settings = Convenience.getSettings();
-        this._showActivitiesId = this._settings.connect('changed::'+SHOW_ACTIVITIES_ID,
-        													this._showActivities.bind(this));
-        this._showActivities();
-
-        this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
-															this._showAppMenu.bind(this));
-        this._showAppMenu();
-        
-        this._showDateTimeId = this._settings.connect('changed::'+SHOW_DATE_TIME_ID,
-															this._showDateTime.bind(this));
-        this._showDateTime();
-
-    },
-    
-    _onDestroy(actor) {
-    	
-    	if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
-		let display;
-		display = global.screen || global.display;
-
-		display.disconnect(this._workareasChangedId);
-        }
-    	
-    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-            global.window_group.disconnect(this._actorAddedId);
-            global.window_group.disconnect(this._actorRemovedId);
-            global.window_manager.disconnect(this._switchWorkspaceId);
-            
-            this._trackedWindows.forEach((value, key, map) => {
-            	value.forEach(id => {
-            		key.disconnect(id);
-                });
-            });
-    	}
-    	
-	    Main.overview.disconnect(this._showingId);
-	    Main.overview.disconnect(this._hidingId);
-	    this._settings.disconnect(this._showActivitiesId);
-	    this._settings.disconnect(this._showAppMenuId);
-//	    Tweener.removeTweens(actor);
+var MultiMonitorsPanel = (() => {
+	let MultiMonitorsPanel = class MultiMonitorsPanel extends St.Widget {
+	    _init (monitorIndex, mmPanelBox) {
+	    	this.monitorIndex = monitorIndex;
+	    	
+	    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
+	    	
+	    	super._init({ name: 'panel',
+	            reactive: true });
+	
+			// For compatibility with extensions that still use the
+			// this.actor field
+			this.actor = this;
+			this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
+			
+			this._sessionStyle = null;
+			
+			this.statusArea = {};
+			
+			this.menuManager = new PopupMenu.PopupMenuManager(this);
+			
+			this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
+			this.add_child(this._leftBox);
+			this._centerBox = new St.BoxLayout({ name: 'panelCenter' });
+			this.add_child(this._centerBox);
+			this._rightBox = new St.BoxLayout({ name: 'panelRight' });
+			this.add_child(this._rightBox);
+			
+			this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
+			this.add_child(this._leftCorner.actor);
+			
+			this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
+			this.add_child(this._rightCorner.actor);
+			
+			this.connect('button-press-event', this._onButtonPress.bind(this));
+			this.connect('touch-event', this._onButtonPress.bind(this));
+			this.connect('key-press-event', this._onKeyPress.bind(this));
+			
+			this._showingId = Main.overview.connect('showing', () => {
+			  this.add_style_pseudo_class('overview');
+			});
+			this._hidingId = Main.overview.connect('hiding', () => {
+			  this.remove_style_pseudo_class('overview');
+			});
+			
+			mmPanelBox.panelBox.add(this);
+			Main.ctrlAltTabManager.addGroup(this, _("Top Bar"), 'focus-top-bar-symbolic',
+			                              { sortGroup: CtrlAltTab.SortGroup.TOP });
+			
+			this._updatedId = Main.sessionMode.connect('updated', this._updatePanel.bind(this));
+			
+			this._workareasChangedId = global.display.connect('workareas-changed', () => { this.queue_relayout(); });
+			this._updatePanel();
+		}
 	    
-	    Main.ctrlAltTabManager.removeGroup(this.actor);
-	    
-	    Main.sessionMode.disconnect(this._updatedId);
-	    
-	    for (let name in this.statusArea) {
-	    	if(this.statusArea.hasOwnProperty(name))
-	    		this.statusArea[name].destroy();
-	    	    delete this.statusArea[name];
+	    _onDestroy(actor) {
+	    	
+	    	if (this._currentVersion[0]==3 && this._currentVersion[1]>26) {
+			let display;
+			display = global.screen || global.display;
+	
+			display.disconnect(this._workareasChangedId);
+	        }
+	    	
+	    	if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+	            global.window_group.disconnect(this._actorAddedId);
+	            global.window_group.disconnect(this._actorRemovedId);
+	            global.window_manager.disconnect(this._switchWorkspaceId);
+	            
+	            this._trackedWindows.forEach((value, key, map) => {
+	            	value.forEach(id => {
+	            		key.disconnect(id);
+	                });
+	            });
+	    	}
+	    	
+		    Main.overview.disconnect(this._showingId);
+		    Main.overview.disconnect(this._hidingId);
+		    this._settings.disconnect(this._showActivitiesId);
+		    this._settings.disconnect(this._showAppMenuId);
+	//	    Tweener.removeTweens(actor);
+		    
+		    Main.ctrlAltTabManager.removeGroup(this.actor);
+		    
+		    Main.sessionMode.disconnect(this._updatedId);
+		    
+		    for (let name in this.statusArea) {
+		    	if(this.statusArea.hasOwnProperty(name))
+		    		this.statusArea[name].destroy();
+		    	    delete this.statusArea[name];
+		    }
+		    
+		    this.actor._delegate = null;
 	    }
 	    
-	    this.actor._delegate = null;
-    },
-    
-    _showActivities() {
-    	let name = 'activities';
-    	if(this._settings.get_boolean(SHOW_ACTIVITIES_ID)){
-    		if(this.statusArea[name])
-    			this.statusArea[name].actor.visible = true;
-    	}
-    	else{
-    		if(this.statusArea[name])
-    			this.statusArea[name].actor.visible = false;
-    	}
-	},
+	    _showActivities() {
+	    	let name = 'activities';
+	    	if(this._settings.get_boolean(SHOW_ACTIVITIES_ID)){
+	    		if(this.statusArea[name])
+	    			this.statusArea[name].actor.visible = true;
+	    	}
+	    	else{
+	    		if(this.statusArea[name])
+	    			this.statusArea[name].actor.visible = false;
+	    	}
+		}
+		
+		_showDateTime() {
+	    	let name = 'dateMenu';
+	    	if(this._settings.get_boolean(SHOW_DATE_TIME_ID)){
+	    		if(this.statusArea[name])
+	    			this.statusArea[name].actor.visible = true;
+	    	}
+	    	else{
+	    		if(this.statusArea[name])
+	    			this.statusArea[name].actor.visible = false;
+	    	}
+		}
+		
+		_showAppMenu() {
+			let name = 'appMenu';
+	    	if(this._settings.get_boolean(SHOW_APP_MENU_ID)){
+	    		if(!this.statusArea[name]){
+	    			let indicator = new MultiMonitorsAppMenuButton(this);
+	    			this.statusArea[name] = indicator;
+	    			let box = this._leftBox;
+	    			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
+	    		}
+	    	}
+	    	else{
+	    		if(this.statusArea[name]){
+	    			let indicator = this.statusArea[name];
+	    			this.menuManager.removeMenu(indicator.menu);
+	    			indicator.destroy();
+	    		}
+	    	}
+		}
 	
-	_showDateTime() {
-    	let name = 'dateMenu';
-    	if(this._settings.get_boolean(SHOW_DATE_TIME_ID)){
-    		if(this.statusArea[name])
-    			this.statusArea[name].actor.visible = true;
-    	}
-    	else{
-    		if(this.statusArea[name])
-    			this.statusArea[name].actor.visible = false;
-    	}
-	},
+	    _getPreferredWidth(actor, forHeight, alloc) {
+	        alloc.min_size = -1;
+	        if(Main.layoutManager.monitors.length>this.monitorIndex)
+	        	alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
+	        else
+	        	alloc.natural_size = -1;
+	    }
+	    
+	    _updateSolidStyle() {
+	        if (this.actor.has_style_pseudo_class('overview') || !Main.sessionMode.hasWindows) {
+	            this._removeStyleClassName('solid');
+	            return;
+	        }
 	
-	_showAppMenu() {
-		let name = 'appMenu';
-    	if(this._settings.get_boolean(SHOW_APP_MENU_ID)){
-    		if(!this.statusArea[name]){
-    			let indicator = new MultiMonitorsAppMenuButton(this);
-    			this.statusArea[name] = indicator;
-    			let box = this._leftBox;
-    			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
-    		}
-    	}
-    	else{
-    		if(this.statusArea[name]){
-    			let indicator = this.statusArea[name];
-    			this.menuManager.removeMenu(indicator.menu);
-    			indicator.destroy();
-    		}
-    	}
-	},
-
-    _getPreferredWidth(actor, forHeight, alloc) {
-        alloc.min_size = -1;
-        if(Main.layoutManager.monitors.length>this.monitorIndex)
-        	alloc.natural_size = Main.layoutManager.monitors[this.monitorIndex].width;
-        else
-        	alloc.natural_size = -1;
-    },
-    
-    _updateSolidStyle() {
-        if (this.actor.has_style_pseudo_class('overview') || !Main.sessionMode.hasWindows) {
-            this._removeStyleClassName('solid');
-            return;
-        }
-
-        if (!(Main.layoutManager.monitors.length>this.monitorIndex))
-            return;
-
-        /* Get all the windows in the active workspace that are in the primary monitor and visible */
-        let display;
-        display = global.screen || global.workspace_manager;
-        let activeWorkspace = display.get_active_workspace();
-        let monitorIndex = this.monitorIndex;
-        let windows = activeWorkspace.list_windows().filter((metaWindow) => {
-            return metaWindow.get_monitor() == monitorIndex &&
-                   metaWindow.showing_on_its_workspace() &&
-                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP;
-        });
-
-        /* Check if at least one window is near enough to the panel */
-        let [, panelTop] = this.actor.get_transformed_position();
-        let panelBottom = panelTop + this.actor.get_height();
-        let scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let isNearEnough = windows.some((metaWindow) => {
-            let verticalPosition = metaWindow.get_frame_rect().y;
-            return verticalPosition < panelBottom + 5 * scale;
-        });
-
-        if (isNearEnough)
-            this._addStyleClassName('solid');
-        else
-            this._removeStyleClassName('solid');
-    },
-
-    
-    _hideIndicators() {
-        for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
-            let indicator = this.statusArea[role];
-            if (!indicator)
-                continue;
-            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
-	            if (indicator.menu)
-	                indicator.menu.close();
-            }
-            indicator.container.hide();
-        }
-    },
-
-    _ensureIndicator(role) {
-        let indicator = this.statusArea[role];
-        if (!indicator) {
-            let constructor = MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS[role];
-            if (!constructor) {
-                return null;
-            }
-            indicator = new constructor(this);
-            this.statusArea[role] = indicator;
-        }
-        return indicator;
-    }
-});
+	        if (!(Main.layoutManager.monitors.length>this.monitorIndex))
+	            return;
+	
+	        /* Get all the windows in the active workspace that are in the primary monitor and visible */
+	        let display;
+	        display = global.screen || global.workspace_manager;
+	        let activeWorkspace = display.get_active_workspace();
+	        let monitorIndex = this.monitorIndex;
+	        let windows = activeWorkspace.list_windows().filter((metaWindow) => {
+	            return metaWindow.get_monitor() == monitorIndex &&
+	                   metaWindow.showing_on_its_workspace() &&
+	                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP;
+	        });
+	
+	        /* Check if at least one window is near enough to the panel */
+	        let [, panelTop] = this.actor.get_transformed_position();
+	        let panelBottom = panelTop + this.actor.get_height();
+	        let scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+	        let isNearEnough = windows.some((metaWindow) => {
+	            let verticalPosition = metaWindow.get_frame_rect().y;
+	            return verticalPosition < panelBottom + 5 * scale;
+	        });
+	
+	        if (isNearEnough)
+	            this._addStyleClassName('solid');
+	        else
+	            this._removeStyleClassName('solid');
+	    }
+	    
+	    _hideIndicators() {
+	        for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
+	            let indicator = this.statusArea[role];
+	            if (!indicator)
+	                continue;
+	            if (this._currentVersion[0]==3 && this._currentVersion[1]>24) {
+		            if (indicator.menu)
+		                indicator.menu.close();
+	            }
+	            indicator.container.hide();
+	        }
+	    }
+	
+	    _ensureIndicator(role) {
+	        let indicator = this.statusArea[role];
+	        if (!indicator) {
+	            let constructor = MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS[role];
+	            if (!constructor) {
+	                return null;
+	            }
+	            indicator = new constructor(this);
+	            this.statusArea[role] = indicator;
+	        }
+	        return indicator;
+	    }
+	};
+	MultiMonitors.copyClass(Panel.Panel, MultiMonitorsPanel);
+	return GObject.registerClass(MultiMonitorsPanel);
+})();

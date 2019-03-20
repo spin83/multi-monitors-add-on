@@ -18,6 +18,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 const Lang = imports.lang;
 
 const St = imports.gi.St;
+const Gio = imports.gi.Gio;
 
 const Util = imports.misc.util;
 
@@ -27,7 +28,9 @@ const PanelMenu = imports.ui.panelMenu;
 
 const Gettext = imports.gettext.domain('multi-monitors-add-on');
 const _ = Gettext.gettext;
-const Convenience = imports.misc.extensionUtils.getCurrentExtension().imports.convenience;
+const CE = imports.misc.extensionUtils.getCurrentExtension();
+const Convenience = CE.imports.convenience;
+const extensionPath = CE.path;
 
 var MultiMonitorsIndicator = new Lang.Class({
 	Name: 'MultiMonitorsIndicator',
@@ -56,10 +59,12 @@ var MultiMonitorsIndicator = new Lang.Class({
 		Main.layoutManager.disconnect(this._viewMonitorsId);
 	},
 	
-	_syncIndicatorsVisible() {
-        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some((actor) => {
-            return actor.visible;
-        });
+    _syncIndicatorsVisible() {
+        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some(a => a.visible);
+    },
+    
+    _icon_name (icon, iconName) {
+    	icon.set_gicon(Gio.icon_new_for_string(extensionPath+"/icons/"+iconName+".svg"));
     },
 	
 	_viewMonitors() {
@@ -74,10 +79,10 @@ var MultiMonitorsIndicator = new Lang.Class({
 				this._mmStatusIcon.add_child(icon);
 				icon.connect('notify::visible', this._syncIndicatorsVisible.bind(this));
 				
-				if(this._leftRightIcon)
-					icon.icon_name = 'multi-monitors-l-symbolic';
+				if (this._leftRightIcon)
+					this._icon_name(icon, 'multi-monitors-l-symbolic');
 				else
-					icon.icon_name = 'multi-monitors-r-symbolic';
+					this._icon_name(icon, 'multi-monitors-r-symbolic');
 				this._leftRightIcon = !this._leftRightIcon;
 			}
 			this._syncIndicatorsVisible();
