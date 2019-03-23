@@ -40,20 +40,25 @@ const WORKSPACES_ONLY_ON_PRIMARY_ID = 'workspaces-only-on-primary';
 
 const SHOW_INDICATOR_ID = 'show-indicator';
 const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
+const GNOME_SHELL_VERSION = Config.PACKAGE_VERSION.split('.');
 
 function copyClass (s, d) {
-	global.log(s.name +" > "+ d.name);
+//	global.log(s.name +" > "+ d.name);
 	let propertyNames = Object.getOwnPropertyNames(s.prototype);
 	for (let pName of propertyNames.values()) {
-		global.log(" ) "+pName);
+//		global.log(" ) "+pName);
 		if (d.prototype.hasOwnProperty(pName)) continue;
 	  	if (pName === "prototype") continue;
 	  	if (pName === "constructor") continue;
-	  	global.log(pName);
+//	  	global.log(pName);
         let pDesc = Object.getOwnPropertyDescriptor(s.prototype, pName);
         Object.defineProperty(d.prototype, pName, pDesc);
 	}
 };
+
+function gnomeShellVersion() {
+	return GNOME_SHELL_VERSION;
+}
 
 const MultiMonitorsAddOn = new Lang.Class({
 	Name: 'MultiMonitorsAddOn',

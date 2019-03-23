@@ -15,12 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, visit https://www.gnu.org/licenses/.
 */
 
-const Lang = imports.lang;
 const Signals = imports.signals;
 
 const { St, Gio, Shell, Clutter, GnomeDesktop, GObject } = imports.gi;
-
-const Config = imports.misc.config;
 
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;

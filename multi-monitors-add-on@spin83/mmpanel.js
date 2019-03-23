@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, visit https://www.gnu.org/licenses/.
 */
 
-const Lang = imports.lang;
-
 const { St, Shell, Meta, Atk, Clutter, GObject } = imports.gi;
 
 const Main = imports.ui.main;
@@ -25,8 +23,7 @@ const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
 const CtrlAltTab = imports.ui.ctrlAltTab;
 const ExtensionSystem = imports.ui.extensionSystem;
-
-const Config = imports.misc.config;
+const Tweener = imports.ui.tweener;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const CE = ExtensionUtils.getCurrentExtension();
@@ -282,6 +279,12 @@ var MultiMonitorsAppMenuButton  = (() => {
 	        return null;
 	    }
 	    
+	    _sync() {
+	    	if (!this._switchWorkspaceNotifyId)
+	    		return;
+	    	Panel.AppMenuButton.prototype._sync.call(this);
+	    }
+	    
 	    _onDestroy() {
 	    	if (this._actionGroupNotifyId) {
 	            this._targetApp.disconnect(this._actionGroupNotifyId);
@@ -300,7 +303,7 @@ var MultiMonitorsAppMenuButton  = (() => {
                 this.menu._app.disconnect(this.menu._windowsChangedId);
                 this.menu._windowsChangedId = 0;
             }
-    
+            Tweener.removeTweens(this.actor);
             Panel.AppMenuButton.prototype._onDestroy.call(this);
 		}
 	};
@@ -359,9 +362,7 @@ var MultiMonitorsPanel = (() => {
 	let MultiMonitorsPanel = class MultiMonitorsPanel extends St.Widget {
 	    _init (monitorIndex, mmPanelBox) {
 	    	this.monitorIndex = monitorIndex;
-	    	
-	    	this._currentVersion = Config.PACKAGE_VERSION.split('.');
-	    	
+
 	    	super._init({ name: 'panel',
 	            reactive: true });
 	
