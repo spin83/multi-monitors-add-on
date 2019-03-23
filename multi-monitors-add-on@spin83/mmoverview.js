@@ -171,7 +171,7 @@ const MultiMonitorsThumbnailsBox = new Lang.Class({
 		this._windowDragEndId = Main.overview.connect('window-drag-end', this._onDragEnd.bind(this));
 		this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onDragCancelled.bind(this));
 		
-		if (this._currentVersion[0]==3 && this._currentVersion[1]<30) {
+		if ('OVERRIDE_SCHEMA' in WorkspaceThumbnail) { // <= 3.30.1
 			this._settings = new Gio.Settings({ schema_id: WorkspaceThumbnail.OVERRIDE_SCHEMA });
 		}
 		else {
