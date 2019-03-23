@@ -21,9 +21,8 @@ const MMPanel = MultiMonitors.imports.mmpanel;
 
 var SHOW_PANEL_ID = 'show-panel';
 
-const MultiMonitorsPanelBox = new Lang.Class({
-	Name: 'MultiMonitorsPanelBox',
-	_init (monitor) {
+const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
+	constructor(monitor) {
 		this._rightPanelBarrier = null;
 	
 		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
@@ -33,9 +32,9 @@ const MultiMonitorsPanelBox = new Lang.Class({
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
         
 		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', this._panelBoxChanged.bind(this));
-	},
+	}
 	
-	destroy () {
+	destroy() {
 		if (this._rightPanelBarrier) {
 	        this._rightPanelBarrier.destroy();
 	        this._rightPanelBarrier = null;
@@ -43,12 +42,12 @@ const MultiMonitorsPanelBox = new Lang.Class({
 	
 		this.panelBox.disconnect(this._panelBoxChangedId);
 		this.panelBox.destroy();
-	},
+	}
 	
 	updatePanel(monitor) {
 	    this.panelBox.set_position(monitor.x, monitor.y);
 	    this.panelBox.set_size(monitor.width, -1);
-	},
+	}
 
 	_panelBoxChanged(self, box, flags) {
 //		global.log(box.get_x()+" "+box.get_y()+" "+box.get_height()+" "+box.get_width())
@@ -64,8 +63,8 @@ const MultiMonitorsPanelBox = new Lang.Class({
 								            x2: box.get_x() + box.get_width(), y2: box.get_y() + this.panelBox.height,
 								            directions: Meta.BarrierDirection.NEGATIVE_X });
 	    }
-	},
-});
+	}
+};
 
 var MultiMonitorsLayoutManager = new Lang.Class({
 	Name: 'MultiMonitorsLayoutManager',
@@ -249,6 +248,14 @@ var MultiMonitorsLayoutManager = new Lang.Class({
 		if (indicator._actionGroupNotifyId) {
 			indicator._targetApp.disconnect(indicator._actionGroupNotifyId);
 			indicator._actionGroupNotifyId = 0;
+        }
+        if (indicator._busyNotifyId) {
+        	indicator._targetApp.disconnect(indicator._busyNotifyId);
+        	indicator._busyNotifyId = 0;
+        }
+        if (indicator.menu._windowsChangedId) {
+        	indicator.menu._app.disconnect(indicator.menu._windowsChangedId);
+        	indicator.menu._windowsChangedId = 0;
         }
 		indicator = new appMenuButton(panel);
 		panel.statusArea[role] = indicator;
