@@ -6,5 +6,5 @@
 	"gettext-domain": "multi-monitors-add-on",
 	"description": "Add multiple monitors overview and panel for gnome-shell.",
 	"url": "https://github.com/spin83/multi-monitors-add-on.git",
-	"version": 16.2
+	"version": 18
 }
