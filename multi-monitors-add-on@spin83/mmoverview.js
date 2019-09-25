@@ -20,7 +20,6 @@ const Signals = imports.signals;
 const {Clutter, GObject, St, Shell, Gio, Meta} = imports.gi;
 
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
 const Params = imports.misc.params;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 const OverviewControls = imports.ui.overviewControls;
@@ -40,17 +39,17 @@ const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
 const MultiMonitorsWorkspaceThumbnail = (() => {
     let MultiMonitorsWorkspaceThumbnail = class MultiMonitorsWorkspaceThumbnail extends St.Widget {
         _init(metaWorkspace, monitorIndex) {
-            this.metaWorkspace = metaWorkspace;
-            this.monitorIndex = monitorIndex;
-
-            this._removed = false;
-
             super._init({
                 clip_to_allocation: true,
                 style_class: 'workspace-thumbnail'
             });
 
             this._delegate = this;
+
+            this.metaWorkspace = metaWorkspace;
+            this.monitorIndex = monitorIndex;
+
+            this._removed = false;
 
             this._contents = new Clutter.Actor();
             this.add_child(this._contents);
@@ -104,9 +103,44 @@ const MultiMonitorsWorkspaceThumbnail = (() => {
             this._slidePosition = 0; // Fully slid in
             this._collapseFraction = 0; // Not collapsed
         }
+
+        set slide_position(slidePosition) {
+            if (this._slidePosition == slidePosition)
+                return;
+            this._slidePosition = slidePosition;
+            this.notify('slide-position');
+            this.queue_relayout();
+        }
+
+        get slide_position() {
+            return this._slidePosition;
+        }
+
+        set collapse_fraction(collapseFraction) {
+            if (this._collapseFraction == collapseFraction)
+                return;
+            this._collapseFraction = collapseFraction;
+            this.nofity('collapse-fraction');
+            this.queue_relayout();
+        }
+
+        get collapse_fraction() {
+            return this._collapseFraction;
+        }
     };
     MultiMonitors.copyClass(WorkspaceThumbnail.WorkspaceThumbnail, MultiMonitorsWorkspaceThumbnail);
-    return GObject.registerClass(MultiMonitorsWorkspaceThumbnail);
+    return GObject.registerClass({
+        Properties: {
+            'collapse-fraction': GObject.ParamSpec.double(
+                'collapse-fraction', 'collapse-fraction', 'collapse-fraction',
+                GObject.ParamFlags.READWRITE,
+                0, 1, 0),
+            'slide-position': GObject.ParamSpec.double(
+                'slide-position', 'slide-position', 'slide-position',
+                GObject.ParamFlags.READWRITE,
+                0, 1, 0),
+        }
+    }, MultiMonitorsWorkspaceThumbnail);
 })();
 
 
@@ -215,8 +249,6 @@ const MultiMonitorsThumbnailsBox = (() => {
             this._settings.disconnect(this._changedDynamicWorkspacesId);
             Main.layoutManager.disconnect(this._monitorsChangedId);
             global.display.disconnect(this._workareasChangedPortholeId);
-
-            Tweener.removeTweens(actor);
         }
 
         addThumbnails(start, count) {
@@ -233,7 +265,7 @@ const MultiMonitorsThumbnailsBox = (() => {
                 if (start > 0 && this._spliceIndex == -1) {
                     // not the initial fill, and not splicing via DND
                     thumbnail.state = WorkspaceThumbnail.ThumbnailState.NEW;
-                    thumbnail.slidePosition = 1; // start slid out
+                    thumbnail.slide_position = 1; // start slid out
                     this._haveNewThumbnails = true;
                 } else {
                     thumbnail.state = WorkspaceThumbnail.ThumbnailState.NORMAL;
@@ -251,19 +283,55 @@ const MultiMonitorsThumbnailsBox = (() => {
             this._spliceIndex = -1;
         }
 
+        set scale(scale) {
+            if (this._scale == scale)
+                return;
+
+            this._scale = scale;
+            this.notify('scale');
+            this.queue_relayout();
+        }
+
+        get scale() {
+            return this._scale;
+        }
+
+        set indicator_y(indicatorY) {
+            if (this._indicatorY == indicatorY)
+                return;
+
+            this._indicatorY = indicatorY;
+            this.notify('indicator-y');
+            this.queue_relayout();
+        }
+
+        get indicator_y() {
+            return this._indicatorY;
+        }
+
         _updatePorthole() {
             this._porthole = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
             this.queue_relayout();
         }
     };
     MultiMonitors.copyClass(WorkspaceThumbnail.ThumbnailsBox, MultiMonitorsThumbnailsBox);
-    return GObject.registerClass(MultiMonitorsThumbnailsBox);
+    return GObject.registerClass({
+        Properties: {
+            'indicator-y': GObject.ParamSpec.double(
+                'indicator-y', 'indicator-y', 'indicator-y',
+                GObject.ParamFlags.READWRITE,
+                0, Infinity, 0),
+            'scale': GObject.ParamSpec.double(
+                'scale', 'scale', 'scale',
+                GObject.ParamFlags.READWRITE,
+                0, Infinity, 0)
+        }
+    }, MultiMonitorsThumbnailsBox);
 })();
 
 const MultiMonitorsSlidingControl = (() => {
     let MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl extends St.Widget {
         _init(params) {
-
             params = Params.parse(params, {slideDirection: OverviewControls.SlideDirection.LEFT});
 
             this._visible = true;
@@ -271,7 +339,7 @@ const MultiMonitorsSlidingControl = (() => {
 
             this.layout = new OverviewControls.SlideLayout();
             this.layout.slideDirection = params.slideDirection;
-            this.layout.translationX = 0;
+            this.layout.translation_x = 0;
 
             super._init({
                 layout_manager: this.layout,
@@ -305,9 +373,18 @@ const MultiMonitorsSlidingControl = (() => {
             Main.overview.disconnect(this._windowDragBeginId);
             Main.overview.disconnect(this._windowDragCancelledId);
             Main.overview.disconnect(this._windowDragEndId);
+        }
 
-            Tweener.removeTweens(this);
-            Tweener.removeTweens(this.layout);
+        _getSlide() {
+            throw new GObject.NotImplementedError(`_getSlide in ${this.constructor.name}`);
+        }
+
+
+        _updateSlide() {
+            this.ease_property('@layout.slide-x', this._getSlide(), {
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
+            });
         }
 
         _updateTranslation() {
@@ -322,19 +399,17 @@ const MultiMonitorsSlidingControl = (() => {
                 translationEnd = translation;
             }
 
-            if (this.layout.translationX == translationEnd)
+            if (this.layout.translation_x == translationEnd)
                 return;
 
-            this.layout.translationX = translationStart;
+            this.layout.translation_x = translationStart;
             if (this.onAnimationBegin) this.onAnimationBegin();
-            Tweener.addTween(this.layout, {
-                translationX: translationEnd,
-                time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
-                transition: 'easeOutQuad',
-                onComplete() {
+            this.ease_property('@layout.translation-x', translationEnd, {
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
+                onComplete: () => {
                     if (this.onAnimationEnd) this.onAnimationEnd();
-                },
-                onCompleteScope: this
+                }
             });
         }
     };
@@ -377,6 +452,12 @@ const MultiMonitorsThumbnailsSlider = (() => {
 const MultiMonitorsControlsManager = (() => {
     let MultiMonitorsControlsManager = class MultiMonitorsControlsManager extends St.Widget {
         _init(index) {
+            let layout = new OverviewControls.ControlsLayout();
+            super._init({
+                layout_manager: layout,
+                x_expand: true, y_expand: true,
+                clip_to_allocation: true,
+            });
             this._monitorIndex = index;
             this._workspacesViews = null;
 
@@ -397,13 +478,6 @@ const MultiMonitorsControlsManager = (() => {
                 //        	global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
                 this._workspacesViews.setActualGeometry(geometry);
             };
-
-			let layout = new OverviewControls.ControlsLayout();
-			super._init({
-				layout_manager: layout,
-				x_expand: true, y_expand: true,
-				clip_to_allocation: true,
-			});
             this.connect('destroy', this._onDestroy.bind(this));
 
 
@@ -610,12 +684,10 @@ const MultiMonitorsControlsManager = (() => {
                 return;
 
             this._workspacesViews.actor.avisible = opacity != 0;
-            Tweener.addTween((this._workspacesViews.actor, this._viewActor),
-                {
-                    opacity: opacity,
-                    time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
-                    transition: 'easeOutQuad'
-                });
+            this._workspacesViews.actor.ease_property('@opacity', opacity, {
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
+            });
         }
 
         _onPageEmpty() {
