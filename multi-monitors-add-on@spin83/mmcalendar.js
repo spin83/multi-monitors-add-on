@@ -33,11 +33,6 @@ const Convenience = CE.imports.convenience;
 const MultiMonitorsCalendar = (() => {
     let MultiMonitorsCalendar = class MultiMonitorsCalendar extends St.Widget {
         _init() {
-            super._init({
-                style_class: 'calendar',
-                layout_manager: new Clutter.TableLayout(),
-                reactive: true,
-            });
             this._weekStart = Shell.util_get_week_start();
             this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
 
@@ -51,6 +46,12 @@ const MultiMonitorsCalendar = (() => {
             this._selectedDate = new Date();
 
             this._shouldDateGrabFocus = false;
+
+            super._init({
+                style_class: 'calendar',
+                layout_manager: new Clutter.TableLayout(),
+                reactive: true,
+            });
 
             this.connect('scroll-event', this._onScroll.bind(this));
 
