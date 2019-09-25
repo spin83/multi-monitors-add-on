@@ -78,10 +78,12 @@ const MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends Mess
 
         this._messageById = new Map();
 
-        this._title = new St.Button({ style_class: 'events-section-title',
+        this._title = new St.Button({
+            style_class: 'events-section-title',
             label: '',
             x_align: St.Align.START,
-            can_focus: true });
+            can_focus: true
+        });
         this.actor.insert_child_below(this._title, null);
 
         this._title.connect('clicked', this._onTitleClicked.bind(this));
@@ -89,7 +91,7 @@ const MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends Mess
 
         this._defaultAppSystem = Shell.AppSystem.get_default();
         this._appInstalledChangedId = this._defaultAppSystem.connect('installed-changed',
-            this._appInstalledChanged.bind(this));
+                                      this._appInstalledChanged.bind(this));
 
         this.actor.connect('destroy', this._onDestroy.bind(this));
         this._appInstalledChanged();
@@ -228,10 +230,10 @@ var MultiMonitorsDateMenuButton  = (() => {
             bin.add_actor(hbox);
             this._calendar = new MultiMonitorsCalendar();
             this._calendar.connect('selected-date-changed',
-                (calendar, date) => {
-                    layout.frozen = !DateMenu._isToday(date);
-                    this._messageList.setDate(date);
-                });
+                                   (calendar, date) => {
+                                       layout.frozen = !DateMenu._isToday(date);
+                                       this._messageList.setDate(date);
+                                   });
 
             this.menu.connect('open-state-changed', (menu, isOpen) => {
                 // Whenever the menu is opened, select today

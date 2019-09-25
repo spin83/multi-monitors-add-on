@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, visit https://www.gnu.org/licenses/.
 */
 
-const {St, Shell, Meta, Atk, Clutter, GObject} = imports.gi;
+const { St, Shell, Meta, Atk, Clutter, GObject } = imports.gi;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;

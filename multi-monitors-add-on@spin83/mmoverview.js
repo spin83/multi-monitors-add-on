@@ -17,7 +17,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 
 const Signals = imports.signals;
 
-const {Clutter, GObject, St, Shell, Gio, Meta} = imports.gi;
+const { Clutter, GObject, St, Shell, Gio, Meta } = imports.gi;
 
 const Main = imports.ui.main;
 const Params = imports.misc.params;
