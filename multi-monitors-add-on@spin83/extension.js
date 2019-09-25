@@ -120,11 +120,8 @@ const MultiMonitorsAddOn = new Lang.Class({
 				workspacesDisplay._restackedNotifyId = 0;
 			}
 			workspacesDisplay.hide();
-			workspacesDisplay.actor._delegate = null;
-			workspacesDisplay.actor.destroy();
 			Main.overview.viewSelector._workspacesPage.hide();
 			Main.overview.viewSelector._workspacesPage.destroy();
-			workspacesDisplay.actor = null;
 			
 			workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay();
 			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
@@ -147,11 +144,9 @@ const MultiMonitorsAddOn = new Lang.Class({
 			if (!Main.overview.visible) {
 				let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
 				workspacesDisplay.hide();
-				workspacesDisplay.actor._delegate = null;
-				workspacesDisplay.actor.destroy();
+				workspacesDisplay._delegate = null;
 				Main.overview.viewSelector._workspacesPage.hide();
 				Main.overview.viewSelector._workspacesPage.destroy();
-				workspacesDisplay.actor = null;
 				
 				workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
 				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
