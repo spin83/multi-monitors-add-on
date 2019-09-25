@@ -313,9 +313,9 @@ var MultiMonitorsActivitiesButton = (() => {
     let MultiMonitorsActivitiesButton = class MultiMonitorsActivitiesButton extends PanelMenu.Button {
         _init() {
             super._init(0.0, null, true);
-            this.accessible_role = Atk.Role.TOGGLE_BUTTON;
+            this.actor.accessible_role = Atk.Role.TOGGLE_BUTTON;
 
-            this.name = 'mmPanelActivities';
+            this.actor.name = 'mmPanelActivities';
 
             /* Translators: If there is no suitable word for "Activities"
                in your language, you can use the word for "Overview". */
@@ -323,20 +323,20 @@ var MultiMonitorsActivitiesButton = (() => {
                 text: _("Activities"),
                 y_align: Clutter.ActorAlign.CENTER
             });
-            this.add_actor(this._label);
+            this.actor.add_actor(this._label);
 
-            this.label_actor = this._label;
+            this.actor.label_actor = this._label;
 
-            this.connect('captured-event', this._onCapturedEvent.bind(this));
-            this.connect_after('key-release-event', this._onKeyRelease.bind(this));
+            this.actor.connect('captured-event', this._onCapturedEvent.bind(this));
+            this.actor.connect_after('key-release-event', this._onKeyRelease.bind(this));
 
             this._showingId = Main.overview.connect('showing', () => {
-                this.add_style_pseudo_class('overview');
-                this.add_accessible_state(Atk.StateType.CHECKED);
+                this.actor.add_style_pseudo_class('overview');
+                this.actor.add_accessible_state(Atk.StateType.CHECKED);
             });
             this._hidingId = Main.overview.connect('hiding', () => {
-                this.remove_style_pseudo_class('overview');
-                this.remove_accessible_state(Atk.StateType.CHECKED);
+                this.actor.remove_style_pseudo_class('overview');
+                this.actor.remove_accessible_state(Atk.StateType.CHECKED);
             });
 
             this._xdndTimeOut = 0;
@@ -449,10 +449,10 @@ var MultiMonitorsPanel = (() => {
             let name = 'activities';
             if (this._settings.get_boolean(SHOW_ACTIVITIES_ID)) {
                 if (this.statusArea[name])
-                    this.statusArea[name].visible = true;
+                    this.statusArea[name].actor.visible = true;
             } else {
                 if (this.statusArea[name])
-                    this.statusArea[name].visible = false;
+                    this.statusArea[name].actor.visible = false;
             }
         }
 
@@ -460,10 +460,10 @@ var MultiMonitorsPanel = (() => {
             let name = 'dateMenu';
             if (this._settings.get_boolean(SHOW_DATE_TIME_ID)) {
                 if (this.statusArea[name])
-                    this.statusArea[name].visible = true;
+                    this.statusArea[name].actor.visible = true;
             } else {
                 if (this.statusArea[name])
-                    this.statusArea[name].visible = false;
+                    this.statusArea[name].actor.visible = false;
             }
         }
 

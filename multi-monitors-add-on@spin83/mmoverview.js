@@ -517,7 +517,7 @@ const MultiMonitorsControlsManager = (() => {
             if (Main.mmOverview[this._monitorIndex]._panelGhost)
                 panelGhost_height = Main.mmOverview[this._monitorIndex]._panelGhost.get_height();
 
-            let allocation = Main.overview._controls.allocation;
+            let allocation = Main.overview._controls.actor.allocation;
             let primaryControl_height = allocation.y2 - allocation.y1;
             let bottom_spacer_height = Main.layoutManager.primaryMonitor.height - allocation.y2;
 
@@ -609,8 +609,8 @@ const MultiMonitorsControlsManager = (() => {
             if (!this._workspacesViews)
                 return;
 
-            this._workspacesViews.visible = opacity != 0;
-            Tweener.addTween((this._workspacesViews, this._viewActor),
+            this._workspacesViews.actor.avisible = opacity != 0;
+            Tweener.addTween((this._workspacesViews.actor, this._viewActor),
                 {
                     opacity: opacity,
                     time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
@@ -628,8 +628,8 @@ const MultiMonitorsControlsManager = (() => {
 
         hide() {
             if (this._workspacesViews && (!this._workspacesViews.visible)) {
-                this._workspacesViews.opacity = 255;
-                this._workspacesViews.visible = true;
+                this._workspacesViews.actor.opacity = 255;
+                this._workspacesViews.actor.visible = true;
             }
             this._workspacesViews = null;
         }
