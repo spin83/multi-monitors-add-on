@@ -120,7 +120,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 				workspacesDisplay._restackedNotifyId = 0;
 			}
 			workspacesDisplay.hide();
-			workspacesDisplay._delegate = null;
+			workspacesDisplay.actor._delegate = null;
 			workspacesDisplay.actor.destroy();
 			Main.overview.viewSelector._workspacesPage.hide();
 			Main.overview.viewSelector._workspacesPage.destroy();
