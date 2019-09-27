@@ -53,7 +53,7 @@ var StatusIndicatorsController = class StatusIndicatorsController {
 
     destroy() {
         this._settings.disconnect(this._transferIndicatorsId);
-        ExtensionSystem.disconnect(this._extensionStateChangedId);
+        Main.extensionManager.disconnect(this._extensionStateChangedId);
         Main.sessionMode.disconnect(this._updatedSessionId);
         this._settings.set_strv(AVAILABLE_INDICATORS_ID, []);
         this._transferBack(this._transfered_indicators);
