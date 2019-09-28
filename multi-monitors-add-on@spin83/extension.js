@@ -288,6 +288,19 @@ function init(extensionMeta) {
             });
         });
     };
+
+	if (gnomeShellVersion()[1]==32) {
+	    WorkspacesView.WorkspacesDisplay.prototype._updateWorkspacesFullGeometry = function() {
+	        let monitors = Main.layoutManager.monitors;
+	        if (this._workspacesViews.length!=monitors.length)
+	            return;
+	
+	        for (let i = 0; i < monitors.length; i++) {
+	            let geometry = (i == this._primaryIndex) ? this._fullGeometry : monitors[i];
+	            this._workspacesViews[i].setFullGeometry(geometry);
+	        }
+	    }
+    }
     
     let metaVersion = MultiMonitors.metadata['version'];
     if (Number.isFinite(metaVersion)) {

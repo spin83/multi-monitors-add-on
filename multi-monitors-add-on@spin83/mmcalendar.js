@@ -35,7 +35,7 @@ const MultiMonitorsCalendar = class MultiMonitorsCalendar {
         this._weekStart = Shell.util_get_week_start();
         this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
 
-        this._showWeekdateKeyId = this._settings.connect('changed::' + Calendar.SHOW_WEEKDATE_KEY, this._onSettingsChange.bind(this));
+        this._showWeekdateKeyId = this._settings.connect(`changed::${Calendar.SHOW_WEEKDATE_KEY}`, this._onSettingsChange.bind(this));
         this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
 
         this._headerFormatWithoutYear = _('%OB');
@@ -203,9 +203,9 @@ var MultiMonitorsDateMenuButton  = (() => {
 	        box.add_actor(this._clockDisplay);
 	//        box.add_actor(this._indicator.actor);
 	
-	        this.actor.label_actor = this._clockDisplay;
-	        this.actor.add_actor(box);
-	        this.actor.add_style_class_name ('clock-display');
+	        this.label_actor = this._clockDisplay;
+	        this.add_actor(box);
+	        this.add_style_class_name ('clock-display');
 	
 	        let layout = new DateMenu.FreezableBinLayout();
 	        let bin = new St.Widget({ layout_manager: layout });

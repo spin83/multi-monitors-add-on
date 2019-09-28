@@ -37,21 +37,27 @@ const Convenience = CE.imports.convenience;
 
 const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
 
-const MultiMonitorsWorkspaceThumbnail = class MultiMonitorsWorkspaceThumbnail {
-    constructor (metaWorkspace, monitorIndex) {
+var MultiMonitorsWorkspaceThumbnail = (() => {
+	let MultiMonitorsWorkspaceThumbnail = class MultiMonitorsWorkspaceThumbnail extends St.Widget {
+	    _init (metaWorkspace, monitorIndex) {
+
         this.metaWorkspace = metaWorkspace;
         this.monitorIndex = monitorIndex;
 
-        this._removed = false;
+		if (MultiMonitors.gnomeShellVersion()[1]==32) {
+				this.actor = this;
+		}
 
-        this.actor = new St.Widget({ clip_to_allocation: true,
-                                     style_class: 'workspace-thumbnail' });
-        this.actor._delegate = this;
+        super._init({
+            clip_to_allocation: true,
+            style_class: 'workspace-thumbnail'
+        });
+        this._delegate = this;
 
         this._contents = new Clutter.Actor();
-        this.actor.add_child(this._contents);
+        this.add_child(this._contents);
 
-        this.actor.connect('destroy', this._onDestroy.bind(this));
+        this.connect('destroy', this._onDestroy.bind(this));
 
 //        this._createBackground();
         this._bgManager = new Background.BackgroundManager({ monitorIndex: this.monitorIndex,
@@ -98,22 +104,49 @@ const MultiMonitorsWorkspaceThumbnail = class MultiMonitorsWorkspaceThumbnail {
         this._slidePosition = 0; // Fully slid in
         this._collapseFraction = 0; // Not collapsed
     }
-};
-Signals.addSignalMethods(MultiMonitorsWorkspaceThumbnail.prototype);
-MultiMonitors.copyClass(WorkspaceThumbnail.WorkspaceThumbnail, MultiMonitorsWorkspaceThumbnail);
 
+   	//for Gnome 3.32 version compatibility.    
+    destroy() {
+    	if (MultiMonitors.gnomeShellVersion()[1]==32) {
+    		this.workspaceRemoved();
+    		if (this.actor) {
+    			Tweener.removeTweens(this.actor);
+    			super.destroy();
+    		}
+		}
+		else {
+			super.destroy();
+		}
+    }
+};
+	MultiMonitors.copyClass(WorkspaceThumbnail.WorkspaceThumbnail, MultiMonitorsWorkspaceThumbnail);
+	return GObject.registerClass({
+	    Properties: {
+	        'collapse-fraction': GObject.ParamSpec.double(
+	            'collapse-fraction', 'collapse-fraction', 'collapse-fraction',
+	            GObject.ParamFlags.READWRITE,
+	            0, 1, 0),
+	        'slide-position': GObject.ParamSpec.double(
+	            'slide-position', 'slide-position', 'slide-position',
+	            GObject.ParamFlags.READWRITE,
+	            0, 1, 0),
+	    }}, MultiMonitorsWorkspaceThumbnail);
+})();
 
 const MultiMonitorsThumbnailsBox = (() => {
 	let MultiMonitorsThumbnailsBox = class MultiMonitorsThumbnailsBox extends St.Widget {
 	    _init(monitorIndex) {
 	    	this._monitorIndex = monitorIndex;
+	    	
+	  		if (MultiMonitors.gnomeShellVersion()[1]==32) {
+				this.actor = this;
+			}
 
 	    	super._init({ reactive: true,
 	                      style_class: 'workspace-thumbnails',
 	                      request_mode: Clutter.RequestMode.WIDTH_FOR_HEIGHT });
 	
-	        this.actor = this;
-	        this.actor._delegate = this;
+	        this._delegate = this;
 	
 	        let indicator = new St.Bin({ style_class: 'workspace-thumbnail-indicator' });
 	
@@ -186,10 +219,10 @@ const MultiMonitorsThumbnailsBox = (() => {
 	        this._syncStackingId = 0;
 	        this._workareasChangedId = 0;
 	        
-	        this.actor.connect('destroy', this._onDestroy.bind(this));
+	        this.connect('destroy', this._onDestroy.bind(this));
 	    }
 	
-	    _onDestroy(actor) {
+	    _onDestroy() {
 	        this._destroyThumbnails();
 	
 			Main.overview.disconnect(this._showingId);
@@ -205,8 +238,6 @@ const MultiMonitorsThumbnailsBox = (() => {
 	        this._settings.disconnect(this._changedDynamicWorkspacesId);
         	Main.layoutManager.disconnect(this._monitorsChangedId);
 	        global.display.disconnect(this._workareasChangedPortholeId);
-	        
-	        Tweener.removeTweens(actor);
 	    }
 	
 	    addThumbnails(start, count) {
@@ -218,12 +249,17 @@ const MultiMonitorsThumbnailsBox = (() => {
 	            thumbnail.setPorthole(this._porthole.x, this._porthole.y,
 	                                  this._porthole.width, this._porthole.height);
 	            this._thumbnails.push(thumbnail);
-	            this.add_actor(thumbnail.actor);
+            	this.add_actor(thumbnail);
 	
 	            if (start > 0 && this._spliceIndex == -1) {
 	                // not the initial fill, and not splicing via DND
 	                thumbnail.state = WorkspaceThumbnail.ThumbnailState.NEW;
-	                thumbnail.slidePosition = 1; // start slid out
+	          		if (MultiMonitors.gnomeShellVersion()[1]==32) {
+						thumbnail.slidePosition = 1; // start slid out
+					}
+	                else {
+	                	thumbnail.slide_position = 1; // start slid out
+	                }
 	                this._haveNewThumbnails = true;
 	            } else {
 	                thumbnail.state = WorkspaceThumbnail.ThumbnailState.NORMAL;
@@ -247,7 +283,17 @@ const MultiMonitorsThumbnailsBox = (() => {
 	    }
 	};
 	MultiMonitors.copyClass(WorkspaceThumbnail.ThumbnailsBox, MultiMonitorsThumbnailsBox);
-	return GObject.registerClass(MultiMonitorsThumbnailsBox);
+	return GObject.registerClass({
+	    Properties: {
+	        'indicator-y': GObject.ParamSpec.double(
+	            'indicator-y', 'indicator-y', 'indicator-y',
+	            GObject.ParamFlags.READWRITE,
+	            0, Infinity, 0),
+	        'scale': GObject.ParamSpec.double(
+	            'scale', 'scale', 'scale',
+	            GObject.ParamFlags.READWRITE,
+	            0, Infinity, 0)
+	    }}, MultiMonitorsThumbnailsBox);
 })();
 
 const MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl {
@@ -290,35 +336,6 @@ const MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl {
     	Main.overview.disconnect(this._windowDragBeginId);
     	Main.overview.disconnect(this._windowDragCancelledId);
     	Main.overview.disconnect(this._windowDragEndId);
-    	
-    	Tweener.removeTweens(this.actor);
-    	Tweener.removeTweens(this.layout);
-    }
-    
-    _updateTranslation() {
-        let translationStart = 0;
-        let translationEnd = 0;
-        let translation = this._getTranslation();
-
-        let shouldShow = (this._getSlide() > 0);
-        if (shouldShow) {
-            translationStart = translation;
-        } else {
-            translationEnd = translation;
-        }
-
-        if (this.layout.translationX == translationEnd)
-            return;
-
-        this.layout.translationX = translationStart;
-        if (this.onAnimationBegin) this.onAnimationBegin();
-        Tweener.addTween(this.layout, { translationX: translationEnd,
-                                        time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
-                                        transition: 'easeOutQuad',
-                                        onComplete() {
-                                      	  if (this.onAnimationEnd) this.onAnimationEnd();
-                                        },
-                                        onCompleteScope: this});
     }
 };
 MultiMonitors.copyClass(OverviewControls.SlidingControl, MultiMonitorsSlidingControl);
@@ -583,11 +600,20 @@ const MultiMonitorsControlsManager = class MultiMonitorsControlsManager {
     		return;
     	
         this._workspacesViews.actor.visible = opacity != 0;
-        Tweener.addTween((this._workspacesViews.actor, this._viewActor),
+        if (MultiMonitors.gnomeShellVersion()[1]==32) {
+        	Tweener.addTween((this._workspacesViews.actor, this._viewActor),
                 { opacity: opacity,
                   time: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
                   transition: 'easeOutQuad'
                 });
+        }
+        else {
+        	this._workspacesViews.actor.ease({
+            	opacity: opacity,
+            	mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            	duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME
+        	});
+        }
     }
 
     _onPageEmpty() {

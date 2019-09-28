@@ -23,7 +23,6 @@ const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
 const CtrlAltTab = imports.ui.ctrlAltTab;
 const ExtensionSystem = imports.ui.extensionSystem;
-const Tweener = imports.ui.tweener;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const CE = ExtensionUtils.getCurrentExtension();
@@ -44,8 +43,14 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 		
         this._updatedSessionId = Main.sessionMode.connect('updated', this._updateSessionIndicators.bind(this));
         this._updateSessionIndicators();
-        this._extensionStateChangedId = ExtensionSystem.connect('extension-state-changed', 
+        if (MultiMonitors.gnomeShellVersion()[1]==32) {
+        	this._extensionStateChangedId = ExtensionSystem.connect('extension-state-changed', 
         										this._extensionStateChanged.bind(this));
+        }
+        else { 
+        	this._extensionStateChangedId = Main.extensionManager.connect('extension-state-changed', 
+        										this._extensionStateChanged.bind(this));
+        }
 
         this._transferIndicatorsId = this._settings.connect('changed::'+TRANSFER_INDICATORS_ID,
 																		this.transferIndicators.bind(this));
@@ -53,7 +58,12 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 	
 	destroy() {
 		this._settings.disconnect(this._transferIndicatorsId);
-		ExtensionSystem.disconnect(this._extensionStateChangedId);
+		if (MultiMonitors.gnomeShellVersion()[1]==32) {
+			ExtensionSystem.disconnect(this._extensionStateChangedId);
+		}
+		else {
+			Main.extensionManager.disconnect(this._extensionStateChangedId);
+		}
 		Main.sessionMode.disconnect(this._updatedSessionId);
 		this._settings.set_strv(AVAILABLE_INDICATORS_ID, []);
 		this._transferBack(this._transfered_indicators);
@@ -303,7 +313,6 @@ var MultiMonitorsAppMenuButton  = (() => {
                 this.menu._app.disconnect(this.menu._windowsChangedId);
                 this.menu._windowsChangedId = 0;
             }
-            Tweener.removeTweens(this.actor);
             Panel.AppMenuButton.prototype._onDestroy.call(this);
 		}
 	};
@@ -315,28 +324,28 @@ var MultiMonitorsActivitiesButton = (() => {
 	let MultiMonitorsActivitiesButton = class MultiMonitorsActivitiesButton extends PanelMenu.Button {
 	_init() {
 	        super._init(0.0, null, true);
-	        this.actor.accessible_role = Atk.Role.TOGGLE_BUTTON;
+	        this.accessible_role = Atk.Role.TOGGLE_BUTTON;
 	
-	        this.actor.name = 'mmPanelActivities';
+	        this.name = 'mmPanelActivities';
 	
 	        /* Translators: If there is no suitable word for "Activities"
 	           in your language, you can use the word for "Overview". */
 	        this._label = new St.Label({ text: _("Activities"),
 	                                     y_align: Clutter.ActorAlign.CENTER });
-	        this.actor.add_actor(this._label);
+	        this.add_actor(this._label);
 	
-	        this.actor.label_actor = this._label;
+	        this.label_actor = this._label;
 	
-	        this.actor.connect('captured-event', this._onCapturedEvent.bind(this));
-	        this.actor.connect_after('key-release-event', this._onKeyRelease.bind(this));
+	        this.connect('captured-event', this._onCapturedEvent.bind(this));
+	        this.connect_after('key-release-event', this._onKeyRelease.bind(this));
 	
 	        this._showingId = Main.overview.connect('showing', () => {
-	            this.actor.add_style_pseudo_class('overview');
-	            this.actor.add_accessible_state (Atk.StateType.CHECKED);
+	            this.add_style_pseudo_class('overview');
+	            this.add_accessible_state (Atk.StateType.CHECKED);
 	        });
 	        this._hidingId = Main.overview.connect('hiding', () => {
-	            this.actor.remove_style_pseudo_class('overview');
-	            this.actor.remove_accessible_state (Atk.StateType.CHECKED);
+	            this.remove_style_pseudo_class('overview');
+	            this.remove_accessible_state (Atk.StateType.CHECKED);
 	        });
 	        
 	        this._xdndTimeOut = 0;
@@ -366,9 +375,9 @@ var MultiMonitorsPanel = (() => {
 	    	super._init({ name: 'panel',
 	            reactive: true });
 	
-			// For compatibility with extensions that still use the
-			// this.actor field
-			this.actor = this;
+			if (MultiMonitors.gnomeShellVersion()[1]==32) {
+				this.actor = this;
+			}
 			this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
 			
 			this._sessionStyle = null;
@@ -445,11 +454,11 @@ var MultiMonitorsPanel = (() => {
 	    	let name = 'activities';
 	    	if (this._settings.get_boolean(SHOW_ACTIVITIES_ID)) {
 	    		if (this.statusArea[name])
-	    			this.statusArea[name].actor.visible = true;
+	    			this.statusArea[name].visible = true;
 	    	}
 	    	else {
 	    		if (this.statusArea[name])
-	    			this.statusArea[name].actor.visible = false;
+	    			this.statusArea[name].visible = false;
 	    	}
 		}
 		
@@ -457,11 +466,11 @@ var MultiMonitorsPanel = (() => {
 	    	let name = 'dateMenu';
 	    	if (this._settings.get_boolean(SHOW_DATE_TIME_ID)) {
 	    		if (this.statusArea[name])
-	    			this.statusArea[name].actor.visible = true;
+	    			this.statusArea[name].visible = true;
 	    	}
 	    	else {
 	    		if (this.statusArea[name])
-	    			this.statusArea[name].actor.visible = false;
+	    			this.statusArea[name].visible = false;
 	    	}
 		}
 		

@@ -46,12 +46,12 @@ const Columns = {
 };
 
 
-const MultiMonitorsPrefsWidget = new GObject.Class({
-    Name: 'MultiMonitorsPrefsWidget',
-    Extends: Gtk.Grid,
-
-    _init(params) {
-		this.parent(params);
+var MultiMonitorsPrefsWidget = GObject.registerClass(
+class MultiMonitorsPrefsWidget extends Gtk.Grid {
+    _init() {
+        super._init({
+            margin: 6,
+        });
 		
 		this.set_orientation(Gtk.Orientation.VERTICAL);
 		
@@ -103,7 +103,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
         
         this.add(toolbar);
 
-    },
+    }
     
     _updateIndicators() {
     	this._store.clear();
@@ -117,7 +117,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 	            this._store.set(iter, [Columns.INDICATOR_NAME, Columns.MONITOR_NUMBER], [indicator, monitor]);
 			}
 		}
-	},
+	}
     
     _addIndicator() {
 	
@@ -210,7 +210,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
 		});
     	
 		dialog.show_all();
-    },
+    }
     
     _removeIndicator() {
         let [any, model, iter] = this._treeView.get_selection().get_selected();
@@ -223,7 +223,7 @@ const MultiMonitorsPrefsWidget = new GObject.Class({
             	this._settings.set_value(TRANSFER_INDICATORS_ID, new GLib.Variant('a{si}', transfers));
         	}
         }
-    },
+    }
 
     _addBooleanSwitch(label, schema_id) {
 		let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});

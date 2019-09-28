@@ -40,7 +40,7 @@ var MultiMonitorsIndicator = (() => {
 	
 			this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
 			this._mmStatusIcon.hide();
-			this.actor.add_child(this._mmStatusIcon);
+			this.add_child(this._mmStatusIcon);
 			this._leftRightIcon = true;
 	
 			this.menu.addAction(_("Preferences"), this._onPreferences.bind(this));
