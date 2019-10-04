@@ -6,8 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-23 22:29+0100\n"
+"Report-Msgid-Bugs-To: https://github.com/spin83/multi-monitors-add-on/"
+"issues\n"
+"POT-Creation-Date: 2019-10-04 04:44-0300\n"
 "PO-Revision-Date: 2017-03-04 23:59+0100\n"
 "Last-Translator: Alonso Lara <alonso.lara.plana@gmail.com>\n"
 "Language-Team: Spanish <LL@li.org>\n"
@@ -16,62 +17,76 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: prefs.js:61
+#: indicator.js:46
+msgid "Preferences"
+msgstr "Preferencias"
+
+#: indicator.js:115
+msgid "Multi Monitors Add-On"
+msgstr "Accesorio de monitores múltiples"
+
+#: mmoverview.js:642
+msgid "Overview"
+msgstr ""
+
+#. Translators: If there is no suitable word for "Activities"
+#. in your language, you can use the word for "Overview".
+#: mmpanel.js:333
+msgid "Activities"
+msgstr ""
+
+#: mmpanel.js:414
+msgid "Top Bar"
+msgstr ""
+
+#: prefs.js:62
 msgid "Show Multi Monitors indicator on Top Panel."
 msgstr "Mostrar indicador de monitores múltiples en el panel."
 
-#: prefs.js:62
+#: prefs.js:63
 msgid "Show Panel on additional monitors."
 msgstr "Mostrar el panel en monitores adicionales."
 
-#: prefs.js:63
+#: prefs.js:64
 msgid "Show Thumbnails-Slider on additional monitors."
 msgstr "Mostrar las miniaturas en los monitores adicionales."
 
-#: prefs.js:64
+#: prefs.js:65
 msgid "Show Activities-Button on additional monitors."
 msgstr "Mostrar las actividades en los monitores adicionales."
 
-#: prefs.js:65
+#: prefs.js:66
 msgid "Show AppMenu-Button on additional monitors."
 msgstr "Mostrar el menú de aplicaciones en los monitores adicionales."
-
-#: prefs.js:66
-msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr "Mostrar las miniaturas en el lado izquierdo de los monitores adicionales."
 
 #: prefs.js:67
 msgid "Show DateTime-Button on additional monitors."
 msgstr "Mostrar la fecha en los monitores adicionales."
 
-#: prefs.js:75
+#: prefs.js:68
+msgid "Show Thumbnails-Slider on left side of additional monitors."
+msgstr ""
+"Mostrar las miniaturas en el lado izquierdo de los monitores adicionales."
+
+#: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
 msgstr "Un listado de indicadores para transferir a monitores adicionales."
 
-#: prefs.js:122
+#: prefs.js:124
 msgid "Select indicator"
 msgstr "Seleccione indicador"
 
-#: prefs.js:125
+#: prefs.js:127
 msgid "Add"
 msgstr "Añadir"
 
-#: prefs.js:139
+#: prefs.js:141
 msgid "Indicators on Top Panel"
 msgstr "Indicadores en el panel"
 
-#: prefs.js:168
+#: prefs.js:170
 msgid "Monitor index:"
 msgstr "Monitor número:"
 
-#: indicator.js:106
-msgid "Preferences"
-msgstr "Preferencias"
-
-#: indicator.js:107
-msgid "Test"
-msgstr "Prueba"
-
-#: indicator.js:129
-msgid "Multi Monitors Add-On"
-msgstr "Accesorio de monitores múltiples"
+#~ msgid "Test"
+#~ msgstr "Prueba"
