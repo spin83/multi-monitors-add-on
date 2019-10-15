@@ -10,7 +10,7 @@ Versions
 ========
 
 * Branch [master](https://github.com/spin83/multi-monitors-add-on/tree/master) contains extension for GNOME 3.32 and 3.34
-* Branch [gnome-3-24_3-30](https://github.com/spin83/multi-monitors-add-on/tree/master) contains extension for GNOME 3.24, 3.26, 3.28 and 3.30
+* Branch [gnome-3-24_3-30](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-24_3-30) contains extension for GNOME 3.24, 3.26, 3.28 and 3.30
 * Branch [gnome-3-20_3-22](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-20_3-22) contains extension for GNOME 3.20 and 3.22
 * Branch [gnome-3-16_3-18](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-16_3-18) contains extension for GNOME 3.16 and 3.18
 * Branch [gnome-3-14](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-14) contains extension for GNOME 3.14
