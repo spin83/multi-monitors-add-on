@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://github.com/spin83/multi-monitors-add-on/"
 "issues\n"
 "POT-Creation-Date: 2019-10-04 04:44-0300\n"
-"PO-Revision-Date: 2018-5-5 15:19+0100\n"
+"PO-Revision-Date: 2020-01-02 15:19+0100\n"
 "Last-Translator: Albano Battistella\n"
 "Language-Team: ItalianLanguage: it\n"
 "Language: \n"
@@ -29,13 +29,13 @@ msgstr "Componente aggiuntivo per più monitor"
 
 #: mmoverview.js:642
 msgid "Overview"
-msgstr ""
+msgstr "Panoramica"
 
 #. Translators: If there is no suitable word for "Activities"
 #. in your language, you can use the word for "Overview".
 #: mmpanel.js:333
 msgid "Activities"
-msgstr ""
+msgstr "Attività"
 
 #: mmpanel.js:414
 msgid "Top Bar"
@@ -59,7 +59,7 @@ msgstr "Mostra pulsante-attività su altri monitor."
 
 #: prefs.js:66
 msgid "Show AppMenu-Button on additional monitors."
-msgstr "Visualizza il pulsante del menu Applicazioni sui monitor secondari"
+msgstr "Visualizza il pulsante del menu Applicazioni sui monitor secondari."
 
 #: prefs.js:67
 msgid "Show DateTime-Button on additional monitors."
@@ -67,11 +67,11 @@ msgstr "Mostra il pulsante Data-Ora sui monitor secondari."
 
 #: prefs.js:68
 msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr "Visualizza gli spazi di lavoro a sinistra per i monitor secondari"
+msgstr "Visualizza gli spazi di lavoro a sinistra per i monitor secondari."
 
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
-msgstr "Un elenco di indicatori per il trasferimento a monitor secondari "
+msgstr "Un elenco di indicatori per il trasferimento a monitor secondari."
 
 #: prefs.js:124
 msgid "Select indicator"
