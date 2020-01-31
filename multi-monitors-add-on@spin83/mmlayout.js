@@ -66,6 +66,8 @@ const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
 var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 	constructor() {
 		this._settings = Convenience.getSettings();
+		this._desktopSettings = Convenience.getSettings("org.gnome.desktop.interface");
+
 		Main.mmPanel = [];
 	
 		this._monitorIds = [];
@@ -98,6 +100,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 				this._layoutManager_updateHotCorners = Main.layoutManager._updateHotCorners;
 				
 				let enable_hot_corners = (Main.sessionMode.currentMode == 'ubuntu');
+				let that = this;
 				Main.layoutManager._updateHotCorners = function() {
 			        this.hotCorners.forEach((corner) => {
 			            if (corner)
@@ -106,10 +109,17 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 			        this.hotCorners = [];
 			        
 			        if (enable_hot_corners) {
-				        if (!global.settings.get_boolean('enable-hot-corners')) {
-				            this.emit('hot-corners-changed');
-				            return;
-				        }
+								try {
+									if (!global.settings.get_boolean('enable-hot-corners')) {
+											this.emit('hot-corners-changed');
+											return;
+									}
+								} catch (e) {
+									if (!that._desktopSettings.get_boolean('enable-hot-corners')) {
+										this.emit('hot-corners-changed');
+										return;
+									}
+								}
 			        }
 			        
 			        let size = this.panelBox.height;
@@ -129,8 +139,13 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 				
 				if (!this._changedEnableHotCornersId) {
 					if (enable_hot_corners) {
-						this._changedEnableHotCornersId = global.settings.connect('changed::enable-hot-corners',
-								Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
+						try {
+							this._changedEnableHotCornersId = global.settings.connect('changed::enable-hot-corners',
+									Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
+						} catch (e) {
+							this._changedEnableHotCornersId = this._desktopSettings.connect('changed::enable-hot-corners',
+									Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
+						}
 					}
 				}
 				
