@@ -336,8 +336,10 @@ var MultiMonitorsActivitiesButton = (() => {
 	
 	        this.label_actor = this._label;
 	
-	        this.connect('captured-event', this._onCapturedEvent.bind(this));
-	        this.connect_after('key-release-event', this._onKeyRelease.bind(this));
+	        if (MultiMonitors.gnomeShellVersion()[1]<36) {
+	            this.connect('captured-event', this._onCapturedEvent.bind(this));
+	            this.connect_after('key-release-event', this._onKeyRelease.bind(this));
+            }
 	
 	        this._showingId = Main.overview.connect('showing', () => {
 	            this.add_style_pseudo_class('overview');
@@ -394,14 +396,21 @@ var MultiMonitorsPanel = (() => {
 			this.add_child(this._rightBox);
 			
 			this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
-			this.add_child(this._leftCorner.actor);
+			if (MultiMonitors.gnomeShellVersion()[1]<36)
+				this.add_child(this._leftCorner.actor);
+			else
+				this.add_child(this._leftCorner); 
 			
 			this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
-			this.add_child(this._rightCorner.actor);
-			
-			this.connect('button-press-event', this._onButtonPress.bind(this));
-			this.connect('touch-event', this._onButtonPress.bind(this));
-			this.connect('key-press-event', this._onKeyPress.bind(this));
+			if (MultiMonitors.gnomeShellVersion()[1]<36) {
+				this.add_child(this._rightCorner.actor);
+				
+				this.connect('button-press-event', this._onButtonPress.bind(this));
+				this.connect('touch-event', this._onButtonPress.bind(this));
+				this.connect('key-press-event', this._onKeyPress.bind(this));
+			}
+			else
+				this.add_child(this._rightCorner);
 			
 			this._showingId = Main.overview.connect('showing', () => {
 			  this.add_style_pseudo_class('overview');

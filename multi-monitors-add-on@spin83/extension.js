@@ -119,17 +119,33 @@ const MultiMonitorsAddOn = new Lang.Class({
 			if (workspacesDisplay._restackedNotifyId === undefined) {
 				workspacesDisplay._restackedNotifyId = 0;
 			}
-			workspacesDisplay.hide();
-			workspacesDisplay.actor._delegate = null;
-			workspacesDisplay.actor.destroy();
-			Main.overview.viewSelector._workspacesPage.hide();
-			Main.overview.viewSelector._workspacesPage.destroy();
-			workspacesDisplay.actor = null;
-			
-			workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay();
-			Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
-			Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
-	                                             _("Windows"), 'focus-windows-symbolic');
+			if (gnomeShellVersion()[1]<36) {
+				workspacesDisplay.hide();
+				workspacesDisplay.actor._delegate = null;
+				workspacesDisplay.actor.destroy();
+				Main.overview.viewSelector._workspacesPage.hide();
+				Main.overview.viewSelector._workspacesPage.destroy();
+				workspacesDisplay.actor = null;
+				
+				workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay34();
+				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+				Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
+		                                             _("Windows"), 'focus-windows-symbolic');
+			}
+			else {
+				workspacesDisplay.hide();
+				workspacesDisplay.destroy();
+				//workspacesDisplay._swipeTracker = null;
+				Main.overview.viewSelector._workspacesDisplay = null;
+				Main.overview.viewSelector._workspacesPage.hide();
+				Main.overview.viewSelector._workspacesPage.destroy();
+				
+				let workspaceAdjustment = Main.overview._overview._controls._workspaceAdjustment;
+				workspacesDisplay = new MMOverview.MultiMonitorsWorkspacesDisplay(workspaceAdjustment);
+				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+				Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay,
+		                                             _("Windows"), 'focus-windows-symbolic');
+			}
 			if (Main.overview.visible) {
 				Main.overview._controls._updateWorkspacesGeometry();
 				Main.overview.viewSelector._workspacesPage.show();
@@ -145,18 +161,35 @@ const MultiMonitorsAddOn = new Lang.Class({
 		if (Main.mmOverview) {
 			
 			if (!Main.overview.visible) {
-				let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
-				workspacesDisplay.hide();
-				workspacesDisplay.actor._delegate = null;
-				workspacesDisplay.actor.destroy();
-				Main.overview.viewSelector._workspacesPage.hide();
-				Main.overview.viewSelector._workspacesPage.destroy();
-				workspacesDisplay.actor = null;
-				
-				workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
-				Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
-				Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
-		                                             _("Windows"), 'focus-windows-symbolic');
+				if (gnomeShellVersion()[1]<36) {
+					let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
+					workspacesDisplay.hide();
+					workspacesDisplay.actor.destroy();
+					//workspacesDisplay.actor._delegate = null;
+					Main.overview.viewSelector._workspacesDisplay = null;
+					Main.overview.viewSelector._workspacesPage.hide();
+					Main.overview.viewSelector._workspacesPage.destroy();
+					workspacesDisplay.actor = null;
+					
+					workspacesDisplay = new WorkspacesView.WorkspacesDisplay34();
+					Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+					Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
+			                                             _("Windows"), 'focus-windows-symbolic');
+				}
+				else {
+					let workspacesDisplay = Main.overview.viewSelector._workspacesDisplay;
+					workspacesDisplay.hide();
+					workspacesDisplay._swipeTracker = null;
+					workspacesDisplay.destroy();
+					Main.overview.viewSelector._workspacesPage.hide();
+					Main.overview.viewSelector._workspacesPage.destroy();
+					
+					let workspaceAdjustment = Main.overview._overview._controls._workspaceAdjustment;
+					workspacesDisplay = new WorkspacesView.WorkspacesDisplay(workspaceAdjustment);
+					Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
+					Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay,
+			                                             _("Windows"), 'focus-windows-symbolic');
+				}
 			}
 			
 			for (let i = 0; i < Main.mmOverview.length; i++) {
@@ -240,9 +273,10 @@ let version = null;
 
 function init(extensionMeta) {
 	Convenience.initTranslations();
-    let theme = imports.gi.Gtk.IconTheme.get_default();
-    theme.append_search_path(extensionMeta.path + "/icons");
-    
+	if (gnomeShellVersion()[1]<36) {
+        let theme = imports.gi.Gtk.IconTheme.get_default();
+        theme.append_search_path(extensionMeta.path + "/icons");
+    }
     // fix bug in panel: Destroy function many time added to this same indicator.
     Main.panel._ensureIndicator = function(role) {
         let indicator = this.statusArea[role];
