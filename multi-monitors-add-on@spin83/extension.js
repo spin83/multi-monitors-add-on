@@ -240,8 +240,13 @@ let version = null;
 
 function init(extensionMeta) {
 	Convenience.initTranslations();
-    let theme = imports.gi.Gtk.IconTheme.get_default();
-    theme.append_search_path(extensionMeta.path + "/icons");
+    if (gnomeShellVersion()[1]<36) {
+        let theme = imports.gi.Gtk.IconTheme.get_default();
+        theme.append_search_path(extensionMeta.path + "/icons");
+    } else {
+        let theme = new imports.gi.Gtk.IconTheme();
+        theme.append_search_path(extensionMeta.path + "/icons");
+    }
     
     // fix bug in panel: Destroy function many time added to this same indicator.
     Main.panel._ensureIndicator = function(role) {
