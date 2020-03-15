@@ -29,6 +29,7 @@ const ViewSelector = imports.ui.viewSelector;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
 const WorkspacesView = imports.ui.workspacesView;
+const SwipeTracker = imports.ui.swipeTracker;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const CE = ExtensionUtils.getCurrentExtension();
@@ -925,7 +926,7 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        this._primaryIndex = Main.layoutManager.primaryIndex;
 	        this._workspacesViews = [];
 	
-	        this._settings = new Gio.Settings({ schema_id: MUTTER_SCHEMA });
+	        this._settings = new Gio.Settings({ schema_id: WorkspacesView.MUTTER_SCHEMA });
 	        this._settings.connect('changed::workspaces-only-on-primary',
 	                               this._workspacesOnlyOnPrimaryChanged.bind(this));
 	        this._workspacesOnlyOnPrimaryChanged();
