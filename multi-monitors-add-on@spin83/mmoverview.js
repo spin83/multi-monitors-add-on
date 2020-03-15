@@ -225,7 +225,7 @@ const MultiMonitorsThumbnailsBox = (() => {
 			{
 		        this._scrollAdjustment = scrollAdjustment;
 		
-		        this._scrollAdjustment.connect('notify::value', adj => {
+		        this._scrollAdjustmentNotifyValueId = this._scrollAdjustment.connect('notify::value', adj => {
 		            let workspaceManager = global.workspace_manager;
 		            let activeIndex = workspaceManager.get_active_workspace_index();
 		
@@ -243,6 +243,8 @@ const MultiMonitorsThumbnailsBox = (() => {
 	
 	    _onDestroy() {
 	        this._destroyThumbnails();
+			if (MultiMonitors.gnomeShellVersion()[1]>=36)
+				this._scrollAdjustment.disconnect(this._scrollAdjustmentNotifyValueId);
 	
 			Main.overview.disconnect(this._showingId);
 			Main.overview.disconnect(this._hiddenId);
