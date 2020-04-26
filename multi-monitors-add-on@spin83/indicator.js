@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, visit https://www.gnu.org/licenses/.
 */
 
-const { St, Gio, GObject } = imports.gi;
+const { St, Gio, GLib, GObject } = imports.gi;
 
 const Util = imports.misc.util;
 
@@ -26,6 +26,7 @@ const PanelMenu = imports.ui.panelMenu;
 const Gettext = imports.gettext.domain('multi-monitors-add-on');
 const _ = Gettext.gettext;
 const CE = imports.misc.extensionUtils.getCurrentExtension();
+const MultiMonitors = CE.imports.extension;
 const Convenience = CE.imports.convenience;
 const extensionPath = CE.path;
 
@@ -40,7 +41,12 @@ var MultiMonitorsIndicator = (() => {
 	
 			this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
 			this._mmStatusIcon.hide();
-			this.add_child(this._mmStatusIcon);
+			if (MultiMonitors.gnomeShellVersion()[1]<36) {
+				this.actor.add_child(this._mmStatusIcon);
+			}
+			else {
+				this.add_child(this._mmStatusIcon);
+			}
 			this._leftRightIcon = true;
 	
 			this.menu.addAction(_("Preferences"), this._onPreferences.bind(this));
@@ -97,7 +103,32 @@ var MultiMonitorsIndicator = (() => {
 		
 		_onPreferences()
 		{
-			Util.spawn(["gnome-shell-extension-prefs", "multi-monitors-add-on@spin83"]);
+			if (MultiMonitors.gnomeShellVersion()[1]<36) {
+				Util.spawn(["gnome-shell-extension-prefs", "multi-monitors-add-on@spin83"]);
+			}
+			else
+			{
+				const uuid = "multi-monitors-add-on@spin83";
+
+				Gio.DBus.session.call(
+					'org.gnome.Shell.Extensions',
+					'/org/gnome/Shell/Extensions',
+					'org.gnome.Shell.Extensions',
+					'OpenExtensionPrefs',
+					new GLib.Variant('(ssa{sv})', [uuid, '', {}]),
+					null,
+					Gio.DBusCallFlags.NONE,
+					-1,
+					null);
+				/*
+				try {
+					const extensionManager = imports.ui.main.extensionManager;
+					extensionManager.openExtensionPrefs(uuid, '', {});
+				} catch (e) {
+					Util.spawn(["gnome-shell-extension-prefs", uuid]);
+				}
+				*/
+			}
 		}
 		
 		_onInit2ndMonitor()
