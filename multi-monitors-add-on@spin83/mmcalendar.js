@@ -36,7 +36,7 @@ var MultiMonitorsCalendar = (() => {
 	        this._weekStart = Shell.util_get_week_start();
 	        this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
 	
-	        this._settings.connect('changed::%s'.format(Calendar.SHOW_WEEKDATE_KEY), this._onSettingsChange.bind(this));
+	        this._showWeekdateKeyId = this._settings.connect('changed::%s'.format(Calendar.SHOW_WEEKDATE_KEY), this._onSettingsChange.bind(this));
 	        this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
 	
 	        this._headerFormatWithoutYear = _('%OB');
@@ -54,6 +54,7 @@ var MultiMonitorsCalendar = (() => {
 	        });
 	
 	        this._buildHeader();
+			this.connect('destroy', this._onDestroy.bind(this));
 	    }
 	    
 	    _onDestroy() {
@@ -120,8 +121,8 @@ var MultiMonitorsEventsSection = (() => {
 	        this._title.connect('clicked', this._onTitleClicked.bind(this));
 	        this._title.connect('key-focus-in', this._onKeyFocusIn.bind(this));
 	
-			this._defaultAppSystem = Shell.AppSystem.get_default();
-	        this._appInstalledChangedId = this._defaultAppSystem.connect('installed-changed',
+			this._appSys = Shell.AppSystem.get_default();
+	        this._appInstalledChangedId = this._appSys.connect('installed-changed',
 	                                              this._appInstalledChanged.bind(this));
 
 			this.connect('destroy', this._onDestroy.bind(this));
@@ -130,7 +131,7 @@ var MultiMonitorsEventsSection = (() => {
 
 	    _onDestroy() {
 	    	this._desktopSettings.disconnect(this._reloadEventsId);
-	    	this._defaultAppSystem.disconnect(this._appInstalledChangedId);
+	    	this._appSys.disconnect(this._appInstalledChangedId);
 	    }
 	};
 	MultiMonitors.copyClass(Calendar.EventsSection, MultiMonitorsEventsSection);
@@ -255,17 +256,22 @@ var MultiMonitorsCalendarMessageList = (() => {
 	        let hbox = new St.BoxLayout({ style_class: 'message-list-controls' });
 	        box.add_child(hbox);
 	
-	        hbox.add_child(new St.Label({
+	        const dndLabel = new St.Label({
 	            text: _('Do Not Disturb'),
 	            y_align: Clutter.ActorAlign.CENTER,
-	        }));
+	        });
+	        hbox.add_child(dndLabel);
 	
 	        this._dndSwitch = new Calendar.DoNotDisturbSwitch();
 	        this._dndButton = new St.Button({
 	            can_focus: true,
+	            toggle_mode: true,
 	            child: this._dndSwitch,
+	            label_actor: dndLabel,
 	        });
-	        this._dndButton.connect('clicked', () => this._dndSwitch.toggle());
+	        this._dndButton.bind_property('checked',
+	            this._dndSwitch, 'state',
+	            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE);
 	        hbox.add_child(this._dndButton);
 	
 	        this._clearButton = new St.Button({
@@ -303,8 +309,7 @@ var MultiMonitorsCalendarMessageList = (() => {
 			this.connect('destroy', this._onDestroy.bind(this));
 	    }
 
-	    _onDestroy(actor) {
-	    	this._destroyed = true;
+	    _onDestroy() {
 	    	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
 	    	this._sessionModeUpdatedId = 0;
 	    }
