@@ -879,6 +879,196 @@ var MultiMonitorsOverview = class MultiMonitorsOverview {
 	}
 };
 
+var MultiMonitorsTouchpadSwipeGesture = (() => {
+	let MultiMonitorsTouchpadSwipeGesture = class MultiMonitorsTouchpadSwipeGesture extends GObject.Object {
+	    _init(allowedModes) {
+	        super._init();
+	        this._allowedModes = allowedModes;
+	        this._touchpadSettings = new Gio.Settings({
+	            schema_id: 'org.gnome.desktop.peripherals.touchpad',
+	        });
+	        this._orientation = Clutter.Orientation.VERTICAL;
+	        this._enabled = true;
+	
+	        this._capturedEventTouchpad = global.stage.connect('captured-event::touchpad', this._handleEvent.bind(this));
+	    }
+
+		destroy() {
+			if (this._capturedEventTouchpad) {
+				global.stage.disconnect(this._capturedEventTouchpad);
+				this._capturedEventTouchpad = null;
+			}
+			this.run_dispose();
+		}
+	};
+	MultiMonitors.copyClass(SwipeTracker.TouchpadSwipeGesture, MultiMonitorsTouchpadSwipeGesture);
+	return GObject.registerClass({
+		Properties: {
+	        'enabled': GObject.ParamSpec.boolean(
+	            'enabled', 'enabled', 'enabled',
+	            GObject.ParamFlags.READWRITE,
+	            true),
+	        'orientation': GObject.ParamSpec.enum(
+	            'orientation', 'orientation', 'orientation',
+	            GObject.ParamFlags.READWRITE,
+	            Clutter.Orientation, Clutter.Orientation.VERTICAL),
+	    },
+	    Signals: {
+	        'begin':  { param_types: [GObject.TYPE_UINT, GObject.TYPE_DOUBLE, GObject.TYPE_DOUBLE] },
+	        'update': { param_types: [GObject.TYPE_UINT, GObject.TYPE_DOUBLE] },
+	        'end':    { param_types: [GObject.TYPE_UINT] },
+	    }}, MultiMonitorsTouchpadSwipeGesture);
+})();
+
+var MultiMonitorsTouchSwipeGesture = (() => {
+	let MultiMonitorsTouchSwipeGesture = class MultiMonitorsTouchSwipeGesture extends Clutter.GestureAction {
+    _init(allowedModes, nTouchPoints, thresholdTriggerEdge) {
+        super._init();
+        this.set_n_touch_points(nTouchPoints);
+        this.set_threshold_trigger_edge(thresholdTriggerEdge);
+
+        this._allowedModes = allowedModes;
+        this._distance = global.screen_height;
+        this._orientation = Clutter.Orientation.VERTICAL;
+
+        this._grabOpBeginId = global.display.connect('grab-op-begin', () => {
+            this.cancel();
+        });
+
+        this._lastPosition = 0;
+	    }
+
+		destroy() {
+			if (this._grabOpBeginId) {
+				this.cancel();
+				global.display.disconnect(this._grabOpBeginId);
+				this._grabOpBeginId = null;
+			}
+			this.run_dispose();
+		}
+	};
+	MultiMonitors.copyClass(SwipeTracker.TouchSwipeGesture, MultiMonitorsTouchSwipeGesture);
+	return GObject.registerClass({
+		Properties: {
+	        'distance': GObject.ParamSpec.double(
+	            'distance', 'distance', 'distance',
+	            GObject.ParamFlags.READWRITE,
+	            0, Infinity, 0),
+	        'orientation': GObject.ParamSpec.enum(
+	            'orientation', 'orientation', 'orientation',
+	            GObject.ParamFlags.READWRITE,
+	            Clutter.Orientation, Clutter.Orientation.VERTICAL),
+	    },
+	    Signals: {
+	        'begin':  { param_types: [GObject.TYPE_UINT, GObject.TYPE_DOUBLE, GObject.TYPE_DOUBLE] },
+	        'update': { param_types: [GObject.TYPE_UINT, GObject.TYPE_DOUBLE] },
+	        'end':    { param_types: [GObject.TYPE_UINT] },
+	        'cancel': { param_types: [GObject.TYPE_UINT] },
+	    }}, MultiMonitorsTouchSwipeGesture);
+})();
+
+var MultiMonitorsSwipeTracker = (() => {
+	let MultiMonitorsSwipeTracker = class MultiMonitorsSwipeTracker extends GObject.Object {
+	    _init(actor, allowedModes, params) {
+	        super._init();
+	        params = Params.parse(params, { allowDrag: true, allowScroll: true });
+	
+	        this._allowedModes = allowedModes;
+	        this._enabled = true;
+	        this._orientation = Clutter.Orientation.VERTICAL;
+	        this._distance = global.screen_height;
+	
+	        this._reset();
+	
+	        this._touchpadGesture = new MultiMonitorsTouchpadSwipeGesture(allowedModes);
+	        this._touchpadGesture.connect('begin', this._beginGesture.bind(this));
+	        this._touchpadGesture.connect('update', this._updateGesture.bind(this));
+	        this._touchpadGesture.connect('end', this._endGesture.bind(this));
+	        this.bind_property('enabled', this._touchpadGesture, 'enabled', 0);
+	        this.bind_property('orientation', this._touchpadGesture, 'orientation', 0);
+	
+	        this._touchGesture = new MultiMonitorsTouchSwipeGesture(allowedModes, 4,
+	            Clutter.GestureTriggerEdge.NONE);
+	        this._touchGesture.connect('begin', this._beginTouchSwipe.bind(this));
+	        this._touchGesture.connect('update', this._updateGesture.bind(this));
+	        this._touchGesture.connect('end', this._endGesture.bind(this));
+	        this._touchGesture.connect('cancel', this._cancelGesture.bind(this));
+	        this.bind_property('enabled', this._touchGesture, 'enabled', 0);
+	        this.bind_property('orientation', this._touchGesture, 'orientation', 0);
+	        this.bind_property('distance', this._touchGesture, 'distance', 0);
+	        global.stage.add_action(this._touchGesture);
+	
+	        if (params.allowDrag) {
+	            this._dragGesture = new MultiMonitorsTouchSwipeGesture(allowedModes, 1,
+	                Clutter.GestureTriggerEdge.AFTER);
+	            this._dragGesture.connect('begin', this._beginGesture.bind(this));
+	            this._dragGesture.connect('update', this._updateGesture.bind(this));
+	            this._dragGesture.connect('end', this._endGesture.bind(this));
+	            this._dragGesture.connect('cancel', this._cancelGesture.bind(this));
+	            this.bind_property('enabled', this._dragGesture, 'enabled', 0);
+	            this.bind_property('orientation', this._dragGesture, 'orientation', 0);
+	            this.bind_property('distance', this._dragGesture, 'distance', 0);
+	            actor.add_action(this._dragGesture);
+	        } else {
+	            this._dragGesture = null;
+	        }
+	
+	        if (params.allowScroll) {
+	            this._scrollGesture = new SwipeTracker.ScrollGesture(actor, allowedModes);
+	            this._scrollGesture.connect('begin', this._beginGesture.bind(this));
+	            this._scrollGesture.connect('update', this._updateGesture.bind(this));
+	            this._scrollGesture.connect('end', this._endGesture.bind(this));
+	            this.bind_property('enabled', this._scrollGesture, 'enabled', 0);
+	            this.bind_property('orientation', this._scrollGesture, 'orientation', 0);
+	        } else {
+	            this._scrollGesture = null;
+	        }
+	    }
+
+		destroy() {
+			this._reset();
+			if (this._touchpadGesture) {
+				this._touchpadGesture.destroy();
+				this._touchpadGesture = null;
+			}
+			if (this._touchGesture) {
+				this._touchGesture.destroy();
+				this._touchGesture = null;
+			}
+			if (this._dragGesture) {
+				this._dragGesture.destroy();
+				this._dragGesture = null;
+			}
+			if (this._scrollGesture) {
+				this._scrollGesture.run_dispose();
+				this._scrollGesture = null;
+			}
+			this.run_dispose();
+		}
+	};
+	MultiMonitors.copyClass(SwipeTracker.SwipeTracker, MultiMonitorsSwipeTracker);
+	return GObject.registerClass({
+		Properties: {
+	        'enabled': GObject.ParamSpec.boolean(
+            'enabled', 'enabled', 'enabled',
+	            GObject.ParamFlags.READWRITE,
+	            true),
+	        'orientation': GObject.ParamSpec.enum(
+	            'orientation', 'orientation', 'orientation',
+	            GObject.ParamFlags.READWRITE,
+	            Clutter.Orientation, Clutter.Orientation.VERTICAL),
+	        'distance': GObject.ParamSpec.double(
+	            'distance', 'distance', 'distance',
+	            GObject.ParamFlags.READWRITE,
+	            0, Infinity, 0),
+	    },
+	    Signals: {
+	        'begin':  { param_types: [GObject.TYPE_UINT] },
+	        'update': { param_types: [GObject.TYPE_DOUBLE] },
+	        'end':    { param_types: [GObject.TYPE_UINT64, GObject.TYPE_DOUBLE] },
+	    }}, MultiMonitorsSwipeTracker);
+})();
+
 var MultiMonitorsWorkspacesDisplay = (() => {
 	let MultiMonitorsWorkspacesDisplay = class MultiMonitorsWorkspacesDisplay extends St.Widget {
 	    _init(scrollAdjustment) {
@@ -911,13 +1101,13 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        this.bind_property('mapped', clickAction, 'enabled', GObject.BindingFlags.SYNC_CREATE);
 	        this._clickAction = clickAction;
 	
-	        this._swipeTracker = new SwipeTracker.SwipeTracker(
+	        this._swipeTracker = new MultiMonitorsSwipeTracker(
 	            Main.layoutManager.overviewGroup, Shell.ActionMode.OVERVIEW);
 	        this._swipeTrackerBeginId = this._swipeTracker.connect('begin', this._switchWorkspaceBegin.bind(this));
 	        this._swipeTrackerUpdateId = this._swipeTracker.connect('update', this._switchWorkspaceUpdate.bind(this));
 	        this._swipeTrackerEndId = this._swipeTracker.connect('end', this._switchWorkspaceEnd.bind(this));
 	        this.connect('notify::mapped', this._updateSwipeTracker.bind(this));
-	
+
 	        this._windowDragBeginId =
 	            Main.overview.connect('window-drag-begin',
 	                this._windowDragBegin.bind(this));
@@ -945,11 +1135,15 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        this._gestureActive = false; // touch(pad) gestures
 	        this._canScroll = true; // limiting scrolling speed
 	
-	        this.connect('destroy', this._onDestroy.bind(this));
+			this.connect('destroy', this._onDestroyMM.bind(this));
 	    }
 
 		_onDestroyMM() {
-			
+			this._onDestroy();
+			if (this._swipeTracker) {
+				this._swipeTracker.destroy();
+				this._swipeTracker = null;
+			}
 		}
 		
 	    _workspacesOnlyOnPrimaryChanged() {
