@@ -444,7 +444,55 @@ var MultiMonitorsPanel = (() => {
 	        
 	        this.connect('destroy', this._onDestroy.bind(this));
 		}
-	    
+
+		_tryDragWindow(event) {
+			if (Main.modalCount > 0)
+				return Clutter.EVENT_PROPAGATE;
+
+			if (event.source != this)
+				return Clutter.EVENT_PROPAGATE;
+
+			let { x, y } = event;
+			let dragWindow = this._getDraggableWindowForPosition(x);
+
+			if (!dragWindow)
+				return Clutter.EVENT_PROPAGATE;
+
+			return global.display.begin_grab_op(
+				dragWindow,
+				Meta.GrabOp.MOVING,
+				false, /* pointer grab */
+				true, /* frame action */
+				event.button || -1,
+				event.modifier_state,
+				event.time,
+				x, y) ? Clutter.EVENT_STOP : Clutter.EVENT_PROPAGATE;
+		}
+
+		vfunc_button_press_event(buttonEvent) {
+			if (buttonEvent.button != 1)
+				return Clutter.EVENT_PROPAGATE;
+
+			return this._tryDragWindow(buttonEvent);
+		}
+
+		vfunc_touch_event(touchEvent) {
+			if (touchEvent.type != Clutter.EventType.TOUCH_BEGIN)
+				return Clutter.EVENT_PROPAGATE;
+
+			return this._tryDragWindow(touchEvent);
+		}
+
+		vfunc_key_press_event(keyEvent) {
+			let symbol = keyEvent.keyval;
+			if (symbol == Clutter.KEY_Escape) {
+				global.display.focus_default_window(keyEvent.time);
+				return Clutter.EVENT_STOP;
+			}
+
+			return super.vfunc_key_press_event(keyEvent);
+		}
+
 	    _onDestroy() {
 			global.display.disconnect(this._workareasChangedId);
 		    Main.overview.disconnect(this._showingId);
@@ -547,7 +595,7 @@ var MultiMonitorsPanel = (() => {
 	        let allWindowsByStacking = global.display.sort_windows_by_stacking(
 	            workspace.list_windows()
 	        ).reverse();
-	
+
 	        return allWindowsByStacking.find(metaWindow => {
 	            let rect = metaWindow.get_frame_rect();
 	            return metaWindow.get_monitor() == this.monitorIndex &&
