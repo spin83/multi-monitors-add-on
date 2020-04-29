@@ -287,6 +287,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 		if (this.mmappMenu) {
 			this._changeMainPanelAppMenuButton(Panel.AppMenuButton);
 			this.mmappMenu = false;
+			Main.panel._updatePanel()
 		}		
 	}
 };
