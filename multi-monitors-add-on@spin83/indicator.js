@@ -41,7 +41,7 @@ var MultiMonitorsIndicator = (() => {
 	
 			this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
 			this._mmStatusIcon.hide();
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
+			if (MultiMonitors.gnomeShellVersion()[1]<34) {
 				this.actor.add_child(this._mmStatusIcon);
 			}
 			else {

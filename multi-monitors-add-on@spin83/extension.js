@@ -24,6 +24,9 @@ const Main = imports.ui.main;
 
 const WorkspacesView = imports.ui.workspacesView;
 
+const Config = imports.misc.config;
+const GNOME_SHELL_VERSION = Config.PACKAGE_VERSION.split('.');
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const MultiMonitors = ExtensionUtils.getCurrentExtension();
 const Convenience = MultiMonitors.imports.convenience;
@@ -32,15 +35,12 @@ const MMLayout = MultiMonitors.imports.mmlayout;
 const MMOverview = MultiMonitors.imports.mmoverview;
 const MMIndicator = MultiMonitors.imports.indicator;
 
-const Config = imports.misc.config;
-
 const OVERRIDE_SCHEMA = 'org.gnome.shell.overrides';
 const MUTTER_SCHEMA = 'org.gnome.mutter';
 const WORKSPACES_ONLY_ON_PRIMARY_ID = 'workspaces-only-on-primary';
 
 const SHOW_INDICATOR_ID = 'show-indicator';
 const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
-const GNOME_SHELL_VERSION = Config.PACKAGE_VERSION.split('.');
 
 function copyClass (s, d) {
 //	global.log(s.name +" > "+ d.name);
@@ -158,7 +158,7 @@ const MultiMonitorsAddOn = new Lang.Class({
 					Main.overview.viewSelector._workspacesPage.destroy();
 					workspacesDisplay.actor = null;
 					
-					workspacesDisplay = new WorkspacesView.WorkspacesDisplay34();
+					workspacesDisplay = new WorkspacesView.WorkspacesDisplay();
 					Main.overview.viewSelector._workspacesDisplay = workspacesDisplay;
 					Main.overview.viewSelector._workspacesPage = Main.overview.viewSelector._addPage(workspacesDisplay.actor,
 			                                             _("Windows"), 'focus-windows-symbolic');

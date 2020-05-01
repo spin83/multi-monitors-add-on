@@ -29,12 +29,16 @@ const ViewSelector = imports.ui.viewSelector;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
 const WorkspacesView = imports.ui.workspacesView;
-const SwipeTracker = imports.ui.swipeTracker;
+let SwipeTracker = null;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const CE = ExtensionUtils.getCurrentExtension();
 const MultiMonitors = CE.imports.extension;
 const Convenience = CE.imports.convenience;
+
+if (MultiMonitors.gnomeShellVersion()[1]>34) {
+	SwipeTracker = imports.ui.swipeTracker;
+}
 
 const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
 
@@ -880,6 +884,8 @@ var MultiMonitorsOverview = class MultiMonitorsOverview {
 };
 
 var MultiMonitorsTouchpadSwipeGesture = (() => {
+	if (MultiMonitors.gnomeShellVersion()[1]<36)
+		return null;
 	let MultiMonitorsTouchpadSwipeGesture = class MultiMonitorsTouchpadSwipeGesture extends GObject.Object {
 	    _init(allowedModes) {
 	        super._init();
@@ -921,6 +927,8 @@ var MultiMonitorsTouchpadSwipeGesture = (() => {
 })();
 
 var MultiMonitorsTouchSwipeGesture = (() => {
+	if (MultiMonitors.gnomeShellVersion()[1]<36)
+		return null;
 	let MultiMonitorsTouchSwipeGesture = class MultiMonitorsTouchSwipeGesture extends Clutter.GestureAction {
     _init(allowedModes, nTouchPoints, thresholdTriggerEdge) {
         super._init();
@@ -968,6 +976,8 @@ var MultiMonitorsTouchSwipeGesture = (() => {
 })();
 
 var MultiMonitorsSwipeTracker = (() => {
+	if (MultiMonitors.gnomeShellVersion()[1]<36)
+		return null;
 	let MultiMonitorsSwipeTracker = class MultiMonitorsSwipeTracker extends GObject.Object {
 	    _init(actor, allowedModes, params) {
 	        super._init();

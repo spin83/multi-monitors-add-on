@@ -102,6 +102,8 @@ Signals.addSignalMethods(MultiMonitorsCalendar34.prototype);
 MultiMonitors.copyClass(Calendar.Calendar, MultiMonitorsCalendar34);
 
 var MultiMonitorsEventsSection = (() => {
+	if (MultiMonitors.gnomeShellVersion()[1]<36)
+		return null;
 	let MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends MessageList.MessageListSection {
 	    _init() {
 	        super._init();
@@ -173,6 +175,8 @@ const MultiMonitorsEventsSection34 = class MultiMonitorsEventsSection34 extends 
 MultiMonitors.copyClass(Calendar.EventsSection, MultiMonitorsEventsSection34);
 
 var MultiMonitorsNotificationSection = (() => {
+	if (MultiMonitors.gnomeShellVersion()[1]<36)
+		return null;
 	let MultiMonitorsNotificationSection = class MultiMonitorsNotificationSection extends MessageList.MessageListSection {
 	    _init() {
 	        super._init();
