@@ -1139,7 +1139,6 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        this._keyPressEventId = 0;
 	        this._scrollTimeoutId = 0;
 	
-	        this._actualGeometry = null;
 	        this._fullGeometry = null;
 	        this._inWindowDrag = false;
 	
@@ -1208,7 +1207,7 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        this._gestureActive = true;
 	    }
 	    
-	    _syncWorkspacesFullGeometry() {
+	    _updateWorkspacesFullGeometry() {
 	        if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
 	            return;
 	
@@ -1229,15 +1228,21 @@ var MultiMonitorsWorkspacesDisplay = (() => {
 	        }
 	    }
 	    
-	    _syncWorkspacesActualGeometry() {
+	    _updateWorkspacesActualGeometry() {
 	        if (this._workspacesViews.length!=Main.layoutManager.monitors.length)
 	            return;
+	
+	        let [x, y] = this.get_transformed_position();
+	        let allocation = this.allocation;
+	        let width = allocation.x2 - allocation.x1;
+	        let height = allocation.y2 - allocation.y1;
+	        let primaryGeometry = { x: x, y: y, width: width, height: height };
 	
 	        let monitors = Main.layoutManager.monitors;
 	        for (let i = 0; i < monitors.length; i++) {
 	            let geometry;
 	            if (i == this._primaryIndex) {
-	            	geometry = this._actualGeometry;
+	            	geometry = primaryGeometry;
 	            }
 	            else if (Main.mmOverview && Main.mmOverview[i]) {
 	            	geometry = Main.mmOverview[i].getWorkspacesActualGeometry();
