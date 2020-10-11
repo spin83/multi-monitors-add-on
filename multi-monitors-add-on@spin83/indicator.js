@@ -18,9 +18,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 const { St, Gio, GLib, GObject } = imports.gi;
 
 const Util = imports.misc.util;
-
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
 const PanelMenu = imports.ui.panelMenu;
 
 const Gettext = imports.gettext.domain('multi-monitors-add-on');
@@ -34,23 +32,15 @@ var MultiMonitorsIndicator = (() => {
 	let MultiMonitorsIndicator = class MultiMonitorsIndicator extends PanelMenu.Button {
 		_init() {
 			super._init(0.0, "MultiMonitorsAddOn", false);
-			
+
 			Convenience.initTranslations();
-			
+
 			this.text = null;
-	
 			this._mmStatusIcon = new St.BoxLayout({ style_class: 'multimonitor-status-indicators-box' });
 			this._mmStatusIcon.hide();
-			if (MultiMonitors.gnomeShellVersion()[1]<34) {
-				this.actor.add_child(this._mmStatusIcon);
-			}
-			else {
-				this.add_child(this._mmStatusIcon);
-			}
+			this.add_child(this._mmStatusIcon);
 			this._leftRightIcon = true;
-	
 			this.menu.addAction(_("Preferences"), this._onPreferences.bind(this));
-			
 			this._viewMonitorsId = Main.layoutManager.connect('monitors-changed', this._viewMonitors.bind(this));
 			this._viewMonitors();
 		}
@@ -59,15 +49,15 @@ var MultiMonitorsIndicator = (() => {
 			Main.layoutManager.disconnect(this._viewMonitorsId);
 			super._onDestroy();
 		}
-		
+
 	    _syncIndicatorsVisible() {
 	        this._mmStatusIcon.visible = this._mmStatusIcon.get_children().some(a => a.visible);
 	    }
-	    
+
 	    _icon_name (icon, iconName) {
 	    	icon.set_gicon(Gio.icon_new_for_string(extensionPath+"/icons/"+iconName+".svg"));
 	    }
-		
+
 		_viewMonitors() {
 			let monitors = this._mmStatusIcon.get_children();
 		
@@ -100,66 +90,19 @@ var MultiMonitorsIndicator = (() => {
 				}
 			}
 		}
-		
-		_onPreferences()
-		{
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
-				Util.spawn(["gnome-shell-extension-prefs", "multi-monitors-add-on@spin83"]);
-			}
-			else
-			{
-				const uuid = "multi-monitors-add-on@spin83";
 
-				Gio.DBus.session.call(
-					'org.gnome.Shell.Extensions',
-					'/org/gnome/Shell/Extensions',
-					'org.gnome.Shell.Extensions',
-					'OpenExtensionPrefs',
-					new GLib.Variant('(ssa{sv})', [uuid, '', {}]),
-					null,
-					Gio.DBusCallFlags.NONE,
-					-1,
-					null);
-				/*
-				try {
-					const extensionManager = imports.ui.main.extensionManager;
-					extensionManager.openExtensionPrefs(uuid, '', {});
-				} catch (e) {
-					Util.spawn(["gnome-shell-extension-prefs", uuid]);
-				}
-				*/
-			}
-		}
-		
-		_onInit2ndMonitor()
-		{
-			Util.spawn(["intel-virtual-output"]);
-		}
-		
-		_hideHello() {
-		    Main.uiGroup.remove_actor(this.text);
-		    this.text = null;
-		}
-		
-		_showHello() {
-		    if (!this.text) {
-		        this.text = new St.Label({ style_class: 'helloworld-label', text: _("Multi Monitors Add-On") });
-		        Main.uiGroup.add_actor(this.text);
-		    }
-	
-		    this.text.opacity = 255;
-	
-		    let monitor = Main.layoutManager.primaryMonitor;
-	
-		    this.text.set_position(Math.floor(monitor.width / 2 - this.text.width / 2),
-		                      Math.floor(monitor.height / 2 - this.text.height / 2));
-	
-		    Tweener.addTween(this.text,
-		                     { opacity: 0,
-		                       time: 4,
-		                       transition: 'easeOutQuad',
-		                       onComplete: this._hideHello.bind(this) });
-	
+		_onPreferences() {
+			const uuid = "multi-monitors-add-on@spin83";
+			Gio.DBus.session.call(
+				'org.gnome.Shell.Extensions',
+				'/org/gnome/Shell/Extensions',
+				'org.gnome.Shell.Extensions',
+				'OpenExtensionPrefs',
+				new GLib.Variant('(ssa{sv})', [uuid, '', {}]),
+				null,
+				Gio.DBusCallFlags.NONE,
+				-1,
+				null);
 		}
 	};
 	return GObject.registerClass(MultiMonitorsIndicator);

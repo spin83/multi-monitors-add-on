@@ -17,7 +17,7 @@ along with this program; if not, visit https://www.gnu.org/licenses/.
 
 const Signals = imports.signals;
 
-const { St, Gio, Shell, Clutter, GnomeDesktop, GObject, GLib } = imports.gi;
+const { St, Gio, Shell, Clutter, GnomeDesktop, Pango, GObject, GLib } = imports.gi;
 
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
@@ -67,461 +67,288 @@ var MultiMonitorsCalendar = (() => {
 		}, MultiMonitorsCalendar);
 })();
 
-const MultiMonitorsCalendar34 = class MultiMonitorsCalendar34 {
-    constructor() {
-        this._weekStart = Shell.util_get_week_start();
-        this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.calendar' });
-
-        this._showWeekdateKeyId = this._settings.connect(`changed::${Calendar.SHOW_WEEKDATE_KEY}`, this._onSettingsChange.bind(this));
-        this._useWeekdate = this._settings.get_boolean(Calendar.SHOW_WEEKDATE_KEY);
-
-        this._headerFormatWithoutYear = _('%OB');
-        this._headerFormat = _('%OB %Y');
-
-        // Start off with the current date
-        this._selectedDate = new Date();
-
-        this._shouldDateGrabFocus = false;
-
-        this.actor = new St.Widget({ style_class: 'calendar',
-                                     layout_manager: new Clutter.TableLayout(),
-                                     reactive: true });
-
-        this.actor.connect('scroll-event', this._onScroll.bind(this));
-        
-        this.actor.connect('destroy', this._onDestroy.bind(this));
-
-        this._buildHeader ();
-    }
-    
-    _onDestroy(actor) {
-    	this._settings.disconnect(this._showWeekdateKeyId);
-    }
-};
-Signals.addSignalMethods(MultiMonitorsCalendar34.prototype);
-MultiMonitors.copyClass(Calendar.Calendar, MultiMonitorsCalendar34);
-
 var MultiMonitorsEventsSection = (() => {
-	if (MultiMonitors.gnomeShellVersion()[1]<36)
-		return null;
-	let MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends MessageList.MessageListSection {
-	    _init() {
-	        super._init();
-	
-	        this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-	        this._reloadEventsId = this._desktopSettings.connect('changed', this._reloadEvents.bind(this));
-	        this._eventSource = new Calendar.EmptyEventSource();
-	
-	        this._messageById = new Map();
-	
-	        this._title = new St.Button({ style_class: 'events-section-title',
-	                                      label: '',
-	                                      can_focus: true });
-	        this._title.child.x_align = Clutter.ActorAlign.START;
-	        this.insert_child_below(this._title, null);
-	
-	        this._title.connect('clicked', this._onTitleClicked.bind(this));
-	        this._title.connect('key-focus-in', this._onKeyFocusIn.bind(this));
-	
-			this._appSys = Shell.AppSystem.get_default();
-	        this._appInstalledChangedId = this._appSys.connect('installed-changed',
-	                                              this._appInstalledChanged.bind(this));
+    let MultiMonitorsEventsSection = class MultiMonitorsEventsSection extends St.Button {
+    _init() {
+        super._init({
+            style_class: 'events-button',
+            can_focus: true,
+            x_expand: true,
+            child: new St.BoxLayout({
+                style_class: 'events-box',
+                vertical: true,
+                x_expand: true,
+            }),
+        });
 
-			this.connect('destroy', this._onDestroy.bind(this));
-	        this._appInstalledChanged();
-	    }
+        this._startDate = null;
+        this._endDate = null;
 
-	    _onDestroy() {
-	    	this._desktopSettings.disconnect(this._reloadEventsId);
-	    	this._appSys.disconnect(this._appInstalledChangedId);
-	    }
-	};
-	MultiMonitors.copyClass(Calendar.EventsSection, MultiMonitorsEventsSection);
+        this._eventSource = null;
+        this._calendarApp = null;
+
+        this._title = new St.Label({
+            style_class: 'events-title',
+        });
+        this.child.add_child(this._title);
+
+        this._eventsList = new St.BoxLayout({
+            style_class: 'events-list',
+            vertical: true,
+            x_expand: true,
+        });
+        this.child.add_child(this._eventsList);
+
+        this._appSys = Shell.AppSystem.get_default();
+        this._appInstalledChangedId = this._appSys.connect('installed-changed',
+            this._appInstalledChanged.bind(this));
+        this._appInstalledChanged();
+
+        this.connect('destroy', this._onDestroy.bind(this));
+        this._appInstalledChanged();
+    }
+
+    _onDestroy() {
+        this._appSys.disconnect(this._appInstalledChangedId);
+    }};
+
+    MultiMonitors.copyClass(DateMenu.EventsSection, MultiMonitorsEventsSection);
 	return GObject.registerClass(MultiMonitorsEventsSection);
 })();
 
-const MultiMonitorsEventsSection34 = class MultiMonitorsEventsSection34 extends MessageList.MessageListSection {
-	constructor() {
-		super();
-
-        this._desktopSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-        this._reloadEventsId = this._desktopSettings.connect('changed', this._reloadEvents.bind(this));
-        this._eventSource = new Calendar.EmptyEventSource();
-        
-        this._messageById = new Map();
-
-        this._title = new St.Button({ style_class: 'events-section-title',
-                                      label: '',
-                                      x_align: St.Align.START,
-                                      can_focus: true });
-        this.actor.insert_child_below(this._title, null);
-
-        this._title.connect('clicked', this._onTitleClicked.bind(this));
-        this._title.connect('key-focus-in', this._onKeyFocusIn.bind(this));
-
-        this._defaultAppSystem = Shell.AppSystem.get_default(); 
-        this._appInstalledChangedId = this._defaultAppSystem.connect('installed-changed',
-                                              this._appInstalledChanged.bind(this));
-        
-        this.actor.connect('destroy', this._onDestroy.bind(this));
-        this._appInstalledChanged();
-    }
-    
-    _onDestroy(actor) {
-    	this._desktopSettings.disconnect(this._reloadEventsId);
-    	this._defaultAppSystem.disconnect(this._appInstalledChangedId);
-    }
-};
-MultiMonitors.copyClass(Calendar.EventsSection, MultiMonitorsEventsSection34);
-
 var MultiMonitorsNotificationSection = (() => {
-	if (MultiMonitors.gnomeShellVersion()[1]<36)
-		return null;
-	let MultiMonitorsNotificationSection = class MultiMonitorsNotificationSection extends MessageList.MessageListSection {
-	    _init() {
-	        super._init();
-	
-	        this._sources = new Map();
-	        this._nUrgent = 0;
-	
-	        this._sourceAddedId = Main.messageTray.connect('source-added', this._sourceAdded.bind(this));
-	        Main.messageTray.getSources().forEach(source => {
-	            this._sourceAdded(Main.messageTray, source);
-	        });
+    let MultiMonitorsNotificationSection = class MultiMonitorsNotificationSection extends MessageList.MessageListSection {
+    _init() {
+        super._init();
 
-			this.connect('destroy', this._onDestroy.bind(this));
-	    }
-
-	    _onDestroy() {
-	    	Main.messageTray.disconnect(this._sourceAddedId);
-	    	let source, obj;
-	    	for ([source, obj] of this._sources.entries()) {
-	    		this._onSourceDestroy(source, obj);
-	    	}
-	    }
-	};
-	MultiMonitors.copyClass(Calendar.NotificationSection, MultiMonitorsNotificationSection);
-	return GObject.registerClass(MultiMonitorsNotificationSection);
-})();
-
-const MultiMonitorsNotificationSection34 = class MultiMonitorsNotificationSectione34 extends MessageList.MessageListSection {
-    constructor() {
-    	super();
-
-    	this._sources = new Map();
+        this._sources = new Map();
         this._nUrgent = 0;
 
         this._sourceAddedId = Main.messageTray.connect('source-added', this._sourceAdded.bind(this));
-        Main.messageTray.getSources().forEach((source) => {
+        Main.messageTray.getSources().forEach(source => {
             this._sourceAdded(Main.messageTray, source);
         });
 
-        this.actor.connect('notify::mapped', this._onMapped.bind(this));
-        this.actor.connect('destroy', this._onDestroy.bind(this));
+        this.connect('destroy', this._onDestroy.bind(this));
     }
-    
-    _onDestroy(actor) {
-    	Main.messageTray.disconnect(this._sourceAddedId);
-    	let source, obj;
-    	for ([source, obj] of this._sources.entries()) {
-    		this._onSourceDestroy(source, obj);
-    	}
-    }
-};
-MultiMonitors.copyClass(Calendar.NotificationSection, MultiMonitorsNotificationSection34);
+
+    _onDestroy() {
+        Main.messageTray.disconnect(this._sourceAddedId);
+        let source, obj;
+        for ([source, obj] of this._sources.entries()) {
+            this._onSourceDestroy(source, obj);
+        }
+    }};
+
+    MultiMonitors.copyClass(Calendar.NotificationSection, MultiMonitorsNotificationSection);
+    return GObject.registerClass(MultiMonitorsNotificationSection);
+})();
 
 var MultiMonitorsCalendarMessageList = (() => {
 	let MultiMonitorsCalendarMessageList = class MultiMonitorsCalendarMessageList extends St.Widget {
-	    _init() {
-	        super._init({
-	            style_class: 'message-list',
-	            layout_manager: new Clutter.BinLayout(),
-	            x_expand: true,
-	            y_expand: true,
-	        });
+    _init() {
+        super._init({
+            style_class: 'message-list',
+            layout_manager: new Clutter.BinLayout(),
+            x_expand: true,
+            y_expand: true,
+        });
 
-			this._sessionModeUpdatedId = 0;
-	
-	        this._placeholder = new Calendar.Placeholder();
-	        this.add_actor(this._placeholder);
-	
-	        let box = new St.BoxLayout({ vertical: true,
-	                                     x_expand: true, y_expand: true });
-	        this.add_actor(box);
-	
-	        this._scrollView = new St.ScrollView({
-	            style_class: 'vfade',
-	            overlay_scrollbars: true,
-	            x_expand: true, y_expand: true,
-	        });
-	        this._scrollView.set_policy(St.PolicyType.NEVER, St.PolicyType.AUTOMATIC);
-	        box.add_actor(this._scrollView);
-	
-	        let hbox = new St.BoxLayout({ style_class: 'message-list-controls' });
-	        box.add_child(hbox);
-	
-	        const dndLabel = new St.Label({
-	            text: _('Do Not Disturb'),
-	            y_align: Clutter.ActorAlign.CENTER,
-	        });
-	        hbox.add_child(dndLabel);
-	
-	        this._dndSwitch = new Calendar.DoNotDisturbSwitch();
-	        this._dndButton = new St.Button({
-	            can_focus: true,
-	            toggle_mode: true,
-	            child: this._dndSwitch,
-	            label_actor: dndLabel,
-	        });
-	        this._dndButton.bind_property('checked',
-	            this._dndSwitch, 'state',
-	            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE);
-	        hbox.add_child(this._dndButton);
-	
-	        this._clearButton = new St.Button({
-	            style_class: 'message-list-clear-button button',
-	            label: _('Clear'),
-	            can_focus: true,
-	            x_expand: true,
-	            x_align: Clutter.ActorAlign.END,
-	        });
-	        this._clearButton.connect('clicked', () => {
-	            this._sectionList.get_children().forEach(s => s.clear());
-	        });
-	        hbox.add_actor(this._clearButton);
-	
-	        this._placeholder.bind_property('visible',
-	            this._clearButton, 'visible',
-	            GObject.BindingFlags.INVERT_BOOLEAN);
-	
-	        this._sectionList = new St.BoxLayout({ style_class: 'message-list-sections',
-	                                               vertical: true,
-	                                               x_expand: true,
-	                                               y_expand: true,
-	                                               y_align: Clutter.ActorAlign.START });
-	        this._sectionList.connect('actor-added', this._sync.bind(this));
-	        this._sectionList.connect('actor-removed', this._sync.bind(this));
-	        this._scrollView.add_actor(this._sectionList);
-	
-	        this._notificationSection = new MultiMonitorsNotificationSection();
-	        this._addSection(this._notificationSection);
-	
-	        this._eventsSection = new MultiMonitorsEventsSection();
-	        this._addSection(this._eventsSection);
-	
-	        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sync.bind(this));
-			this.connect('destroy', this._onDestroy.bind(this));
-	    }
-
-	    _onDestroy() {
-	    	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
-	    	this._sessionModeUpdatedId = 0;
-	    }
-	    
-	    _sync() {
-	    	if (this._sessionModeUpdatedId === 0) return;
-	    	Calendar.CalendarMessageList.prototype._sync.call(this);
-	    }
-	};
-	MultiMonitors.copyClass(Calendar.CalendarMessageList, MultiMonitorsCalendarMessageList);
-	return GObject.registerClass(MultiMonitorsCalendarMessageList);
-})();
-
-const MultiMonitorsCalendarMessageList34 = class MultiMonitorsCalendarMessageList34 {
-    constructor() {
-        this.actor = new St.Widget({ style_class: 'message-list',
-                                     layout_manager: new Clutter.BinLayout(),
-                                     x_expand: true, y_expand: true });
+        this._sessionModeUpdatedId = 0;
 
         this._placeholder = new Calendar.Placeholder();
-        this.actor.add_actor(this._placeholder.actor);
+        this.add_actor(this._placeholder);
 
         let box = new St.BoxLayout({ vertical: true,
                                      x_expand: true, y_expand: true });
-        this.actor.add_actor(box);
+        this.add_actor(box);
 
-        this._scrollView = new St.ScrollView({ style_class: 'vfade',
-                                               overlay_scrollbars: true,
-                                               x_expand: true, y_expand: true,
-                                               x_fill: true, y_fill: true });
+        this._scrollView = new St.ScrollView({
+            style_class: 'vfade',
+            overlay_scrollbars: true,
+            x_expand: true, y_expand: true,
+        });
         this._scrollView.set_policy(St.PolicyType.NEVER, St.PolicyType.AUTOMATIC);
         box.add_actor(this._scrollView);
 
-        this._clearButton = new St.Button({ style_class: 'message-list-clear-button button',
-                                            label: _("Clear"),
-                                            can_focus: true });
-        this._clearButton.set_x_align(Clutter.ActorAlign.END);
-        this._clearButton.connect('clicked', () => {
-            let sections = [...this._sections.keys()];
-            sections.forEach((s) => { s.clear(); });
+        let hbox = new St.BoxLayout({ style_class: 'message-list-controls' });
+        box.add_child(hbox);
+
+        const dndLabel = new St.Label({
+            text: _('Do Not Disturb'),
+            y_align: Clutter.ActorAlign.CENTER,
         });
-        box.add_actor(this._clearButton);
+        hbox.add_child(dndLabel);
+
+        this._dndSwitch = new Calendar.DoNotDisturbSwitch();
+        this._dndButton = new St.Button({
+            can_focus: true,
+            toggle_mode: true,
+            child: this._dndSwitch,
+            label_actor: dndLabel,
+        });
+
+        this._dndSwitch.bind_property('state',
+                this._dndButton, 'checked',
+                GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE);
+
+        hbox.add_child(this._dndButton);
+
+        this._clearButton = new St.Button({
+            style_class: 'message-list-clear-button button',
+            label: _('Clear'),
+            can_focus: true,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.END,
+        });
+        this._clearButton.connect('clicked', () => {
+            this._sectionList.get_children().forEach(s => s.clear());
+        });
+        hbox.add_actor(this._clearButton);
+
+        this._placeholder.bind_property('visible',
+            this._clearButton, 'visible',
+            GObject.BindingFlags.INVERT_BOOLEAN);
 
         this._sectionList = new St.BoxLayout({ style_class: 'message-list-sections',
                                                vertical: true,
+                                               x_expand: true,
                                                y_expand: true,
                                                y_align: Clutter.ActorAlign.START });
+        this._sectionList.connect('actor-added', this._sync.bind(this));
+        this._sectionList.connect('actor-removed', this._sync.bind(this));
         this._scrollView.add_actor(this._sectionList);
-        this._sections = new Map();
-        
-        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sync.bind(this));
 
-        this._notificationSection = new MultiMonitorsNotificationSection34();
+        this._notificationSection = new MultiMonitorsNotificationSection();
         this._addSection(this._notificationSection);
-        this._eventsSection = new MultiMonitorsEventsSection34();
-        this._addSection(this._eventsSection);
-        
-        this.actor.connect('destroy', this._onDestroy.bind(this));
+
+        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sync.bind(this));
+        this.connect('destroy', this._onDestroy.bind(this));
     }
-    
-    _onDestroy(actor) {
-    	this._destroyed = true;
-    	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
-    	this._sessionModeUpdatedId = 0;
+
+    _onDestroy() {
+        Main.sessionMode.disconnect(this._sessionModeUpdatedId);
+        this._sessionModeUpdatedId = 0;
     }
-    
+
     _sync() {
-    	if (this._sessionModeUpdatedId === 0) return;
-    	Calendar.CalendarMessageList.prototype._sync.call(this);
-    }
-};
-MultiMonitors.copyClass(Calendar.CalendarMessageList, MultiMonitorsCalendarMessageList34);
+        if (this._sessionModeUpdatedId === 0) return;
+        Calendar.CalendarMessageList.prototype._sync.call(this);
+    }};
+
+    MultiMonitors.copyClass(Calendar.CalendarMessageList, MultiMonitorsCalendarMessageList);
+    return GObject.registerClass(MultiMonitorsCalendarMessageList);
+})();
 
 var MultiMonitorsDateMenuButton  = (() => {
-	let MultiMonitorsDateMenuButton = class MultiMonitorsDateMenuButton extends PanelMenu.Button {
-	    _init() {
-	    	let hbox;
-	    	let vbox;
+    let MultiMonitorsDateMenuButton = class MultiMonitorsDateMenuButton extends PanelMenu.Button {
+    _init() {
+        let hbox;
+        let vbox;
+        let box;
+        super._init(0.5);
 
-			let box;
-	    	if (MultiMonitors.gnomeShellVersion()[1]<36) {
-		        let menuAlignment = 0.5;
-		        if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL)
-		            menuAlignment = 1.0 - menuAlignment;
-		        super._init(menuAlignment);
-		
-		        this._clockDisplay = new St.Label({ y_align: Clutter.ActorAlign.CENTER });
-		//        this._indicator = new DateMenu.MessagesIndicator();
-		
-		        box = new St.BoxLayout();
-		//        box.add_actor(new DateMenu.IndicatorPad(this._indicator.actor));
-		        box.add_actor(this._clockDisplay);
-		//        box.add_actor(this._indicator.actor);
-			}
-			else {
-		        super._init(0.5);
-		
-		        this._clockDisplay = new St.Label({ style_class: 'clock' });
-		        this._clockDisplay.clutter_text.y_align = Clutter.ActorAlign.CENTER;
-		
-		        this._indicator = new DateMenu.MessagesIndicator();
-		
-		        const indicatorPad = new St.Widget();
-		        this._indicator.bind_property('visible',
-		            indicatorPad, 'visible',
-		            GObject.BindingFlags.SYNC_CREATE);
-		        indicatorPad.add_constraint(new Clutter.BindConstraint({
-		            source: this._indicator,
-		            coordinate: Clutter.BindCoordinate.SIZE,
-		        }));
-		
-		        box = new St.BoxLayout({ style_class: 'clock-display-box' });
-		        box.add_actor(indicatorPad);
-		        box.add_actor(this._clockDisplay);
-		        box.add_actor(this._indicator);
-			}
-	
-	        this.label_actor = this._clockDisplay;
-	        this.add_actor(box);
-	        this.add_style_class_name('clock-display');
-	
-	        let layout = new DateMenu.FreezableBinLayout();
-	        let bin = new St.Widget({ layout_manager: layout });
-	
-	        // For some minimal compatibility with PopupMenuItem
-	        bin._delegate = this;
-	
-	        this.menu.box.add_child(bin);
-	
-	        hbox = new St.BoxLayout({ name: 'calendarArea' });
-	        bin.add_actor(hbox);
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
-	        	this._calendar = new MultiMonitorsCalendar34();
-		        this._calendar.connect('selected-date-changed',
-		                               (calendar, date) => {
-		                                   layout.frozen = !DateMenu._isToday(date);
-		                                   this._messageList.setDate(date);
-		                               });
-			}
-			else {
-				this._calendar = new MultiMonitorsCalendar();
-		        this._calendar.connect('selected-date-changed', (_calendar, datetime) => {
-		            let date = DateMenu._gDateTimeToDate(datetime);
-		            layout.frozen = !DateMenu._isToday(date);
-		            this._messageList.setDate(date);
-		        });
-			}
-	
-	        this.menu.connect('open-state-changed', (menu, isOpen) => {
-	            // Whenever the menu is opened, select today
-	            if (isOpen) {
-	                let now = new Date();
-	                this._calendar.setDate(now);
-	                this._date.setDate(now);
-	                this._messageList.setDate(now);
-	            }
-	        });
-	
-			
-	        // Fill up the first column
-			let calendar_actor;
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
-	        	this._messageList = new MultiMonitorsCalendarMessageList34();
-				hbox.add(this._messageList.actor, { expand: true, y_fill: false, y_align: St.Align.START });
-				calendar_actor = this._calendar.actor;
-			}
-			else {
-	        	this._messageList = new MultiMonitorsCalendarMessageList();
-				hbox.add_child(this._messageList);
-				calendar_actor = this._calendar;
-			}
-	
-	        // Fill up the second column
-	        let boxLayout = new DateMenu.CalendarColumnLayout(calendar_actor);
-	        vbox = new St.Widget({ style_class: 'datemenu-calendar-column',
-	                               layout_manager: boxLayout });
-	        boxLayout.hookup_style(vbox);
-	        hbox.add(vbox);
-	        
-	        this._date = new DateMenu.TodayButton(this._calendar);
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
-		        vbox.add_actor(this._date.actor);
-		
-		        vbox.add_actor(this._calendar.actor);
-			}
-			else {
-		        vbox.add_actor(this._date);
-		
-		        vbox.add_actor(this._calendar);
-			}
-	
-	        this._displaysSection = {};
-	
-	        this._clock = new GnomeDesktop.WallClock();
-	        this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
-        	this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', this._updateTimeZone.bind(this));
-	        
-	        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sessionUpdated.bind(this));
-	        
-	        this._sessionUpdated();
-	    }
-	    
-	    _onDestroy() {
-	    	Main.sessionMode.disconnect(this._sessionModeUpdatedId);
-        	this._clock.disconnect(this._clockNotifyTimezoneId);
-        	super._onDestroy();
-	    }
-	};
-	MultiMonitors.copyClass(DateMenu.DateMenuButton, MultiMonitorsDateMenuButton);
-	return GObject.registerClass(MultiMonitorsDateMenuButton);
+        this._clockDisplay = new St.Label({ style_class: 'clock' });
+        this._clockDisplay.clutter_text.y_align = Clutter.ActorAlign.CENTER;
+        this._clockDisplay.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+
+        this._indicator = new DateMenu.MessagesIndicator();
+
+        const indicatorPad = new St.Widget();
+        this._indicator.bind_property('visible',
+            indicatorPad, 'visible',
+            GObject.BindingFlags.SYNC_CREATE);
+        indicatorPad.add_constraint(new Clutter.BindConstraint({
+            source: this._indicator,
+            coordinate: Clutter.BindCoordinate.SIZE,
+        }));
+
+        box = new St.BoxLayout({ style_class: 'clock-display-box' });
+        box.add_actor(indicatorPad);
+        box.add_actor(this._clockDisplay);
+        box.add_actor(this._indicator);
+
+        this.label_actor = this._clockDisplay;
+        this.add_actor(box);
+        this.add_style_class_name('clock-display');
+
+        let layout = new DateMenu.FreezableBinLayout();
+        let bin = new St.Widget({ layout_manager: layout });
+
+        // For some minimal compatibility with PopupMenuItem
+        bin._delegate = this;
+
+        this.menu.box.add_child(bin);
+
+        hbox = new St.BoxLayout({ name: 'calendarArea' });
+        bin.add_actor(hbox);
+
+        this._calendar = new MultiMonitorsCalendar();
+        this._calendar.connect('selected-date-changed', (_calendar, datetime) => {
+            let date = DateMenu._gDateTimeToDate(datetime);
+            layout.frozen = !DateMenu._isToday(date);
+            this._eventsItem.setDate(date);
+        });
+
+        this.menu.connect('open-state-changed', (menu, isOpen) => {
+        // Whenever the menu is opened, select today
+            if (isOpen) {
+                let now = new Date();
+                this._calendar.setDate(now);
+                this._date.setDate(now);
+                this._eventsItem.setDate(now);
+            }
+        });
+
+        // Fill up the first column
+        this._messageList = new MultiMonitorsCalendarMessageList();
+        hbox.add_child(this._messageList);
+        let calendar_actor = this._calendar;
+
+        this._date = new DateMenu.TodayButton(this._calendar);
+        // Fill up the second column
+        let boxLayout = new DateMenu.CalendarColumnLayout([calendar_actor, this._date]);
+        vbox = new St.Widget({ style_class: 'datemenu-calendar-column',
+                               layout_manager: boxLayout });
+        boxLayout.hookup_style(vbox);
+        hbox.add(vbox);
+
+        vbox.add_actor(this._date);
+
+        vbox.add_actor(this._calendar);
+
+
+        this._displaysSection = {};
+
+        this._displaysSection = new St.ScrollView({ style_class: 'datemenu-displays-section vfade',
+                                                    x_expand: true,
+                                                    overlay_scrollbars: true });
+        this._displaysSection.set_policy(St.PolicyType.NEVER, St.PolicyType.EXTERNAL);
+
+        vbox.add_actor(this._displaysSection);
+        let displaysBox = new St.BoxLayout({ vertical: true,
+                                             x_expand: true,
+                                             style_class: 'datemenu-displays-box' });
+        this._displaysSection.add_actor(displaysBox);
+
+        this._eventsItem = new MultiMonitorsEventsSection();
+        displaysBox.add_child(this._eventsItem);
+
+        this._clock = new GnomeDesktop.WallClock();
+        this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
+        this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', this._updateTimeZone.bind(this));
+        
+        this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sessionUpdated.bind(this));
+        
+        this._sessionUpdated();
+    }
+
+    _onDestroy() {
+        Main.sessionMode.disconnect(this._sessionModeUpdatedId);
+        this._clock.disconnect(this._clockNotifyTimezoneId);
+        super._onDestroy();
+    }};
+
+    MultiMonitors.copyClass(DateMenu.DateMenuButton, MultiMonitorsDateMenuButton);
+    return GObject.registerClass(MultiMonitorsDateMenuButton);
 })();

@@ -37,38 +37,27 @@ const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 
 var StatusIndicatorsController = class StatusIndicatorsController  {
-	constructor() {
-		this._transfered_indicators = [];
-		this._settings = Convenience.getSettings();
-		
+    constructor() {
+        this._transfered_indicators = [];
+        this._settings = Convenience.getSettings();
+
         this._updatedSessionId = Main.sessionMode.connect('updated', this._updateSessionIndicators.bind(this));
         this._updateSessionIndicators();
-        if (MultiMonitors.gnomeShellVersion()[1]==32) {
-        	this._extensionStateChangedId = ExtensionSystem.connect('extension-state-changed', 
-        										this._extensionStateChanged.bind(this));
-        }
-        else { 
-        	this._extensionStateChangedId = Main.extensionManager.connect('extension-state-changed', 
-        										this._extensionStateChanged.bind(this));
-        }
+        this._extensionStateChangedId = Main.extensionManager.connect('extension-state-changed', 
+                                            this._extensionStateChanged.bind(this));
 
         this._transferIndicatorsId = this._settings.connect('changed::'+TRANSFER_INDICATORS_ID,
-																		this.transferIndicators.bind(this));
-	}
-	
-	destroy() {
-		this._settings.disconnect(this._transferIndicatorsId);
-		if (MultiMonitors.gnomeShellVersion()[1]==32) {
-			ExtensionSystem.disconnect(this._extensionStateChangedId);
-		}
-		else {
-			Main.extensionManager.disconnect(this._extensionStateChangedId);
-		}
-		Main.sessionMode.disconnect(this._updatedSessionId);
-		this._settings.set_strv(AVAILABLE_INDICATORS_ID, []);
-		this._transferBack(this._transfered_indicators);
-	}
-	
+                                                                        this.transferIndicators.bind(this));
+    }
+
+    destroy() {
+        this._settings.disconnect(this._transferIndicatorsId);
+        Main.extensionManager.disconnect(this._extensionStateChangedId);
+        Main.sessionMode.disconnect(this._updatedSessionId);
+        this._settings.set_strv(AVAILABLE_INDICATORS_ID, []);
+        this._transferBack(this._transfered_indicators);
+    }
+
 	transferBack(panel) {
 		let transfer_back = this._transfered_indicators.filter((element) => {
 			return element.monitor==panel.monitorIndex;
@@ -76,7 +65,7 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 		
 		this._transferBack(transfer_back, panel);
 	}
-	
+
 	transferIndicators() {
 		let boxs = ['_leftBox', '_centerBox', '_rightBox'];
     	let transfers = this._settings.get_value(TRANSFER_INDICATORS_ID).deep_unpack();
@@ -108,7 +97,7 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 			}
 		}
 	}
-	
+
 	_findPanel(monitor) {
 		for (let i = 0; i < Main.mmPanel.length; i++) {
 			if (Main.mmPanel[i].monitorIndex == monitor) {
@@ -117,7 +106,7 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 		}
 		return null;
 	}
-	
+
 	_transferBack(transfer_back, panel) {
     	transfer_back.forEach((element) => {
     		this._transfered_indicators.splice(this._transfered_indicators.indexOf(element));
@@ -137,12 +126,12 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
 			}
 		});
 	}
-    
+
 	_extensionStateChanged() {
 		this._findAvailableIndicators();
         this.transferIndicators();
 	}
-	
+
 	_updateSessionIndicators() {
         let session_indicators = [];
         session_indicators.push('MultiMonitorsAddOn');
@@ -158,7 +147,7 @@ var StatusIndicatorsController = class StatusIndicatorsController  {
         this._findAvailableIndicators();
         this.transferIndicators();
 	}
-	
+
     _findAvailableIndicators() {
 		let available_indicators = [];
 		let statusArea = Main.panel.statusArea;
@@ -321,46 +310,41 @@ var MultiMonitorsAppMenuButton  = (() => {
 })();
 
 var MultiMonitorsActivitiesButton = (() => {
-	let MultiMonitorsActivitiesButton = class MultiMonitorsActivitiesButton extends PanelMenu.Button {
-	_init() {
-	        super._init(0.0, null, true);
-	        this.accessible_role = Atk.Role.TOGGLE_BUTTON;
-	
-	        this.name = 'mmPanelActivities';
-	
-	        /* Translators: If there is no suitable word for "Activities"
-	           in your language, you can use the word for "Overview". */
-	        this._label = new St.Label({ text: _("Activities"),
-	                                     y_align: Clutter.ActorAlign.CENTER });
-	        this.add_actor(this._label);
-	
-	        this.label_actor = this._label;
-	
-	        if (MultiMonitors.gnomeShellVersion()[1]<36) {
-	            this.connect('captured-event', this._onCapturedEvent.bind(this));
-	            this.connect_after('key-release-event', this._onKeyRelease.bind(this));
-            }
-	
-	        this._showingId = Main.overview.connect('showing', () => {
-	            this.add_style_pseudo_class('overview');
-	            this.add_accessible_state (Atk.StateType.CHECKED);
-	        });
-	        this._hidingId = Main.overview.connect('hiding', () => {
-	            this.remove_style_pseudo_class('overview');
-	            this.remove_accessible_state (Atk.StateType.CHECKED);
-	        });
-	        
-	        this._xdndTimeOut = 0;
-	    }
-	    
-	    _onDestroy() {
-		    Main.overview.disconnect(this._showingId);
-		    Main.overview.disconnect(this._hidingId);
-		    super._onDestroy();
-	    }
-	}
-	MultiMonitors.copyClass(Panel.ActivitiesButton, MultiMonitorsActivitiesButton);
-	return GObject.registerClass(MultiMonitorsActivitiesButton);
+    let MultiMonitorsActivitiesButton = class MultiMonitorsActivitiesButton extends PanelMenu.Button {
+    _init() {
+            super._init(0.0, null, true);
+            this.accessible_role = Atk.Role.TOGGLE_BUTTON;
+
+            this.name = 'mmPanelActivities';
+
+            /* Translators: If there is no suitable word for "Activities"
+               in your language, you can use the word for "Overview". */
+            this._label = new St.Label({ text: _("Activities"),
+                                         y_align: Clutter.ActorAlign.CENTER });
+            this.add_actor(this._label);
+
+            this.label_actor = this._label;
+
+            this._showingId = Main.overview.connect('showing', () => {
+                this.add_style_pseudo_class('overview');
+                this.add_accessible_state (Atk.StateType.CHECKED);
+            });
+            this._hidingId = Main.overview.connect('hiding', () => {
+                this.remove_style_pseudo_class('overview');
+                this.remove_accessible_state (Atk.StateType.CHECKED);
+            });
+            
+            this._xdndTimeOut = 0;
+        }
+
+        _onDestroy() {
+            Main.overview.disconnect(this._showingId);
+            Main.overview.disconnect(this._hidingId);
+            super._onDestroy();
+        }
+    }
+    MultiMonitors.copyClass(Panel.ActivitiesButton, MultiMonitorsActivitiesButton);
+    return GObject.registerClass(MultiMonitorsActivitiesButton);
 })();
 
 const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
@@ -370,194 +354,173 @@ const MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS = {
 };
 
 var MultiMonitorsPanel = (() => {
-	let MultiMonitorsPanel = class MultiMonitorsPanel extends St.Widget {
-	    _init (monitorIndex, mmPanelBox) {
-	    	this.monitorIndex = monitorIndex;
+    let MultiMonitorsPanel = class MultiMonitorsPanel extends St.Widget {
+    _init(monitorIndex, mmPanelBox) {
+        super._init({ name: 'panel',
+                      reactive: true });
 
-	    	super._init({ name: 'panel',
-	            reactive: true });
-	
-			if (MultiMonitors.gnomeShellVersion()[1]==32) {
-				this.actor = this;
-			}
-			this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
-			
-			this._sessionStyle = null;
-			
-			this.statusArea = {};
-			
-			this.menuManager = new PopupMenu.PopupMenuManager(this);
-			
-			this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
-			this.add_child(this._leftBox);
-			this._centerBox = new St.BoxLayout({ name: 'panelCenter' });
-			this.add_child(this._centerBox);
-			this._rightBox = new St.BoxLayout({ name: 'panelRight' });
-			this.add_child(this._rightBox);
-			
-			this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
-			if (MultiMonitors.gnomeShellVersion()[1]<36)
-				this.add_child(this._leftCorner.actor);
-			else
-				this.add_child(this._leftCorner); 
-			
-			this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
-			if (MultiMonitors.gnomeShellVersion()[1]<36) {
-				this.add_child(this._rightCorner.actor);
-				
-				this.connect('button-press-event', this._onButtonPress.bind(this));
-				this.connect('touch-event', this._onButtonPress.bind(this));
-				this.connect('key-press-event', this._onKeyPress.bind(this));
-			}
-			else
-				this.add_child(this._rightCorner);
-			
-			this._showingId = Main.overview.connect('showing', () => {
-			  this.add_style_pseudo_class('overview');
-			});
-			this._hidingId = Main.overview.connect('hiding', () => {
-			  this.remove_style_pseudo_class('overview');
-			});
-			
-			mmPanelBox.panelBox.add(this);
-			Main.ctrlAltTabManager.addGroup(this, _("Top Bar"), 'focus-top-bar-symbolic',
-			                              { sortGroup: CtrlAltTab.SortGroup.TOP });
-			
-			this._updatedId = Main.sessionMode.connect('updated', this._updatePanel.bind(this));
-			
-			this._workareasChangedId = global.display.connect('workareas-changed', () => { this.queue_relayout(); });
-			
-			this._updatePanel();
-			
-	        this._settings = Convenience.getSettings();
-	        this._showActivitiesId = this._settings.connect('changed::'+SHOW_ACTIVITIES_ID,
-	        													this._showActivities.bind(this));
-	        this._showActivities();
+        this.monitorIndex = monitorIndex;
 
-	        this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
-																this._showAppMenu.bind(this));
-	        this._showAppMenu();
-	        
-	        this._showDateTimeId = this._settings.connect('changed::'+SHOW_DATE_TIME_ID,
-																this._showDateTime.bind(this));
-	        this._showDateTime();
-	        
-	        this.connect('destroy', this._onDestroy.bind(this));
-		}
-	    
-	    _onDestroy() {
-			global.display.disconnect(this._workareasChangedId);
-		    Main.overview.disconnect(this._showingId);
-		    Main.overview.disconnect(this._hidingId);
+        this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
 
-		    this._settings.disconnect(this._showActivitiesId);
-		    this._settings.disconnect(this._showAppMenuId);
-		    this._settings.disconnect(this._showDateTimeId);
-		    
-		    Main.ctrlAltTabManager.removeGroup(this);
-		    
-		    Main.sessionMode.disconnect(this._updatedId);
-	    }
-	    
-	    _showActivities() {
-	    	let name = 'activities';
-	    	if (this._settings.get_boolean(SHOW_ACTIVITIES_ID)) {
-	    		if (this.statusArea[name])
-	    			this.statusArea[name].visible = true;
-	    	}
-	    	else {
-	    		if (this.statusArea[name])
-	    			this.statusArea[name].visible = false;
-	    	}
-		}
-		
-		_showDateTime() {
-	    	let name = 'dateMenu';
-	    	if (this._settings.get_boolean(SHOW_DATE_TIME_ID)) {
-	    		if (this.statusArea[name])
-	    			this.statusArea[name].visible = true;
-	    	}
-	    	else {
-	    		if (this.statusArea[name])
-	    			this.statusArea[name].visible = false;
-	    	}
-		}
-		
-		_showAppMenu() {
-			let name = 'appMenu';
-	    	if (this._settings.get_boolean(SHOW_APP_MENU_ID)) {
-	    		if (!this.statusArea[name]) {
-	    			let indicator = new MultiMonitorsAppMenuButton(this);
-	    			this.statusArea[name] = indicator;
-	    			let box = this._leftBox;
-	    			this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
-	    		}
-	    	}
-	    	else {
-	    		if (this.statusArea[name]) {
-	    			let indicator = this.statusArea[name];
-	    			this.menuManager.removeMenu(indicator.menu);
-	    			indicator.destroy();
-	    			delete this.statusArea[name];
-	    		}
-	    	}
-		}
+        this._sessionStyle = null;
 
-	    vfunc_get_preferred_width(forHeight) {
-	    	if (Main.layoutManager.monitors.length>this.monitorIndex)
-	    		return [0, Main.layoutManager.monitors[this.monitorIndex].width];
-	    	
-	        return [0,  0];
-	    }
-	    
-	    _hideIndicators() {
-	        for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
-	            let indicator = this.statusArea[role];
-	            if (!indicator)
-	                continue;
-	            
-	            if (indicator.menu)
-	                indicator.menu.close();
-	            
-	            indicator.container.hide();
-	        }
-	    }
-	
-	    _ensureIndicator(role) {
-	        let indicator = this.statusArea[role];
-	        if (indicator) {
-	            indicator.container.show();
-	            return null;
-	        }
-	        else {
-	            let constructor = MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS[role];
-	            if (!constructor) {
-	                // This icon is not implemented (this is a bug)
-	                return null;
-	            }
-	            indicator = new constructor(this);
-	            this.statusArea[role] = indicator;
-	        }
-	        return indicator;
-	    }
+        this.statusArea = {};
 
-	    _getDraggableWindowForPosition(stageX) {
-	        let workspaceManager = global.workspace_manager;
-	        let workspace = workspaceManager.get_active_workspace();
-	        let allWindowsByStacking = global.display.sort_windows_by_stacking(
-	            workspace.list_windows()
-	        ).reverse();
-	
-	        return allWindowsByStacking.find(metaWindow => {
-	            let rect = metaWindow.get_frame_rect();
-	            return metaWindow.get_monitor() == this.monitorIndex &&
-	                   metaWindow.showing_on_its_workspace() &&
-	                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP &&
-	                   metaWindow.maximized_vertically &&
-	                   stageX > rect.x && stageX < rect.x + rect.width;
-	        });
-		}
-	};
-	MultiMonitors.copyClass(Panel.Panel, MultiMonitorsPanel);
-	return GObject.registerClass(MultiMonitorsPanel);
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+
+        this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
+        this.add_child(this._leftBox);
+        this._centerBox = new St.BoxLayout({ name: 'panelCenter' });
+        this.add_child(this._centerBox);
+        this._rightBox = new St.BoxLayout({ name: 'panelRight' });
+        this.add_child(this._rightBox);
+
+        this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
+        this.add_child(this._leftCorner);
+
+        this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
+        this.add_child(this._rightCorner);
+
+        this._showingId = Main.overview.connect('showing', () => {
+            this.add_style_pseudo_class('overview');
+        });
+        this._hidingId = Main.overview.connect('hiding', () => {
+            this.remove_style_pseudo_class('overview');
+        });
+
+        mmPanelBox.panelBox.add(this);
+        Main.ctrlAltTabManager.addGroup(this, _("Top Bar"), 'focus-top-bar-symbolic',
+                                        { sortGroup: CtrlAltTab.SortGroup.TOP });
+
+        this._updatedId = Main.sessionMode.connect('updated', this._updatePanel.bind(this));
+
+        this._workareasChangedId = global.display.connect('workareas-changed', () => this.queue_relayout());
+        this._updatePanel();
+
+        this._settings = Convenience.getSettings();
+        this._showActivitiesId = this._settings.connect('changed::'+SHOW_ACTIVITIES_ID,
+                                                            this._showActivities.bind(this));
+        this._showActivities();
+
+        this._showAppMenuId = this._settings.connect('changed::'+SHOW_APP_MENU_ID,
+                                                            this._showAppMenu.bind(this));
+        this._showAppMenu();
+
+        this._showDateTimeId = this._settings.connect('changed::'+SHOW_DATE_TIME_ID,
+                                                            this._showDateTime.bind(this));
+        this._showDateTime();
+
+        this.connect('destroy', this._onDestroy.bind(this));
+    }
+
+    _onDestroy() {
+        global.display.disconnect(this._workareasChangedId);
+        Main.overview.disconnect(this._showingId);
+        Main.overview.disconnect(this._hidingId);
+
+        this._settings.disconnect(this._showActivitiesId);
+        this._settings.disconnect(this._showAppMenuId);
+        this._settings.disconnect(this._showDateTimeId);
+
+        Main.ctrlAltTabManager.removeGroup(this);
+        Main.sessionMode.disconnect(this._updatedId);
+    }
+
+    _showActivities() {
+        let name = 'activities';
+        if (this._settings.get_boolean(SHOW_ACTIVITIES_ID)) {
+            if (this.statusArea[name])
+                this.statusArea[name].visible = true;
+        }
+        else {
+            if (this.statusArea[name])
+                this.statusArea[name].visible = false;
+        }
+    }
+
+    _showDateTime() {
+        let name = 'dateMenu';
+        if (this._settings.get_boolean(SHOW_DATE_TIME_ID)) {
+            if (this.statusArea[name])
+                this.statusArea[name].visible = true;
+        }
+        else {
+            if (this.statusArea[name])
+                this.statusArea[name].visible = false;
+        }
+    }
+
+    _showAppMenu() {
+        let name = 'appMenu';
+        if (this._settings.get_boolean(SHOW_APP_MENU_ID)) {
+            if (!this.statusArea[name]) {
+                let indicator = new MultiMonitorsAppMenuButton(this);
+                this.statusArea[name] = indicator;
+                let box = this._leftBox;
+                this._addToPanelBox(name, indicator, box.get_n_children()+1, box);
+            }
+        }
+        else {
+            if (this.statusArea[name]) {
+                let indicator = this.statusArea[name];
+                this.menuManager.removeMenu(indicator.menu);
+                indicator.destroy();
+                delete this.statusArea[name];
+            }
+        }
+    }
+
+    vfunc_get_preferred_width(forHeight) {
+        if (Main.layoutManager.monitors.length>this.monitorIndex)
+            return [0, Main.layoutManager.monitors[this.monitorIndex].width];
+        
+        return [0,  0];
+    }
+
+    _hideIndicators() {
+        for (let role in MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS) {
+            let indicator = this.statusArea[role];
+            if (!indicator)
+                continue;
+            indicator.container.hide();
+        }
+    }
+
+    _ensureIndicator(role) {
+        let indicator = this.statusArea[role];
+        if (indicator) {
+            indicator.container.show();
+            return null;
+        }
+        else {
+            let constructor = MULTI_MONITOR_PANEL_ITEM_IMPLEMENTATIONS[role];
+            if (!constructor) {
+                // This icon is not implemented (this is a bug)
+                return null;
+            }
+            indicator = new constructor(this);
+            this.statusArea[role] = indicator;
+        }
+        return indicator;
+    }
+
+    _getDraggableWindowForPosition(stageX) {
+        let workspaceManager = global.workspace_manager;
+        const windows = workspaceManager.get_active_workspace().list_windows();
+        const allWindowsByStacking =
+            global.display.sort_windows_by_stacking(windows).reverse();
+
+        return allWindowsByStacking.find(metaWindow => {
+            let rect = metaWindow.get_frame_rect();
+            return metaWindow.get_monitor() == this.monitorIndex &&
+                   metaWindow.showing_on_its_workspace() &&
+                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP &&
+                   metaWindow.maximized_vertically &&
+                   stageX > rect.x && stageX < rect.x + rect.width;
+        });
+    }};
+
+    MultiMonitors.copyClass(Panel.Panel, MultiMonitorsPanel);
+    return GObject.registerClass(MultiMonitorsPanel);
 })();

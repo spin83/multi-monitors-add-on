@@ -22,13 +22,13 @@ const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
 	constructor(monitor) {
 		this._rightPanelBarrier = null;
 	
-		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true });
+		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true, clip_to_allocation: true });
         Main.layoutManager.addChrome(this.panelBox, { affectsStruts: true, trackFullscreen: true });
         this.panelBox.set_position(monitor.x, monitor.y);
         this.panelBox.set_size(monitor.width, -1);
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
         
-		this._panelBoxChangedId = this.panelBox.connect('allocation-changed', this._panelBoxChanged.bind(this));
+		this._panelBoxChangedId = this.panelBox.connect('notify::allocation', this._panelBoxChanged.bind(this));
 	}
 	
 	destroy() {
@@ -46,21 +46,21 @@ const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
 	    this.panelBox.set_size(monitor.width, -1);
 	}
 
-	_panelBoxChanged(self, box, flags) {
-//		global.log(box.get_x()+" "+box.get_y()+" "+box.get_height()+" "+box.get_width())
-		
-	    if (this._rightPanelBarrier) {
-	        this._rightPanelBarrier.destroy();
-	        this._rightPanelBarrier = null;
-	    }
-	    
-	    if (this.panelBox.height) {
-	    	this._rightPanelBarrier = new Meta.Barrier({ display: global.display,
-	    									x1: box.get_x() + box.get_width(), y1: box.get_y(),
-								            x2: box.get_x() + box.get_width(), y2: box.get_y() + this.panelBox.height,
-								            directions: Meta.BarrierDirection.NEGATIVE_X });
-	    }
-	}
+	_panelBoxChanged() {
+        if (this._rightPanelBarrier) {
+            this._rightPanelBarrier.destroy();
+            this._rightPanelBarrier = null;
+        }
+
+        const [x, y] = this.panelBox.get_transformed_position();
+        const width = this.panelBox.allocation.get_width();
+        if (this.panelBox.height) {
+            this._rightPanelBarrier = new Meta.Barrier({ display: global.display,
+                                            x1: x + width, y1: y,
+                                            x2: x + width, y2: y + this.panelBox.height,
+                                            directions: Meta.BarrierDirection.NEGATIVE_X });
+        }
+    }
 };
 
 var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
