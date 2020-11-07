@@ -68,6 +68,10 @@ msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr ""
 "Mostrar las miniaturas en el lado izquierdo de los monitores adicionales."
 
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr ""
+
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
 msgstr "Un listado de indicadores para transferir a monitores adicionales."

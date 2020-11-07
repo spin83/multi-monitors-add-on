@@ -70,6 +70,10 @@ msgstr "Wyświetl przycisk daty i czasu na dodatkowych monitorach."
 msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr "Wyświetl pasek miniatur po lewej stronie dla dodatkowych monitorów."
 
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr "Włączenie podglądu po najechaniu rogu ekranu."
+
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
 msgstr "Lista wskaźników do przesunięcia na dodatkowe monitory."

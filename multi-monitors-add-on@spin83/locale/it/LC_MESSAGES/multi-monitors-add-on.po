@@ -59,8 +59,7 @@ msgstr "Mostra il Bottone Attività sui monitor secondari."
 
 #: prefs.js:66
 msgid "Show AppMenu-Button on additional monitors."
-msgstr ""
-"Visualizza il pulsante del menu Applicazioni sui monitor secondari."
+msgstr "Visualizza il pulsante del menu Applicazioni sui monitor secondari."
 
 #: prefs.js:67
 msgid "Show DateTime-Button on additional monitors."
@@ -68,9 +67,12 @@ msgstr "Mostra il Bottone Data/Ora sui monitor secondari."
 
 #: prefs.js:68
 msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr ""
-"Visualizza lo slider delle anteprime a sul lato sinistro per i monitor "
+msgstr "Visualizza lo slider delle anteprime a sul lato sinistro per i monitor "
 "secondari."
+
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr ""
 
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."

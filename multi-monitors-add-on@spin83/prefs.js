@@ -39,6 +39,7 @@ const SHOW_DATE_TIME_ID = 'show-date-time';
 const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
+const ENABLE_HOT_CORNERS = 'enable-hot-corners';
 
 const Columns = {
     INDICATOR_NAME: 0,
@@ -52,26 +53,28 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         super._init({
             margin: 6,
         });
-		
-		this.set_orientation(Gtk.Orientation.VERTICAL);
-		
-		this._settings = Convenience.getSettings();
-		
-		this._screen = Gdk.Screen.get_default();
-		
-		this._addBooleanSwitch(_('Show Multi Monitors indicator on Top Panel.'), SHOW_INDICATOR_ID);
-		this._addBooleanSwitch(_('Show Panel on additional monitors.'), SHOW_PANEL_ID);
-		this._addBooleanSwitch(_('Show Thumbnails-Slider on additional monitors.'), SHOW_THUMBNAILS_SLIDER_ID);
-		this._addBooleanSwitch(_('Show Activities-Button on additional monitors.'), SHOW_ACTIVITIES_ID);
-		this._addBooleanSwitch(_('Show AppMenu-Button on additional monitors.'), SHOW_APP_MENU_ID);
-		this._addBooleanSwitch(_('Show DateTime-Button on additional monitors.'), SHOW_DATE_TIME_ID);
-		this._addBooleanSwitch(_('Show Thumbnails-Slider on left side of additional monitors.'), THUMBNAILS_ON_LEFT_SIDE_ID);
-		
-        this._store = new Gtk.ListStore();
-        this._store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);	
 
-		this._treeView = new Gtk.TreeView({ model: this._store, hexpand: true, vexpand: true });
-		this._treeView.get_selection().set_mode(Gtk.SelectionMode.SINGLE);
+        this.set_orientation(Gtk.Orientation.VERTICAL);
+
+        this._settings = Convenience.getSettings();
+        this._desktopSettings = Convenience.getSettings("org.gnome.desktop.interface");
+
+        this._screen = Gdk.Screen.get_default();
+
+        this._addBooleanSwitch(_('Show Multi Monitors indicator on Top Panel.'), SHOW_INDICATOR_ID);
+        this._addBooleanSwitch(_('Show Panel on additional monitors.'), SHOW_PANEL_ID);
+        this._addBooleanSwitch(_('Show Thumbnails-Slider on additional monitors.'), SHOW_THUMBNAILS_SLIDER_ID);
+        this._addBooleanSwitch(_('Show Activities-Button on additional monitors.'), SHOW_ACTIVITIES_ID);
+        this._addBooleanSwitch(_('Show AppMenu-Button on additional monitors.'), SHOW_APP_MENU_ID);
+        this._addBooleanSwitch(_('Show DateTime-Button on additional monitors.'), SHOW_DATE_TIME_ID);
+        this._addBooleanSwitch(_('Show Thumbnails-Slider on left side of additional monitors.'), THUMBNAILS_ON_LEFT_SIDE_ID);
+        this._addSettingsBooleanSwitch(_('Enable hot corners.'), this._desktopSettings, ENABLE_HOT_CORNERS);
+
+        this._store = new Gtk.ListStore();
+        this._store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);
+
+        this._treeView = new Gtk.TreeView({ model: this._store, hexpand: true, vexpand: true });
+        this._treeView.get_selection().set_mode(Gtk.SelectionMode.SINGLE);
 
         let appColumn = new Gtk.TreeViewColumn({ expand: true, sort_column_id: Columns.INDICATOR_NAME,
                                                  title: _("A list of indicators for transfer to additional monitors.") });
@@ -79,20 +82,20 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         let nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", Columns.INDICATOR_NAME);
-        
+
         nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", Columns.MONITOR_NUMBER);
         
         this._treeView.append_column(appColumn);
         this.add(this._treeView);
-        
+
         let toolbar = new Gtk.Toolbar();
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
-        
+
         this._settings.connect('changed::'+TRANSFER_INDICATORS_ID, Lang.bind(this, this._updateIndicators));
         this._updateIndicators();
-        
+
         let addTButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_ADD });
         addTButton.connect('clicked', Lang.bind(this, this._addIndicator));
         toolbar.add(addTButton);
@@ -102,9 +105,8 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         toolbar.add(removeTButton);
         
         this.add(toolbar);
-
     }
-    
+
     _updateIndicators() {
     	this._store.clear();
     	
@@ -226,15 +228,19 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
     }
 
     _addBooleanSwitch(label, schema_id) {
-		let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});
-		let gLabel = new Gtk.Label({label: _(label), halign: Gtk.Align.START});
-		gHBox.add(gLabel);
-		let gSwitch = new Gtk.Switch({halign: Gtk.Align.END});
-		gHBox.add(gSwitch);
-		this.add(gHBox);
-		
-		this._settings.bind(schema_id, gSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
-	}
+        this._addSettingsBooleanSwitch(label, this._settings, schema_id);
+    }
+
+    _addSettingsBooleanSwitch(label, settings, schema_id) {
+        let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});
+        let gLabel = new Gtk.Label({label: _(label), halign: Gtk.Align.START});
+        gHBox.add(gLabel);
+        let gSwitch = new Gtk.Switch({halign: Gtk.Align.END});
+        gHBox.add(gSwitch);
+        this.add(gHBox);
+
+        settings.bind(schema_id, gSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    }
 });
 
 function init() {

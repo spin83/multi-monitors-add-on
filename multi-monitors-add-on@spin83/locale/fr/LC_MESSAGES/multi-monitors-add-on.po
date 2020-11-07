@@ -72,6 +72,10 @@ msgstr ""
 "Afficher le dock listant les espaces de travail, sur la gauche pour les "
 "moniteurs secondaires"
 
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr ""
+
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
 msgstr "Une liste d'indicateurs pour transfert vers les moniteurs secondaires "

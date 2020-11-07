@@ -52,6 +52,10 @@ msgstr "Mostrar o botão de data e hora em monitores adicionais"
 msgid "A list of indicators for transfer to additional monitors."
 msgstr "Uma lista de indicadores para transferir para monitores adicionais."
 
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr ""
+
 #: prefs.js:122
 msgid "Select indicator"
 msgstr "Selecionar indicador"

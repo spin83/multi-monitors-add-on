@@ -69,6 +69,10 @@ msgstr "Datum-Zeit auf zusätzlichen Monitoren anzeigen."
 msgid "Show Thumbnails-Slider on left side of additional monitors."
 msgstr "Arbeitsflächenübersicht bei zusätzlichen Monitoren links anzeigen"
 
+#: prefs.js:71
+msgid "Enable hot corners."
+msgstr ""
+
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
 msgstr ""

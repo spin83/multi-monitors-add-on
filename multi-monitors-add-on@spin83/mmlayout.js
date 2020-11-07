@@ -17,30 +17,31 @@ const MultiMonitors = CE.imports.extension;
 const MMPanel = CE.imports.mmpanel;
 
 var SHOW_PANEL_ID = 'show-panel';
+var ENABLE_HOT_CORNERS = 'enable-hot-corners';
 
 const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
-	constructor(monitor) {
-		this._rightPanelBarrier = null;
-	
-		this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true, clip_to_allocation: true });
+    constructor(monitor) {
+        this._rightPanelBarrier = null;
+
+        this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true, clip_to_allocation: true });
         Main.layoutManager.addChrome(this.panelBox, { affectsStruts: true, trackFullscreen: true });
         this.panelBox.set_position(monitor.x, monitor.y);
         this.panelBox.set_size(monitor.width, -1);
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
-        
-		this._panelBoxChangedId = this.panelBox.connect('notify::allocation', this._panelBoxChanged.bind(this));
-	}
-	
+
+        this._panelBoxChangedId = this.panelBox.connect('notify::allocation', this._panelBoxChanged.bind(this));
+    }
+
 	destroy() {
 		if (this._rightPanelBarrier) {
 	        this._rightPanelBarrier.destroy();
 	        this._rightPanelBarrier = null;
 	    }
-	
+
 		this.panelBox.disconnect(this._panelBoxChangedId);
 		this.panelBox.destroy();
 	}
-	
+
 	updatePanel(monitor) {
 	    this.panelBox.set_position(monitor.x, monitor.y);
 	    this.panelBox.set_size(monitor.width, -1);
@@ -81,82 +82,65 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 		this._layoutManager_updateHotCorners = null;
 		this._changedEnableHotCornersId = null;
 	}
-	
-	showPanel() {
-		if (this._settings.get_boolean(SHOW_PANEL_ID)) {
-			if (!this._monitorsChangedId) {
-				this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
-				this._monitorsChanged();
-			}
-			if (!this._showAppMenuId) {
-				this._showAppMenuId = this._settings.connect('changed::'+MMPanel.SHOW_APP_MENU_ID, this._showAppMenu.bind(this));
-			}
-			
-			if (!this.statusIndicatorsController) {
-				this.statusIndicatorsController = new MMPanel.StatusIndicatorsController();
-			}
-			
-			if (!this._layoutManager_updateHotCorners) {
-				this._layoutManager_updateHotCorners = Main.layoutManager._updateHotCorners;
-				
-				let enable_hot_corners = (Main.sessionMode.currentMode == 'ubuntu');
-				let that = this;
-				Main.layoutManager._updateHotCorners = function() {
-			        this.hotCorners.forEach((corner) => {
-			            if (corner)
-			                corner.destroy();
-			        });
-			        this.hotCorners = [];
-			        
-			        if (enable_hot_corners) {
-								try {
-									if (!global.settings.get_boolean('enable-hot-corners')) {
-											this.emit('hot-corners-changed');
-											return;
-									}
-								} catch (e) {
-									if (!that._desktopSettings.get_boolean('enable-hot-corners')) {
-										this.emit('hot-corners-changed');
-										return;
-									}
-								}
-			        }
-			        
-			        let size = this.panelBox.height;
 
-			        for (let i = 0; i < this.monitors.length; i++) {
-			            let monitor = this.monitors[i];
-			            let cornerX = this._rtl ? monitor.x + monitor.width : monitor.x;
-			            let cornerY = monitor.y;
-	
-		                let corner = new Layout.HotCorner(this, monitor, cornerX, cornerY);
-		                corner.setBarrierSize(size);
-		                this.hotCorners.push(corner);
-			        }
+    showPanel() {
+        if (this._settings.get_boolean(SHOW_PANEL_ID)) {
+            if (!this._monitorsChangedId) {
+                this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
+                this._monitorsChanged();
+            }
+            if (!this._showAppMenuId) {
+                this._showAppMenuId = this._settings.connect('changed::'+MMPanel.SHOW_APP_MENU_ID, this._showAppMenu.bind(this));
+            }
 
-			        this.emit('hot-corners-changed');
-				};
-				
-				if (!this._changedEnableHotCornersId) {
-					if (enable_hot_corners) {
-						try {
-							this._changedEnableHotCornersId = global.settings.connect('changed::enable-hot-corners',
-									Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
-						} catch (e) {
-							this._changedEnableHotCornersId = this._desktopSettings.connect('changed::enable-hot-corners',
-									Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
-						}
-					}
-				}
-				
-				Main.layoutManager._updateHotCorners();
-			}
-		}
-		else {
-			this.hidePanel();
-		}
-	}
-	
+            if (!this.statusIndicatorsController) {
+                this.statusIndicatorsController = new MMPanel.StatusIndicatorsController();
+            }
+
+            if (!this._layoutManager_updateHotCorners) {
+                this._layoutManager_updateHotCorners = Main.layoutManager._updateHotCorners;
+
+                const _this = this;
+                Main.layoutManager._updateHotCorners = function() {
+                    this.hotCorners.forEach((corner) => {
+                        if (corner)
+                            corner.destroy();
+                    });
+                    this.hotCorners = [];
+
+                    if (!_this._desktopSettings.get_boolean(ENABLE_HOT_CORNERS)) {
+                        this.emit('hot-corners-changed');
+                        return;
+                    }
+
+                    let size = this.panelBox.height;
+
+                    for (let i = 0; i < this.monitors.length; i++) {
+                        let monitor = this.monitors[i];
+                        let cornerX = this._rtl ? monitor.x + monitor.width : monitor.x;
+                        let cornerY = monitor.y;
+
+                        let corner = new Layout.HotCorner(this, monitor, cornerX, cornerY);
+                        corner.setBarrierSize(size);
+                        this.hotCorners.push(corner);
+                    }
+
+                    this.emit('hot-corners-changed');
+                };
+
+                if (!this._changedEnableHotCornersId) {
+                    this._changedEnableHotCornersId = this._desktopSettings.connect('changed::'+ENABLE_HOT_CORNERS,
+                            Main.layoutManager._updateHotCorners.bind(Main.layoutManager));
+                }
+
+                Main.layoutManager._updateHotCorners();
+            }
+        }
+        else {
+            this.hidePanel();
+        }
+    }
+
 	hidePanel() {
 		if (this._changedEnableHotCornersId) {
 			global.settings.disconnect(this._changedEnableHotCornersId);
@@ -192,7 +176,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 			global.log("remove: "+monitorId);
 		}
 	}
-	
+
 	_monitorsChanged () {
 		let monitorChange = Main.layoutManager.monitors.length - this._monitorIds.length -1;
 		if (monitorChange<0) {
@@ -229,7 +213,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 			this.statusIndicatorsController.transferIndicators();
 		}
 	}
-	
+
 	_pushPanel(i, monitor) {
 		let mmPanelBox = new MultiMonitorsPanelBox(monitor);
 		let panel = new MMPanel.MultiMonitorsPanel(i, mmPanelBox);
@@ -237,7 +221,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 		Main.mmPanel.push(panel);
 		this.mmPanelBox.push(mmPanelBox);
 	}
-	
+
 	_popPanel() {
 		let panel = Main.mmPanel.pop();
 		if (this.statusIndicatorsController) {
@@ -246,7 +230,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 		let mmPanelBox = this.mmPanelBox.pop();
 		mmPanelBox.destroy();
     }
-    	
+
 	_changeMainPanelAppMenuButton(appMenuButton) {
 		let role = "appMenu";
 		let panel = Main.panel;
@@ -270,7 +254,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 		let box = panel._leftBox;
 		panel._addToPanelBox(role, indicator, box.get_n_children()+1, box);
 	}
-		
+
 	_showAppMenu() {
 		if (this._settings.get_boolean(MMPanel.SHOW_APP_MENU_ID) && Main.mmPanel.length>0) {
 			if (!this.mmappMenu) {
@@ -282,7 +266,7 @@ var MultiMonitorsLayoutManager = class MultiMonitorsLayoutManager {
 			this._hideAppMenu();
 		}
 	}
-	
+
 	_hideAppMenu() {
 		if (this.mmappMenu) {
 			this._changeMainPanelAppMenuButton(Panel.AppMenuButton);
