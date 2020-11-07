@@ -354,131 +354,55 @@ var MultiMonitorsThumbnailsSlider = (() => {
     return GObject.registerClass(MultiMonitorsThumbnailsSlider);
 })();
 
-const MultiMonitorsControlsManager = class MultiMonitorsControlsManager {
-    constructor(index) {
+var MultiMonitorsControlsManager = GObject.registerClass(
+class MultiMonitorsControlsManager extends St.Widget {
+    _init(index) {
         this._monitorIndex = index;
         this._workspacesViews = null;
-        this._animationInProgress = false;
-        this._canScroll = true;
-        this._scrollTimeoutId = 0;
+        this._spacer_height = 0;
+        this._fixGeometry = 0;
+        this._visible = false;
+        
+        let layout = new OverviewControls.ControlsLayout();
+        super._init({
+            layout_manager: layout,
+            x_expand: true,
+            y_expand: true,
+            clip_to_allocation: true,
+        });
 
         this._workspaceAdjustment = Main.overview._overview._controls._workspaceAdjustment;
-        this._thumbnailsBox = new MultiMonitorsThumbnailsBox(this._workspaceAdjustment, this._monitorIndex);
+
+        this._thumbnailsBox =
+            new MultiMonitorsThumbnailsBox(this._workspaceAdjustment, this._monitorIndex);
         this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
 
-        this._thumbnailsSlider.onAnimationBegin = () => {
-            this._animationInProgress = true;
-        };
-        this._thumbnailsSlider.onAnimationEnd = () => {
-            this._animationInProgress = false;
-            if(!this._workspacesViews)
-                return;
-            let geometry = this.getWorkspacesActualGeometry();
-//        	global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
-            this._workspacesViews.setActualGeometry(geometry);
-        };
+        this._viewSelector = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
+        this._pageChangedId = Main.overview.viewSelector.connect('page-changed', this._setVisibility.bind(this));
+        this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
 
-        let layout = new OverviewControls.ControlsLayout();
-        this.actor = new St.Widget({ visible:false, layout_manager: layout,
-                                     x_expand: true, y_expand: true,
-                                     clip_to_allocation: true });
-        this.actor.connect('notify::allocation', this._updateSpacer.bind(this));
-        this.actor.connect('destroy', this._onDestroy.bind(this));
+        this._group = new St.BoxLayout({ name: 'mm-overview-group-'+index,
+                                         x_expand: true, y_expand: true });
+        this.add_actor(this._group);
 
-        this._group = new St.BoxLayout({ name: 'mm-overview-group',
-                                        x_expand: true, y_expand: true });
-        this.actor.add_actor(this._group);
-
-        this._viewActor = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
-        this._viewActor.connect('notify::allocation', this._updateWorkspacesActualGeometry.bind(this));
-        this._group.add_actor(this._viewActor);
+        this._group.add_child(this._viewSelector);
         this._group.add_actor(this._thumbnailsSlider);
-
-        this.actor.connect('scroll-event', this._onScrollEvent.bind(this));
 
         this._settings = Convenience.getSettings();
         this._thumbnailsOnLeftSideId = this._settings.connect('changed::'+THUMBNAILS_ON_LEFT_SIDE_ID,
                                                                 this._thumbnailsOnLeftSide.bind(this));
         this._thumbnailsOnLeftSide();
+        this._thumbnailsSlider.slideOut();
+        this._thumbnailsBox._updatePorthole();
 
-        this._pageChangedId = Main.overview.viewSelector.connect('page-changed', this._setVisibility.bind(this));
-        this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
-
-        this._clickAction = new Clutter.ClickAction()
-        this._clickedId = this._clickAction.connect('clicked', (action) => {
-            if (action.get_button() == 1 && this._workspacesViews &&
-                                            this._workspacesViews.getActiveWorkspace().isEmpty())
-                Main.overview.hide();
-        });
-
-        Main.mmOverview[this._monitorIndex].addAction(this._clickAction);
-        this._thumbnailsBox._updatePorthole()
-    }
-
-    inOverviewInit() {
-        if (Main.overview.visible) {
-            this._thumbnailsBox._createThumbnails();
-            let activePage = Main.overview.viewSelector.getActivePage();
-            if (activePage != ViewSelector.ViewPage.WINDOWS) {
-                this._thumbnailsSlider.slideOut();
-                this._thumbnailsSlider.pageEmpty();
-            }
-            this.show();
-        }
-    }
-
-    _onScrollEvent(actor, event) {
-        if (Main.overview.viewSelector._workspacesDisplay._swipeTracker.canHandleScrollEvent(event))
-            return Clutter.EVENT_PROPAGATE;
-
-        if (!this.actor.mapped)
-            return Clutter.EVENT_PROPAGATE;
-
-        if (!this._canScroll)
-            return Clutter.EVENT_PROPAGATE;
-
-        let workspaceManager = global.workspace_manager;
-        let activeWs = workspaceManager.get_active_workspace();
-        let ws;
-        switch (event.get_scroll_direction()) {
-        case Clutter.ScrollDirection.UP:
-            ws = activeWs.get_neighbor(Meta.MotionDirection.UP);
-            break;
-        case Clutter.ScrollDirection.DOWN:
-            ws = activeWs.get_neighbor(Meta.MotionDirection.DOWN);
-            break;
-        case Clutter.ScrollDirection.LEFT:
-            ws = activeWs.get_neighbor(Meta.MotionDirection.LEFT);
-            break;
-        case Clutter.ScrollDirection.RIGHT:
-            ws = activeWs.get_neighbor(Meta.MotionDirection.RIGHT);
-            break;
-        default:
-            return Clutter.EVENT_PROPAGATE;
-        }
-        Main.wm.actionMoveWorkspace(ws);
-
-        this._canScroll = false;
-        this._scrollTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
-            WorkspacesView.SCROLL_TIMEOUT_TIME, () => {
-                this._canScroll = true;
-                this._scrollTimeoutId = 0;
-                return GLib.SOURCE_REMOVE;
-            });
-
-        return Clutter.EVENT_STOP;
+        this.connect('notify::allocation', this._updateSpacerVisibility.bind(this));
+        this.connect('destroy', this._onDestroy.bind(this));
     }
 
     _onDestroy() {
-        if (this._scrollTimeoutId !== 0) {
-            GLib.source_remove(this._scrollTimeoutId);
-            this._scrollTimeoutId = 0;
-        }
         Main.overview.viewSelector.disconnect(this._pageChangedId);
         Main.overview.viewSelector.disconnect(this._pageEmptyId);
         this._settings.disconnect(this._thumbnailsOnLeftSideId);
-        this._clickAction.disconnect(this._clickedId);
-        Main.mmOverview[this._monitorIndex].removeAction(this._clickAction);
     }
 
     _thumbnailsOnLeftSide() {
@@ -503,17 +427,18 @@ const MultiMonitorsControlsManager = class MultiMonitorsControlsManager {
                 this._group.set_child_above_sibling(thumbnailsSlider, last);
             }
         }
+        this._fixGeometry = 3;
     }
 
-    _updateSpacer() {
+    _updateSpacerVisibility() {
         if (Main.layoutManager.monitors.length<this._monitorIndex)
             return;
 
         let top_spacer_height = Main.layoutManager.primaryMonitor.height;
 
         let panelGhost_height = 0;
-        if (Main.mmOverview[this._monitorIndex]._panelGhost)
-            panelGhost_height = Main.mmOverview[this._monitorIndex]._panelGhost.get_height();
+        if (Main.mmOverview[this._monitorIndex]._overview._panelGhost)
+            panelGhost_height = Main.mmOverview[this._monitorIndex]._overview._panelGhost.get_height();
 
         let allocation = Main.overview._overview._controls.allocation;
         let primaryControl_height = allocation.get_height();
@@ -522,33 +447,33 @@ const MultiMonitorsControlsManager = class MultiMonitorsControlsManager {
         top_spacer_height -= primaryControl_height + panelGhost_height + bottom_spacer_height;
         top_spacer_height = Math.round(top_spacer_height);
 
-        let spacer = Main.mmOverview[this._monitorIndex]._spacer;
-        if (spacer.get_height()!=top_spacer_height)
+        let spacer = Main.mmOverview[this._monitorIndex]._overview._spacer;
+        if (spacer.get_height()!=top_spacer_height) {
+            this._spacer_height = top_spacer_height;
             spacer.set_height(top_spacer_height);
-    }
-
-    isAnimationInProgress() {
-        return this._animationInProgress;
+        }
     }
 
     getWorkspacesActualGeometry() {
-        const [x, y] = this._viewActor.get_transformed_position();
-        const width = this._viewActor.allocation.get_width();
-        const height = this._viewActor.allocation.get_height();
-
-        return { x, y, width, height };
-    }
-
-    _updateWorkspacesActualGeometry() {
-        if (!this._workspacesViews)
-            return;
-
-        const geometry = this.getWorkspacesActualGeometry();
-        this._workspacesViews.ease({
-            ...geometry,
-            duration: Main.overview.animationInProgress ? Overview.ANIMATION_TIME : 0,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-        });
+        let geometry;
+        if (this._visible) {
+            const [x, y] = this._viewSelector.get_transformed_position();
+            const width = this._viewSelector.allocation.get_width();
+            const height = this._viewSelector.allocation.get_height();
+            geometry = { x, y, width, height };
+        }
+        else {
+            let [x, y] = this.get_transformed_position();
+            const width = this.allocation.get_width();
+            let height = this.allocation.get_height();
+            y -= this._spacer_height;
+            height += this._spacer_height;
+            geometry = { x, y, width, height };
+        }
+        if (isNaN(geometry.x))
+            return null;
+        //global.log("actualG+ i: "+this._monitorIndex+" x: "+geometry.x+" y: "+geometry.y+" width: "+geometry.width+" height: "+geometry.height);
+        return geometry;
     }
 
     _setVisibility() {
@@ -561,118 +486,161 @@ const MultiMonitorsControlsManager = class MultiMonitorsControlsManager {
             return;
 
         let activePage = Main.overview.viewSelector.getActivePage();
-
-        let thumbnailsVisible = (activePage == ViewSelector.ViewPage.WINDOWS);
+        let thumbnailsVisible = activePage == ViewSelector.ViewPage.WINDOWS;
 
         let opacity = null;
-        if (thumbnailsVisible){
-            this._thumbnailsSlider.slideIn();
+        if (thumbnailsVisible) {
             opacity = 255;
+            if (this._fixGeometry===1)
+                this._fixGeometry = 0;
+            this._thumbnailsSlider.slideIn();
         }
-        else{
-            this._thumbnailsSlider.slideOut();
+        else {
             opacity = 0;
+            this._fixGeometry = 1;
+            this._thumbnailsSlider.slideOut();
         }
 
         if (!this._workspacesViews)
             return;
 
-        this._workspacesViews.visible = opacity != 0;
         this._workspacesViews.ease({
             opacity: opacity,
+            duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            duration: OverviewControls.SIDE_CONTROLS_ANIMATION_TIME
         });
     }
 
     _onPageEmpty() {
         this._thumbnailsSlider.pageEmpty();
     }
-
+    
     show() {
-        this.actor.visible = true;
-        this._viewActor.visible = true;
+        this._viewSelector.visible = true;
         this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
+        this._visible = true;
+        const geometry = this.getWorkspacesActualGeometry();
+
+        if (!geometry) {
+            this._fixGeometry = 0;
+            return;
+        }
+
+        if (this._fixGeometry) {
+            const width = this._thumbnailsSlider.get_width();
+            if (this._fixGeometry===2) {
+                geometry.width = geometry.width-width;
+                if (this._thumbnailsSlider.layout.slideDirection === OverviewControls.SlideDirection.LEFT)
+                    geometry.x = geometry.x + width;
+            }
+            else if (this._fixGeometry===3) {
+                if (this._thumbnailsSlider.layout.slideDirection === OverviewControls.SlideDirection.LEFT)
+                    geometry.x = geometry.x + width;
+                else
+                    geometry.x = geometry.x - width;
+            }
+            this._fixGeometry = 0;
+        }
+
+        this._workspacesViews.ease({
+            ...geometry,
+            duration: Main.overview.animationInProgress ? Overview.ANIMATION_TIME : 0,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
     }
 
     hide() {
-        if (this._workspacesViews && (!this._workspacesViews.visible)) {
-            this._workspacesViews.opacity = 255;
-            this._workspacesViews.visible = true;
-        }
+        this._visible = false;
+        this._workspacesViews.opacity = 255;
+        if (this._fixGeometry===1)
+            this._fixGeometry = 2;
+        const geometry = this.getWorkspacesActualGeometry();
+        this._workspacesViews.ease({
+            ...geometry,
+            duration: Main.overview.animationInProgress ? Overview.ANIMATION_TIME : 0,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                this._viewSelector.visible = false;
+            },
+        });
         this._workspacesViews = null;
-        this._viewActor.visible = false;
-        this.actor.visible = false;
     }
-};
+});
 
-var MultiMonitorsOverview = class MultiMonitorsOverview {
-    constructor(index) {
-        this.monitorIndex = index;
-        this._settings = Convenience.getSettings();
-        
-        this._overview = new St.BoxLayout({ name: 'overview'+this.monitorIndex,
-                                                accessible_name: _("Overview"+this.monitorIndex),
-                                                vertical: true});
-        this._overview.add_constraint(new LayoutManager.MonitorConstraint({ index: this.monitorIndex }));
-        this._overview.connect('destroy', this._onDestroy.bind(this));
-        this._overview._delegate = this;
+var MultiMonitorsOverviewActor = GObject.registerClass(
+class MultiMonitorsOverviewActor extends St.BoxLayout {
+    _init(index) {
+        this._monitorIndex = index;
+        super._init({
+            name: 'mm-overview-'+index,
+            /* Translators: This is the main view to select
+                activities. See also note for "Activities" string. */
+            accessible_name: _("MMOverview@"+index),
+            vertical: true,
+        });
 
-        Main.layoutManager.overviewGroup.add_child(this._overview);
+        this.add_constraint(new LayoutManager.MonitorConstraint({ index: this._monitorIndex }));
 
-        this._showingId = null;
-        this._hidingId = null;
-    }
-
-    init() {
         this._panelGhost = null;
-        
-        this._controls = new MultiMonitorsControlsManager(this.monitorIndex);
-        
         if (Main.mmPanel) {
             for (let idx in Main.mmPanel) {
-                if (Main.mmPanel[idx].monitorIndex === this.monitorIndex) {
-                    this._panelGhost = new St.Bin({ child: new Clutter.Clone({source: Main.mmPanel[idx]}), reactive: false, opacity: 0 });
-                    this._overview.add_actor(this._panelGhost);
-                    break;
-                }
+                if (Main.mmPanel[idx].monitorIndex !== this._monitorIndex) 
+                    continue
+                // Add a clone of the panel to the overview so spacing and such is
+                // automatic
+                this._panelGhost = new St.Bin({
+                    child: new Clutter.Clone({ source: Main.mmPanel[idx] }),
+                    reactive: false,
+                    opacity: 0,
+                });
+                this.add_actor(this._panelGhost);
+                break;
             }
         }
 
         this._spacer = new St.Widget();
-        this._overview.add_actor(this._spacer);
+        this.add_actor(this._spacer);
 
-        this._overview.add_actor(this._controls.actor);
+        this._controls = new MultiMonitorsControlsManager(this._monitorIndex);
 
-        this._controls.inOverviewInit();
-        
+        // Add our same-line elements after the search entry
+        this.add_child(this._controls);
+    }
+});
+
+
+var MultiMonitorsOverview = class MultiMonitorsOverview {
+    constructor(index) {
+        this.monitorIndex = index;
+
+        this._initCalled = true;
+        this._overview = new MultiMonitorsOverviewActor(this.monitorIndex);
+        this._overview._delegate = this;
+        this._overview.connect('destroy', this._onDestroy.bind(this));
+        Main.layoutManager.overviewGroup.add_child(this._overview);
+
         this._showingId = Main.overview.connect('showing', this._show.bind(this));
         this._hidingId = Main.overview.connect('hiding', this._hide.bind(this));
     }
 
     getWorkspacesActualGeometry() {
-        if (this._controls.isAnimationInProgress())
-            return null;
-        return this._controls.getWorkspacesActualGeometry();
+        return this._overview._controls.getWorkspacesActualGeometry();
     }
 
     _onDestroy() {
-        if(this._showingId)
-            Main.overview.disconnect(this._showingId);
-        if(this._hidingId)
-            Main.overview.disconnect(this._hidingId);
-        
+        Main.overview.disconnect(this._showingId);
+        Main.overview.disconnect(this._hidingId);
+
         Main.layoutManager.overviewGroup.remove_child(this._overview);
-        
         this._overview._delegate = null;
     }
 
     _show() {
-        this._controls.show();
+        this._overview._controls.show();
     }
 
     _hide() {
-        this._controls.hide();
+        this._overview._controls.hide();
     }
 
     destroy() {
@@ -684,8 +652,7 @@ var MultiMonitorsOverview = class MultiMonitorsOverview {
     }
 
     removeAction(action) {
-        if(action.get_actor())
+        if (action.get_actor())
             this._overview.remove_action(action);
     }
 };
-

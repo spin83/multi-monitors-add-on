@@ -39,7 +39,7 @@ const SHOW_INDICATOR_ID = 'show-indicator';
 const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
 
 function copyClass (s, d) {
-    global.log(s.name +" > "+ d.name);
+//    global.log(s.name +" > "+ d.name);
     let propertyNames = Reflect.ownKeys(s.prototype);
     for (let pName of propertyNames.values()) {
 
@@ -107,7 +107,6 @@ class MultiMonitorsAddOn {
             for (let idx = 0; idx < Main.layoutManager.monitors.length; idx++) {
                 if (idx != Main.layoutManager.primaryIndex) {
                     Main.mmOverview[idx] = new MMOverview.MultiMonitorsOverview(idx);
-                    Main.mmOverview[idx].init();
                 }
             }
 
@@ -128,7 +127,9 @@ class MultiMonitorsAddOn {
                 for (let idx = 0; idx < Main.mmOverview.length; idx++) {
                     if (!Main.mmOverview[idx])
                         continue;
-                    const mmView = Main.mmOverview[idx]._controls._workspacesViews;
+                    if (!Main.mmOverview[idx]._overview)
+                        continue;
+                    const mmView = Main.mmOverview[idx]._overview._controls._workspacesViews;
                     if (!mmView)
                         continue;
 
@@ -141,7 +142,7 @@ class MultiMonitorsAddOn {
                 }
             }
         }
-        else{
+        else {
             this._hideThumbnailsSlider();
         }
     }
