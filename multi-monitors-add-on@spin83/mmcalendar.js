@@ -240,19 +240,59 @@ var MultiMonitorsCalendarMessageList = (() => {
     return GObject.registerClass(MultiMonitorsCalendarMessageList);
 })();
 
+var MultiMonitorsMessagesIndicator  = (() => {
+    let MultiMonitorsMessagesIndicator = class MultiMonitorsMessagesIndicator extends St.Icon {
+    _init() {
+        super._init({
+            icon_size: 16,
+            visible: false,
+            y_expand: true,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+
+        this._sources = [];
+        this._count = 0;
+
+        this._settings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.notifications',
+        });
+        this._settings.connect('changed::show-banners', this._sync.bind(this));
+
+        this._sourceAddedId = Main.messageTray.connect('source-added', this._onSourceAdded.bind(this));
+        this._sourceRemovedId = Main.messageTray.connect('source-removed', this._onSourceRemoved.bind(this));
+        this._queueChangedId = Main.messageTray.connect('queue-changed', this._updateCount.bind(this));
+
+        let sources = Main.messageTray.getSources();
+        sources.forEach(source => this._onSourceAdded(null, source));
+
+        this._sync();
+
+        this.connect('destroy', () => {
+            this._settings.run_dispose();
+            this._settings = null;
+            Main.messageTray.disconnect(this._sourceAddedId);
+            Main.messageTray.disconnect(this._sourceRemovedId);
+            Main.messageTray.disconnect(this._queueChangedId);
+        });
+    }};
+
+    MultiMonitors.copyClass(DateMenu.MessagesIndicator, MultiMonitorsMessagesIndicator);
+    return GObject.registerClass(MultiMonitorsMessagesIndicator);
+})();
+
 var MultiMonitorsDateMenuButton  = (() => {
     let MultiMonitorsDateMenuButton = class MultiMonitorsDateMenuButton extends PanelMenu.Button {
     _init() {
         let hbox;
         let vbox;
-        let box;
+
         super._init(0.5);
 
         this._clockDisplay = new St.Label({ style_class: 'clock' });
         this._clockDisplay.clutter_text.y_align = Clutter.ActorAlign.CENTER;
         this._clockDisplay.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
 
-        this._indicator = new DateMenu.MessagesIndicator();
+        this._indicator = new MultiMonitorsMessagesIndicator();
 
         const indicatorPad = new St.Widget();
         this._indicator.bind_property('visible',
@@ -263,7 +303,7 @@ var MultiMonitorsDateMenuButton  = (() => {
             coordinate: Clutter.BindCoordinate.SIZE,
         }));
 
-        box = new St.BoxLayout({ style_class: 'clock-display-box' });
+        let box = new St.BoxLayout({ style_class: 'clock-display-box' });
         box.add_actor(indicatorPad);
         box.add_actor(this._clockDisplay);
         box.add_actor(this._indicator);
@@ -274,10 +314,8 @@ var MultiMonitorsDateMenuButton  = (() => {
 
         let layout = new DateMenu.FreezableBinLayout();
         let bin = new St.Widget({ layout_manager: layout });
-
         // For some minimal compatibility with PopupMenuItem
         bin._delegate = this;
-
         this.menu.box.add_child(bin);
 
         hbox = new St.BoxLayout({ name: 'calendarArea' });
@@ -289,9 +327,10 @@ var MultiMonitorsDateMenuButton  = (() => {
             layout.frozen = !DateMenu._isToday(date);
             this._eventsItem.setDate(date);
         });
+        this._date = new DateMenu.TodayButton(this._calendar);
 
         this.menu.connect('open-state-changed', (menu, isOpen) => {
-        // Whenever the menu is opened, select today
+            // Whenever the menu is opened, select today
             if (isOpen) {
                 let now = new Date();
                 this._calendar.setDate(now);
@@ -303,29 +342,23 @@ var MultiMonitorsDateMenuButton  = (() => {
         // Fill up the first column
         this._messageList = new MultiMonitorsCalendarMessageList();
         hbox.add_child(this._messageList);
-        let calendar_actor = this._calendar;
 
-        this._date = new DateMenu.TodayButton(this._calendar);
         // Fill up the second column
-        let boxLayout = new DateMenu.CalendarColumnLayout([calendar_actor, this._date]);
+        const boxLayout = new DateMenu.CalendarColumnLayout([this._calendar, this._date]);
         vbox = new St.Widget({ style_class: 'datemenu-calendar-column',
                                layout_manager: boxLayout });
         boxLayout.hookup_style(vbox);
         hbox.add(vbox);
 
         vbox.add_actor(this._date);
-
         vbox.add_actor(this._calendar);
-
-
-        this._displaysSection = {};
 
         this._displaysSection = new St.ScrollView({ style_class: 'datemenu-displays-section vfade',
                                                     x_expand: true,
                                                     overlay_scrollbars: true });
         this._displaysSection.set_policy(St.PolicyType.NEVER, St.PolicyType.EXTERNAL);
-
         vbox.add_actor(this._displaysSection);
+
         let displaysBox = new St.BoxLayout({ vertical: true,
                                              x_expand: true,
                                              style_class: 'datemenu-displays-box' });
@@ -337,9 +370,8 @@ var MultiMonitorsDateMenuButton  = (() => {
         this._clock = new GnomeDesktop.WallClock();
         this._clock.bind_property('clock', this._clockDisplay, 'text', GObject.BindingFlags.SYNC_CREATE);
         this._clockNotifyTimezoneId = this._clock.connect('notify::timezone', this._updateTimeZone.bind(this));
-        
+
         this._sessionModeUpdatedId = Main.sessionMode.connect('updated', this._sessionUpdated.bind(this));
-        
         this._sessionUpdated();
     }
 
@@ -352,3 +384,4 @@ var MultiMonitorsDateMenuButton  = (() => {
     MultiMonitors.copyClass(DateMenu.DateMenuButton, MultiMonitorsDateMenuButton);
     return GObject.registerClass(MultiMonitorsDateMenuButton);
 })();
+
