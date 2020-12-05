@@ -21,46 +21,20 @@ var ENABLE_HOT_CORNERS = 'enable-hot-corners';
 
 const MultiMonitorsPanelBox = class MultiMonitorsPanelBox {
     constructor(monitor) {
-        this._rightPanelBarrier = null;
-
         this.panelBox = new St.BoxLayout({ name: 'panelBox', vertical: true, clip_to_allocation: true });
         Main.layoutManager.addChrome(this.panelBox, { affectsStruts: true, trackFullscreen: true });
         this.panelBox.set_position(monitor.x, monitor.y);
         this.panelBox.set_size(monitor.width, -1);
         Main.uiGroup.set_child_below_sibling(this.panelBox, Main.layoutManager.panelBox);
-
-        this._panelBoxChangedId = this.panelBox.connect('notify::allocation', this._panelBoxChanged.bind(this));
     }
 
-	destroy() {
-		if (this._rightPanelBarrier) {
-	        this._rightPanelBarrier.destroy();
-	        this._rightPanelBarrier = null;
-	    }
+    destroy() {
+        this.panelBox.destroy();
+    }
 
-		this.panelBox.disconnect(this._panelBoxChangedId);
-		this.panelBox.destroy();
-	}
-
-	updatePanel(monitor) {
-	    this.panelBox.set_position(monitor.x, monitor.y);
-	    this.panelBox.set_size(monitor.width, -1);
-	}
-
-	_panelBoxChanged() {
-        if (this._rightPanelBarrier) {
-            this._rightPanelBarrier.destroy();
-            this._rightPanelBarrier = null;
-        }
-
-        const [x, y] = this.panelBox.get_transformed_position();
-        const width = this.panelBox.allocation.get_width();
-        if (this.panelBox.height) {
-            this._rightPanelBarrier = new Meta.Barrier({ display: global.display,
-                                            x1: x + width, y1: y,
-                                            x2: x + width, y2: y + this.panelBox.height,
-                                            directions: Meta.BarrierDirection.NEGATIVE_X });
-        }
+    updatePanel(monitor) {
+        this.panelBox.set_position(monitor.x, monitor.y);
+        this.panelBox.set_size(monitor.width, -1);
     }
 };
 
