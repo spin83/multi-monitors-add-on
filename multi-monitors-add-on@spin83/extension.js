@@ -36,7 +36,7 @@ const MUTTER_SCHEMA = 'org.gnome.mutter';
 const WORKSPACES_ONLY_ON_PRIMARY_ID = 'workspaces-only-on-primary';
 
 const SHOW_INDICATOR_ID = 'show-indicator';
-const SHOW_THUMBNAILS_SLIDER_ID = 'show-thumbnails-slider';
+const THUMBNAILS_SLIDER_POSITION_ID = 'thumbnails-slider-position';
 
 function copyClass (s, d) {
 //    global.log(s.name +" > "+ d.name);
@@ -94,57 +94,57 @@ class MultiMonitorsAddOn {
     }
 
     _showThumbnailsSlider() {
-        if (this._settings.get_boolean(SHOW_THUMBNAILS_SLIDER_ID)) {
-            if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-                this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
-            if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-                this._mu_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
+		if (this._settings.get_string(THUMBNAILS_SLIDER_POSITION_ID) === 'none') {
+			this._hideThumbnailsSlider();
+			return;
+		}
 
-            if (Main.mmOverview)
-                return;
+		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+			this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
+		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+			this._mu_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 
-            Main.mmOverview = [];
-            for (let idx = 0; idx < Main.layoutManager.monitors.length; idx++) {
-                if (idx != Main.layoutManager.primaryIndex) {
-                    Main.mmOverview[idx] = new MMOverview.MultiMonitorsOverview(idx);
-                }
-            }
+		if (Main.mmOverview)
+			return;
 
-            this.syncWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry;
-            Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = function() {
-                if (this._inWindowFade)
-                    return;
+		Main.mmOverview = [];
+		for (let idx = 0; idx < Main.layoutManager.monitors.length; idx++) {
+			if (idx != Main.layoutManager.primaryIndex) {
+				Main.mmOverview[idx] = new MMOverview.MultiMonitorsOverview(idx);
+			}
+		}
 
-                const primaryView = this._getPrimaryView();
-                if (primaryView) {
-                    primaryView.ease({
-                        ...this._actualGeometry,
-                        duration: Main.overview.animationInProgress ? ANIMATION_TIME : 0,
-                        mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-                    });
-                }
+		this.syncWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry;
+		Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = function() {
+			if (this._inWindowFade)
+				return;
 
-                for (let idx = 0; idx < Main.mmOverview.length; idx++) {
-                    if (!Main.mmOverview[idx])
-                        continue;
-                    if (!Main.mmOverview[idx]._overview)
-                        continue;
-                    const mmView = Main.mmOverview[idx]._overview._controls._workspacesViews;
-                    if (!mmView)
-                        continue;
+			const primaryView = this._getPrimaryView();
+			if (primaryView) {
+				primaryView.ease({
+					...this._actualGeometry,
+					duration: Main.overview.animationInProgress ? ANIMATION_TIME : 0,
+					mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+				});
+			}
 
-                    const mmGeometry = Main.mmOverview[idx].getWorkspacesActualGeometry();
-                    mmView.ease({
-                        ...mmGeometry,
-                        duration: Main.overview.animationInProgress ? ANIMATION_TIME : 0,
-                        mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-                    });
-                }
-            }
-        }
-        else {
-            this._hideThumbnailsSlider();
-        }
+			for (let idx = 0; idx < Main.mmOverview.length; idx++) {
+				if (!Main.mmOverview[idx])
+					continue;
+				if (!Main.mmOverview[idx]._overview)
+					continue;
+				const mmView = Main.mmOverview[idx]._overview._controls._workspacesViews;
+				if (!mmView)
+					continue;
+
+				const mmGeometry = Main.mmOverview[idx].getWorkspacesActualGeometry();
+				mmView.ease({
+					...mmGeometry,
+					duration: Main.overview.animationInProgress ? ANIMATION_TIME : 0,
+					mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+				});
+			}
+		}
     }
 
 	_hideThumbnailsSlider() {
@@ -173,10 +173,9 @@ class MultiMonitorsAddOn {
     }
 
     _switchOffThumbnails() {
-		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
-		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-			this._settings.set_boolean(SHOW_THUMBNAILS_SLIDER_ID, false);
+		if (this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID) || this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID)) {
+			this._settings.set_string(THUMBNAILS_SLIDER_POSITION_ID, 'none');
+		}
     }
 
     enable(version) {
@@ -199,7 +198,7 @@ class MultiMonitorsAddOn {
 		this._showPanelId = this._settings.connect('changed::'+MMLayout.SHOW_PANEL_ID, Main.mmLayoutManager.showPanel.bind(Main.mmLayoutManager));
 		Main.mmLayoutManager.showPanel();
 		
-		this._showThumbnailsSliderId = this._settings.connect('changed::'+SHOW_THUMBNAILS_SLIDER_ID, this._showThumbnailsSlider.bind(this));
+		this._thumbnailsSliderPositionId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID, this._showThumbnailsSlider.bind(this));
 		this._relayoutId = Main.layoutManager.connect('monitors-changed', this._relayout.bind(this));
 		this._relayout();
     }
@@ -210,7 +209,7 @@ class MultiMonitorsAddOn {
 		this._mu_settings.disconnect(this._switchOffThumbnailsMuId);
 		
 		this._settings.disconnect(this._showPanelId);
-		this._settings.disconnect(this._showThumbnailsSliderId);
+		this._settings.disconnect(this._thumbnailsSliderPositionId);
 		this._settings.disconnect(this._showIndicatorId);
 
 		
