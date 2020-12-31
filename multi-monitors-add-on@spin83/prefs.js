@@ -65,7 +65,12 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         this._addBooleanSwitch(_('Show Activities-Button on additional monitors.'), SHOW_ACTIVITIES_ID);
         this._addBooleanSwitch(_('Show AppMenu-Button on additional monitors.'), SHOW_APP_MENU_ID);
         this._addBooleanSwitch(_('Show DateTime-Button on additional monitors.'), SHOW_DATE_TIME_ID);
-        this._addComboBoxSwitch(_('Show Thumbnails-Slider on additional monitors.'), THUMBNAILS_SLIDER_POSITION_ID);
+        this._addComboBoxSwitch(_('Show Thumbnails-Slider on additional monitors.'), THUMBNAILS_SLIDER_POSITION_ID, {
+            none: _('No'),
+            right: _('On the right'),
+            left: _('On the left'),
+            auto: _('Auto')
+        });
         this._addSettingsBooleanSwitch(_('Enable hot corners.'), this._desktopSettings, ENABLE_HOT_CORNERS);
 
         this._store = new Gtk.ListStore();
@@ -225,20 +230,20 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         }
     }
 
-	_addComboBoxSwitch(label, schema_id) {
-		this._addSettingsComboBoxSwitch(label, this._settings, schema_id)
+	_addComboBoxSwitch(label, schema_id, options) {
+		this._addSettingsComboBoxSwitch(label, this._settings, schema_id, options)
 	}
 
-	_addSettingsComboBoxSwitch(label, settings, schema_id) {
+	_addSettingsComboBoxSwitch(label, settings, schema_id, options) {
 		let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});
 		let gLabel = new Gtk.Label({label: _(label), halign: Gtk.Align.START});
 		gHBox.add(gLabel);
 
 		let gCBox = new Gtk.ComboBoxText({halign: Gtk.Align.END});
-		gCBox.append('none', 'None');
-		gCBox.append('right', 'Right');
-		gCBox.append('left', 'Left');
-		gCBox.append('auto', 'auto');
+		Object.entries(options).forEach(function(entry) {
+			const [key, val] = entry;
+			gCBox.append(key, val);
+		});
 		gHBox.add(gCBox);
 
 		this.add(gHBox);
