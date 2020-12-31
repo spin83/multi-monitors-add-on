@@ -37,6 +37,7 @@ const SHOW_ACTIVITIES_ID = 'show-activities';
 const SHOW_APP_MENU_ID = 'show-app-menu';
 const SHOW_DATE_TIME_ID = 'show-date-time';
 const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
+const THUMBNAILS_SLIDER_POSITION_ID = 'thumbnails-slider-position';
 const AVAILABLE_INDICATORS_ID = 'available-indicators';
 const TRANSFER_INDICATORS_ID = 'transfer-indicators';
 const ENABLE_HOT_CORNERS = 'enable-hot-corners';
@@ -68,6 +69,7 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         this._addBooleanSwitch(_('Show AppMenu-Button on additional monitors.'), SHOW_APP_MENU_ID);
         this._addBooleanSwitch(_('Show DateTime-Button on additional monitors.'), SHOW_DATE_TIME_ID);
         this._addBooleanSwitch(_('Show Thumbnails-Slider on left side of additional monitors.'), THUMBNAILS_ON_LEFT_SIDE_ID);
+        this._addComboBoxSwitch(_('Show Thumbnails-Slider on additional monitors.'), THUMBNAILS_SLIDER_POSITION_ID);
         this._addSettingsBooleanSwitch(_('Enable hot corners.'), this._desktopSettings, ENABLE_HOT_CORNERS);
 
         this._store = new Gtk.ListStore();
@@ -226,6 +228,27 @@ class MultiMonitorsPrefsWidget extends Gtk.Grid {
         	}
         }
     }
+
+	_addComboBoxSwitch(label, schema_id) {
+		this._addSettingsComboBoxSwitch(label, this._settings, schema_id)
+	}
+
+	_addSettingsComboBoxSwitch(label, settings, schema_id) {
+		let gHBox = new Gtk.HBox({margin: 10, spacing: 20, hexpand: true});
+		let gLabel = new Gtk.Label({label: _(label), halign: Gtk.Align.START});
+		gHBox.add(gLabel);
+
+		let gCBox = new Gtk.ComboBoxText({halign: Gtk.Align.END});
+		gCBox.append('none', 'None');
+		gCBox.append('right', 'Right');
+		gCBox.append('left', 'Left');
+		gCBox.append('auto', 'auto');
+		gHBox.add(gCBox);
+
+		this.add(gHBox);
+
+		settings.bind(schema_id, gCBox, 'active-id', Gio.SettingsBindFlags.DEFAULT);
+	}
 
     _addBooleanSwitch(label, schema_id) {
         this._addSettingsBooleanSwitch(label, this._settings, schema_id);
