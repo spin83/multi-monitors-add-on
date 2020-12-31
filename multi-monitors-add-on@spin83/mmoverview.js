@@ -362,6 +362,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._spacer_height = 0;
         this._fixGeometry = 0;
         this._visible = false;
+        this._primaryMonitorOnTheLeft = Main.layoutManager.monitors[index].x > Main.layoutManager.primaryMonitor.x;
         
         let layout = new OverviewControls.ControlsLayout();
         super._init({
@@ -409,15 +410,8 @@ class MultiMonitorsControlsManager extends St.Widget {
         let thumbnailsSlider;
         thumbnailsSlider = this._thumbnailsSlider;
 
-        let onLeftSide = false;
-        switch (this._settings.get_string(THUMBNAILS_SLIDER_POSITION_ID)) {
-            case 'left':
-                onLeftSide = true;
-                break;
-
-            case 'auto':
-                break;
-        }
+        let sett = this._settings.get_string(THUMBNAILS_SLIDER_POSITION_ID);
+        let onLeftSide = sett === 'left' || (sett === 'auto' && this._primaryMonitorOnTheLeft);
 
         if (onLeftSide) {
             let first = this._group.get_first_child();
