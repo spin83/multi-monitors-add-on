@@ -362,8 +362,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._spacer_height = 0;
         this._fixGeometry = 0;
         this._visible = false;
-        this._primaryMonitorOnTheLeft = Main.layoutManager.monitors[index].x > Main.layoutManager.primaryMonitor.x;
-        
+
         let layout = new OverviewControls.ControlsLayout();
         super._init({
             layout_manager: layout,
@@ -390,20 +389,28 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._group.add_actor(this._thumbnailsSlider);
 
         this._settings = Convenience.getSettings();
-        this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
-                                                                this._thumbnailsSelectSide.bind(this));
-        this._thumbnailsSelectSide();
+
+        this._monitorsChanged();
         this._thumbnailsSlider.slideOut();
         this._thumbnailsBox._updatePorthole();
 
         this.connect('notify::allocation', this._updateSpacerVisibility.bind(this));
         this.connect('destroy', this._onDestroy.bind(this));
+        this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
+                                                        this._thumbnailsSelectSide.bind(this));
+        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
     }
 
     _onDestroy() {
         Main.overview.viewSelector.disconnect(this._pageChangedId);
         Main.overview.viewSelector.disconnect(this._pageEmptyId);
         this._settings.disconnect(this._thumbnailsSelectSideId);
+        Main.layoutManager.disconnect(this._monitorsChangedId);
+    }
+
+    _monitorsChanged() {
+        this._primaryMonitorOnTheLeft = Main.layoutManager.monitors[this._monitorIndex].x > Main.layoutManager.primaryMonitor.x;
+        this._thumbnailsSelectSide();
     }
 
     _thumbnailsSelectSide() {
