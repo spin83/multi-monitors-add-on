@@ -65,11 +65,6 @@ msgstr "Visualizza il pulsante del menu Applicazioni sui monitor secondari."
 msgid "Show DateTime-Button on additional monitors."
 msgstr "Mostra il Bottone Data/Ora sui monitor secondari."
 
-#: prefs.js:68
-msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr "Visualizza lo slider delle anteprime a sul lato sinistro per i monitor "
-"secondari."
-
 #: prefs.js:71
 msgid "Enable hot corners."
 msgstr ""

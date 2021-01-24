@@ -12,12 +12,6 @@
       <summary>Show Panel on additional monitors.</summary>
       <description>Add or remove Panel from additional monitors.</description>
     </key>
-    
-    <key name="show-thumbnails-slider" type="b">
-      <default>true</default>
-      <summary>Show Thumbnails-Slider on additional monitors.</summary>
-      <description>Add or remove Thumbnails-Slider from additional monitors.</description>
-    </key>
 
     <key name="show-activities" type="b">
       <default>true</default>
@@ -36,11 +30,17 @@
       <summary>Show DateTime-Button on additional monitors.</summary>
       <description>Change visibility of DateTime-Button on additional monitors.</description>
     </key>
-    
-    <key name="thumbnails-on-left-side" type="b">
-      <default>true</default>
-      <summary>Show Thumbnails-Slider on left side of additional monitors.</summary>
-      <description>Toggle position of Thumbnails-Slider from right to left  on additional monitors.</description>
+
+    <key name="thumbnails-slider-position" type="s">
+      <choices>
+        <choice value='none'/>
+        <choice value='right'/>
+        <choice value='left'/>
+        <choice value='auto'/>
+      </choices>
+      <default>'auto'</default>
+      <summary>Show Thumbnails-Slider on additional monitors.</summary>
+      <description>Select position of Thumbnails-Slider on additional monitors.</description>
     </key>
     
 	<key name="available-indicators" type="as">

@@ -32,7 +32,7 @@ const CE = ExtensionUtils.getCurrentExtension();
 const MultiMonitors = CE.imports.extension;
 const Convenience = CE.imports.convenience;
 
-const THUMBNAILS_ON_LEFT_SIDE_ID = 'thumbnails-on-left-side';
+const THUMBNAILS_SLIDER_POSITION_ID = 'thumbnails-slider-position';
 
 var MultiMonitorsWorkspaceThumbnail = (() => {
     let MultiMonitorsWorkspaceThumbnail = class MultiMonitorsWorkspaceThumbnail extends St.Widget {
@@ -362,6 +362,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._spacer_height = 0;
         this._fixGeometry = 0;
         this._visible = false;
+        this._primaryMonitorOnTheLeft = Main.layoutManager.monitors[index].x > Main.layoutManager.primaryMonitor.x;
         
         let layout = new OverviewControls.ControlsLayout();
         super._init({
@@ -389,9 +390,9 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._group.add_actor(this._thumbnailsSlider);
 
         this._settings = Convenience.getSettings();
-        this._thumbnailsOnLeftSideId = this._settings.connect('changed::'+THUMBNAILS_ON_LEFT_SIDE_ID,
-                                                                this._thumbnailsOnLeftSide.bind(this));
-        this._thumbnailsOnLeftSide();
+        this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
+                                                                this._thumbnailsSelectSide.bind(this));
+        this._thumbnailsSelectSide();
         this._thumbnailsSlider.slideOut();
         this._thumbnailsBox._updatePorthole();
 
@@ -402,14 +403,17 @@ class MultiMonitorsControlsManager extends St.Widget {
     _onDestroy() {
         Main.overview.viewSelector.disconnect(this._pageChangedId);
         Main.overview.viewSelector.disconnect(this._pageEmptyId);
-        this._settings.disconnect(this._thumbnailsOnLeftSideId);
+        this._settings.disconnect(this._thumbnailsSelectSideId);
     }
 
-    _thumbnailsOnLeftSide() {
+    _thumbnailsSelectSide() {
         let thumbnailsSlider;
         thumbnailsSlider = this._thumbnailsSlider;
 
-        if (this._settings.get_boolean(THUMBNAILS_ON_LEFT_SIDE_ID)) {
+        let sett = this._settings.get_string(THUMBNAILS_SLIDER_POSITION_ID);
+        let onLeftSide = sett === 'left' || (sett === 'auto' && this._primaryMonitorOnTheLeft);
+
+        if (onLeftSide) {
             let first = this._group.get_first_child();
             if (first != thumbnailsSlider) {
                 this._thumbnailsSlider.layout.slideDirection = OverviewControls.SlideDirection.LEFT;

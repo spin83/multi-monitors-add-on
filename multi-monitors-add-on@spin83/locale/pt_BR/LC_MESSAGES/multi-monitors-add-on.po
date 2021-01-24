@@ -39,11 +39,6 @@ msgstr "Mostrar botão de Atividades em monitores adicionais"
 msgid "Show AppMenu-Button on additional monitors."
 msgstr "Mostrar botão de menu de aplicativos em monitores adicionais"
 
-#: prefs.js:66
-msgid "Show Thumbnails-Slider on left side of additional monitors."
-msgstr ""
-"Mostrar controle deslizante de miniaturas à esquerda de monitores adicionais"
-
 #: prefs.js:67
 msgid "Show DateTime-Button on additional monitors."
 msgstr "Mostrar o botão de data e hora em monitores adicionais"
