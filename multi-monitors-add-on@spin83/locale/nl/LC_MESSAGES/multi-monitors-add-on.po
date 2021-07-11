@@ -1,0 +1,92 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the multi-monitors-add-on package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: multi-monitors-add-on\n"
+"Report-Msgid-Bugs-To: https://github.com/spin83/multi-monitors-add-on/"
+"issues\n"
+"POT-Creation-Date: 2019-10-04 04:44-0300\n"
+"PO-Revision-Date: 2021-07-11 17:47+0200\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
+"Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: nl\n"
+
+#: indicator.js:46
+msgid "Preferences"
+msgstr "Voorkeuren"
+
+#: indicator.js:115
+msgid "Multi Monitors Add-On"
+msgstr "Meerdere beeldschermen-uitbreiding"
+
+#: mmoverview.js:642
+msgid "Overview"
+msgstr "Overzicht"
+
+#. Translators: If there is no suitable word for "Activities"
+#. in your language, you can use the word for "Overview".
+#: mmpanel.js:333
+msgid "Activities"
+msgstr "Activiteiten"
+
+#: mmpanel.js:414
+msgid "Top Bar"
+msgstr "Bovenbalk"
+
+#: prefs.js:62
+msgid "Show Multi Monitors indicator on Top Panel."
+msgstr "Indicator tonen op de bovenbalk"
+
+#: prefs.js:63
+msgid "Show Panel on additional monitors."
+msgstr "Bovenbalk tonen op meerdere beeldschermen"
+
+#: prefs.js:64
+msgid "Show Thumbnails-Slider on additional monitors."
+msgstr "Minatuurbalk tonen op meerdere beeldschermen"
+
+#: prefs.js:65
+msgid "Show Activities-Button on additional monitors."
+msgstr "Activiteitenknop tonen op meerdere beeldschermen"
+
+#: prefs.js:66
+msgid "Show AppMenu-Button on additional monitors."
+msgstr "Menuknop tonen op meerdere beeldschermen"
+
+#: prefs.js:67
+msgid "Show DateTime-Button on additional monitors."
+msgstr "Datum-/Tijdknop tonen op meerdere beeldschermen"
+
+#: prefs.js:68
+msgid "Show Thumbnails-Slider on left side of additional monitors."
+msgstr "Minatuurbalk aan linkerkant tonen op meerdere beeldschermen"
+
+#: prefs.js:77
+msgid "A list of indicators for transfer to additional monitors."
+msgstr ""
+"Een lijst met indicators die moeten worden getoond op meerdere "
+"beeldschermen."
+
+#: prefs.js:124
+msgid "Select indicator"
+msgstr "Kies een indicator"
+
+#: prefs.js:127
+msgid "Add"
+msgstr "Toevoegen"
+
+#: prefs.js:141
+msgid "Indicators on Top Panel"
+msgstr "Indicators op bovenbalk"
+
+#: prefs.js:170
+msgid "Monitor index:"
+msgstr "Beeldschermindex:"
