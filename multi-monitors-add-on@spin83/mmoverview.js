@@ -278,6 +278,84 @@ const MultiMonitorsThumbnailsBox = (() => {
     }, MultiMonitorsThumbnailsBox);
 })();
 
+/* This isn't compatible with GNOME 40 and i don't know how to fix it -- TH
+var MultiMonitorsSlidingControl = (() => {
+    let MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl extends St.Widget {
+    _init(params) {
+        params = Params.parse(params, { slideDirection: OverviewControls.SlideDirection.LEFT });
+
+        this.layout = new OverviewControls.SlideLayout();
+        this.layout.slideDirection = params.slideDirection;
+        super._init({
+            layout_manager: this.layout,
+            style_class: 'overview-controls',
+            clip_to_allocation: true,
+        });
+
+        this._visible = true;
+        this._inDrag = false;
+
+        this.connect('destroy', this._onDestroy.bind(this));
+        this._hidingId = Main.overview.connect('hiding', this._onOverviewHiding.bind(this));
+
+        this._itemDragBeginId = Main.overview.connect('item-drag-begin', this._onDragBegin.bind(this));
+        this._itemDragEndId = Main.overview.connect('item-drag-end', this._onDragEnd.bind(this));
+        this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', this._onDragEnd.bind(this));
+
+        this._windowDragBeginId = Main.overview.connect('window-drag-begin', this._onWindowDragBegin.bind(this));
+        this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onWindowDragEnd.bind(this));
+        this._windowDragEndId = Main.overview.connect('window-drag-end', this._onWindowDragEnd.bind(this));
+    }
+
+    _onDestroy() {
+        Main.overview.disconnect(this._hidingId);
+
+        Main.overview.disconnect(this._itemDragBeginId);
+        Main.overview.disconnect(this._itemDragEndId);
+        Main.overview.disconnect(this._itemDragCancelledId);
+
+        Main.overview.disconnect(this._windowDragBeginId);
+        Main.overview.disconnect(this._windowDragCancelledId);
+        Main.overview.disconnect(this._windowDragEndId);
+    }};
+
+    MultiMonitors.copyClass(OverviewControls.SlidingControl, MultiMonitorsSlidingControl);
+    return GObject.registerClass(MultiMonitorsSlidingControl);
+})();
+
+var MultiMonitorsThumbnailsSlider = (() => {
+    let MultiMonitorsThumbnailsSlider = class MultiMonitorsThumbnailsSlider extends MultiMonitorsSlidingControl {
+    _init(thumbnailsBox) {
+        super._init({ slideDirection: OverviewControls.SlideDirection.RIGHT });
+
+        this._thumbnailsBox = thumbnailsBox;
+
+        this.request_mode = Clutter.RequestMode.WIDTH_FOR_HEIGHT;
+        this.reactive = true;
+        this.track_hover = true;
+        this.add_actor(this._thumbnailsBox);
+
+        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateSlide.bind(this));
+        this._activeWorkspaceChangedId = global.workspace_manager.connect('active-workspace-changed',
+                                         this._updateSlide.bind(this));
+        this._notifyNWorkspacesId = global.workspace_manager.connect('notify::n-workspaces',
+                                         this._updateSlide.bind(this));
+        this.connect('notify::hover', this._updateSlide.bind(this));
+        this._thumbnailsBox.bind_property('visible', this, 'visible', GObject.BindingFlags.SYNC_CREATE);
+    }
+
+    _onDestroy() {
+        global.workspace_manager.disconnect(this._activeWorkspaceChangedId);
+        global.workspace_manager.disconnect(this._notifyNWorkspacesId);
+        Main.layoutManager.disconnect(this._monitorsChangedId);
+        super._onDestroy();
+    }};
+
+    MultiMonitors.copyClass(OverviewControls.ThumbnailsSlider, MultiMonitorsThumbnailsSlider);
+    return GObject.registerClass(MultiMonitorsThumbnailsSlider);
+})();
+*/
+
 var MultiMonitorsControlsManager = GObject.registerClass(
 class MultiMonitorsControlsManager extends St.Widget {
     _init(index) {
