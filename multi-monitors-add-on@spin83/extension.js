@@ -40,6 +40,7 @@ const THUMBNAILS_SLIDER_POSITION_ID = 'thumbnails-slider-position';
 
 function copyClass (s, d) {
 //    global.log(s.name +" > "+ d.name);
+    if (!s) throw Error(`copyClass s undefined for d ${d.name}`)
     let propertyNames = Reflect.ownKeys(s.prototype);
     for (let pName of propertyNames.values()) {
 
@@ -114,8 +115,8 @@ class MultiMonitorsAddOn {
 			}
 		}
 
-		this.syncWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry;
-		Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = function() {
+		this.syncWorkspacesActualGeometry = Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry;
+		Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry = function() {
 			if (this._inWindowFade)
 				return;
 
@@ -156,7 +157,7 @@ class MultiMonitorsAddOn {
                 Main.mmOverview[idx].destroy();
         }
         Main.mmOverview = null;
-        Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = this.syncWorkspacesActualGeometry;
+        Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry = this.syncWorkspacesActualGeometry;
     }
 
     _relayout() {

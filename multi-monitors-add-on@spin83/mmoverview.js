@@ -22,7 +22,7 @@ const Params = imports.misc.params;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 const OverviewControls = imports.ui.overviewControls;
 const Overview = imports.ui.overview;
-const ViewSelector = imports.ui.viewSelector;
+const SearchController = imports.ui.searchController;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
 const WorkspacesView = imports.ui.workspacesView;
@@ -278,82 +278,6 @@ const MultiMonitorsThumbnailsBox = (() => {
     }, MultiMonitorsThumbnailsBox);
 })();
 
-var MultiMonitorsSlidingControl = (() => {
-    let MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl extends St.Widget {
-    _init(params) {
-        params = Params.parse(params, { slideDirection: OverviewControls.SlideDirection.LEFT });
-
-        this.layout = new OverviewControls.SlideLayout();
-        this.layout.slideDirection = params.slideDirection;
-        super._init({
-            layout_manager: this.layout,
-            style_class: 'overview-controls',
-            clip_to_allocation: true,
-        });
-
-        this._visible = true;
-        this._inDrag = false;
-
-        this.connect('destroy', this._onDestroy.bind(this));
-        this._hidingId = Main.overview.connect('hiding', this._onOverviewHiding.bind(this));
-
-        this._itemDragBeginId = Main.overview.connect('item-drag-begin', this._onDragBegin.bind(this));
-        this._itemDragEndId = Main.overview.connect('item-drag-end', this._onDragEnd.bind(this));
-        this._itemDragCancelledId = Main.overview.connect('item-drag-cancelled', this._onDragEnd.bind(this));
-
-        this._windowDragBeginId = Main.overview.connect('window-drag-begin', this._onWindowDragBegin.bind(this));
-        this._windowDragCancelledId = Main.overview.connect('window-drag-cancelled', this._onWindowDragEnd.bind(this));
-        this._windowDragEndId = Main.overview.connect('window-drag-end', this._onWindowDragEnd.bind(this));
-    }
-
-    _onDestroy() {
-        Main.overview.disconnect(this._hidingId);
-
-        Main.overview.disconnect(this._itemDragBeginId);
-        Main.overview.disconnect(this._itemDragEndId);
-        Main.overview.disconnect(this._itemDragCancelledId);
-
-        Main.overview.disconnect(this._windowDragBeginId);
-        Main.overview.disconnect(this._windowDragCancelledId);
-        Main.overview.disconnect(this._windowDragEndId);
-    }};
-
-    MultiMonitors.copyClass(OverviewControls.SlidingControl, MultiMonitorsSlidingControl);
-    return GObject.registerClass(MultiMonitorsSlidingControl);
-})();
-
-var MultiMonitorsThumbnailsSlider = (() => {
-    let MultiMonitorsThumbnailsSlider = class MultiMonitorsThumbnailsSlider extends MultiMonitorsSlidingControl {
-    _init(thumbnailsBox) {
-        super._init({ slideDirection: OverviewControls.SlideDirection.RIGHT });
-
-        this._thumbnailsBox = thumbnailsBox;
-
-        this.request_mode = Clutter.RequestMode.WIDTH_FOR_HEIGHT;
-        this.reactive = true;
-        this.track_hover = true;
-        this.add_actor(this._thumbnailsBox);
-
-        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateSlide.bind(this));
-        this._activeWorkspaceChangedId = global.workspace_manager.connect('active-workspace-changed',
-                                         this._updateSlide.bind(this));
-        this._notifyNWorkspacesId = global.workspace_manager.connect('notify::n-workspaces',
-                                         this._updateSlide.bind(this));
-        this.connect('notify::hover', this._updateSlide.bind(this));
-        this._thumbnailsBox.bind_property('visible', this, 'visible', GObject.BindingFlags.SYNC_CREATE);
-    }
-
-    _onDestroy() {
-        global.workspace_manager.disconnect(this._activeWorkspaceChangedId);
-        global.workspace_manager.disconnect(this._notifyNWorkspacesId);
-        Main.layoutManager.disconnect(this._monitorsChangedId);
-        super._onDestroy();
-    }};
-
-    MultiMonitors.copyClass(OverviewControls.ThumbnailsSlider, MultiMonitorsThumbnailsSlider);
-    return GObject.registerClass(MultiMonitorsThumbnailsSlider);
-})();
-
 var MultiMonitorsControlsManager = GObject.registerClass(
 class MultiMonitorsControlsManager extends St.Widget {
     _init(index) {
@@ -375,35 +299,35 @@ class MultiMonitorsControlsManager extends St.Widget {
 
         this._thumbnailsBox =
             new MultiMonitorsThumbnailsBox(this._workspaceAdjustment, this._monitorIndex);
-        this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
+        //this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
 
-        this._viewSelector = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
-        this._pageChangedId = Main.overview.viewSelector.connect('page-changed', this._setVisibility.bind(this));
-        this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
+        this._searchController = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
+        this._pageChangedId = Main.overview.searchController.connect('page-changed', this._setVisibility.bind(this));
+        this._pageEmptyId = Main.overview.searchController.connect('page-empty', this._onPageEmpty.bind(this));
 
         this._group = new St.BoxLayout({ name: 'mm-overview-group-'+index,
                                          x_expand: true, y_expand: true });
         this.add_actor(this._group);
 
-        this._group.add_child(this._viewSelector);
-        this._group.add_actor(this._thumbnailsSlider);
+        this._group.add_child(this._searchController);
+        //this._group.add_actor(this._thumbnailsSlider);
 
         this._settings = Convenience.getSettings();
 
         this._monitorsChanged();
-        this._thumbnailsSlider.slideOut();
+        //this._thumbnailsSlider.slideOut();
         this._thumbnailsBox._updatePorthole();
 
         this.connect('notify::allocation', this._updateSpacerVisibility.bind(this));
         this.connect('destroy', this._onDestroy.bind(this));
-        this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
-                                                        this._thumbnailsSelectSide.bind(this));
+        //this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
+        //                                                this._thumbnailsSelectSide.bind(this));
         this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
     }
 
     _onDestroy() {
-        Main.overview.viewSelector.disconnect(this._pageChangedId);
-        Main.overview.viewSelector.disconnect(this._pageEmptyId);
+        Main.overview.searchController.disconnect(this._pageChangedId);
+        Main.overview.searchController.disconnect(this._pageEmptyId);
         this._settings.disconnect(this._thumbnailsSelectSideId);
         Main.layoutManager.disconnect(this._monitorsChangedId);
     }
@@ -413,6 +337,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._thumbnailsSelectSide();
     }
 
+    /*
     _thumbnailsSelectSide() {
         let thumbnailsSlider;
         thumbnailsSlider = this._thumbnailsSlider;
@@ -440,6 +365,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         }
         this._fixGeometry = 3;
     }
+    */
 
     _updateSpacerVisibility() {
         if (Main.layoutManager.monitors.length<this._monitorIndex)
@@ -468,9 +394,9 @@ class MultiMonitorsControlsManager extends St.Widget {
     getWorkspacesActualGeometry() {
         let geometry;
         if (this._visible) {
-            const [x, y] = this._viewSelector.get_transformed_position();
-            const width = this._viewSelector.allocation.get_width();
-            const height = this._viewSelector.allocation.get_height();
+            const [x, y] = this._searchController.get_transformed_position();
+            const width = this._searchController.allocation.get_width();
+            const height = this._searchController.allocation.get_height();
             geometry = { x, y, width, height };
         }
         else {
@@ -496,20 +422,18 @@ class MultiMonitorsControlsManager extends St.Widget {
             (Main.overview.animationInProgress && !Main.overview.visibleTarget))
             return;
 
-        let activePage = Main.overview.viewSelector.getActivePage();
-        let thumbnailsVisible = activePage == ViewSelector.ViewPage.WINDOWS;
+        let activePage = Main.overview.searchController.getActivePage();
+        let thumbnailsVisible = activePage == SearchController.ViewPage.WINDOWS;
 
         let opacity = null;
         if (thumbnailsVisible) {
             opacity = 255;
             if (this._fixGeometry===1)
                 this._fixGeometry = 0;
-            this._thumbnailsSlider.slideIn();
         }
         else {
             opacity = 0;
             this._fixGeometry = 1;
-            this._thumbnailsSlider.slideOut();
         }
 
         if (!this._workspacesViews)
@@ -523,12 +447,12 @@ class MultiMonitorsControlsManager extends St.Widget {
     }
 
     _onPageEmpty() {
-        this._thumbnailsSlider.pageEmpty();
+        //this._thumbnailsSlider.pageEmpty();
     }
     
     show() {
-        this._viewSelector.visible = true;
-        this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
+        this._searchController.visible = true;
+        this._workspacesViews = Main.overview.searchController._workspacesDisplay._workspacesViews[this._monitorIndex];
         this._visible = true;
         const geometry = this.getWorkspacesActualGeometry();
 
@@ -537,6 +461,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             return;
         }
 
+        /*
         if (this._fixGeometry) {
             const width = this._thumbnailsSlider.get_width();
             if (this._fixGeometry===2) {
@@ -552,6 +477,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             }
             this._fixGeometry = 0;
         }
+        */
 
         this._workspacesViews.ease({
             ...geometry,
@@ -571,7 +497,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             duration: Main.overview.animationInProgress ? Overview.ANIMATION_TIME : 0,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
-                this._viewSelector.visible = false;
+                this._searchController.visible = false;
             },
         });
         this._workspacesViews = null;
