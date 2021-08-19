@@ -27,3 +27,7 @@
 .workspace-thumbnails-left:rtl {
     border-radius: 9px 0 0 9px; 
 }
+
+.datemenu-calendar-column {
+    width: 320px;
+}
