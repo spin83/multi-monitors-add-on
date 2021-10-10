@@ -365,7 +365,12 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._fixGeometry = 0;
         this._visible = false;
 
-        let layout = new OverviewControls.ControlsManagerLayout();
+        let layout
+        if (OverviewControls.ControlsManagerLayout) {
+            layout = new OverviewControls.ControlsManagerLayout();
+        } else {
+            layout = new OverviewControls.ControlsLayout();
+        }
         super._init({
             layout_manager: layout,
             x_expand: true,
