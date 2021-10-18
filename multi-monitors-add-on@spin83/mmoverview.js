@@ -22,7 +22,7 @@ const Params = imports.misc.params;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 const OverviewControls = imports.ui.overviewControls;
 const Overview = imports.ui.overview;
-const ViewSelector = imports.ui.viewSelector;
+const SearchController = imports.ui.searchController;
 const LayoutManager = imports.ui.layout;
 const Background = imports.ui.background;
 const WorkspacesView = imports.ui.workspacesView;
@@ -278,6 +278,7 @@ const MultiMonitorsThumbnailsBox = (() => {
     }, MultiMonitorsThumbnailsBox);
 })();
 
+/* This isn't compatible with GNOME 40 and i don't know how to fix it -- TH
 var MultiMonitorsSlidingControl = (() => {
     let MultiMonitorsSlidingControl = class MultiMonitorsSlidingControl extends St.Widget {
     _init(params) {
@@ -353,6 +354,7 @@ var MultiMonitorsThumbnailsSlider = (() => {
     MultiMonitors.copyClass(OverviewControls.ThumbnailsSlider, MultiMonitorsThumbnailsSlider);
     return GObject.registerClass(MultiMonitorsThumbnailsSlider);
 })();
+*/
 
 var MultiMonitorsControlsManager = GObject.registerClass(
 class MultiMonitorsControlsManager extends St.Widget {
@@ -363,7 +365,12 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._fixGeometry = 0;
         this._visible = false;
 
-        let layout = new OverviewControls.ControlsLayout();
+        let layout
+        if (OverviewControls.ControlsManagerLayout) {
+            layout = new OverviewControls.ControlsManagerLayout();
+        } else {
+            layout = new OverviewControls.ControlsLayout();
+        }
         super._init({
             layout_manager: layout,
             x_expand: true,
@@ -375,35 +382,35 @@ class MultiMonitorsControlsManager extends St.Widget {
 
         this._thumbnailsBox =
             new MultiMonitorsThumbnailsBox(this._workspaceAdjustment, this._monitorIndex);
-        this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
+        //this._thumbnailsSlider = new MultiMonitorsThumbnailsSlider(this._thumbnailsBox);
 
-        this._viewSelector = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
-        this._pageChangedId = Main.overview.viewSelector.connect('page-changed', this._setVisibility.bind(this));
-        this._pageEmptyId = Main.overview.viewSelector.connect('page-empty', this._onPageEmpty.bind(this));
+        this._searchController = new St.Widget({ visible: false, x_expand: true, y_expand: true, clip_to_allocation: true });
+        this._pageChangedId = Main.overview.searchController.connect('page-changed', this._setVisibility.bind(this));
+        this._pageEmptyId = Main.overview.searchController.connect('page-empty', this._onPageEmpty.bind(this));
 
         this._group = new St.BoxLayout({ name: 'mm-overview-group-'+index,
                                          x_expand: true, y_expand: true });
         this.add_actor(this._group);
 
-        this._group.add_child(this._viewSelector);
-        this._group.add_actor(this._thumbnailsSlider);
+        this._group.add_child(this._searchController);
+        //this._group.add_actor(this._thumbnailsSlider);
 
         this._settings = Convenience.getSettings();
 
         this._monitorsChanged();
-        this._thumbnailsSlider.slideOut();
+        //this._thumbnailsSlider.slideOut();
         this._thumbnailsBox._updatePorthole();
 
         this.connect('notify::allocation', this._updateSpacerVisibility.bind(this));
         this.connect('destroy', this._onDestroy.bind(this));
-        this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
-                                                        this._thumbnailsSelectSide.bind(this));
+        //this._thumbnailsSelectSideId = this._settings.connect('changed::'+THUMBNAILS_SLIDER_POSITION_ID,
+        //                                                this._thumbnailsSelectSide.bind(this));
         this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._monitorsChanged.bind(this));
     }
 
     _onDestroy() {
-        Main.overview.viewSelector.disconnect(this._pageChangedId);
-        Main.overview.viewSelector.disconnect(this._pageEmptyId);
+        Main.overview.searchController.disconnect(this._pageChangedId);
+        Main.overview.searchController.disconnect(this._pageEmptyId);
         this._settings.disconnect(this._thumbnailsSelectSideId);
         Main.layoutManager.disconnect(this._monitorsChangedId);
     }
@@ -413,6 +420,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         this._thumbnailsSelectSide();
     }
 
+    /*
     _thumbnailsSelectSide() {
         let thumbnailsSlider;
         thumbnailsSlider = this._thumbnailsSlider;
@@ -440,6 +448,7 @@ class MultiMonitorsControlsManager extends St.Widget {
         }
         this._fixGeometry = 3;
     }
+    */
 
     _updateSpacerVisibility() {
         if (Main.layoutManager.monitors.length<this._monitorIndex)
@@ -468,9 +477,9 @@ class MultiMonitorsControlsManager extends St.Widget {
     getWorkspacesActualGeometry() {
         let geometry;
         if (this._visible) {
-            const [x, y] = this._viewSelector.get_transformed_position();
-            const width = this._viewSelector.allocation.get_width();
-            const height = this._viewSelector.allocation.get_height();
+            const [x, y] = this._searchController.get_transformed_position();
+            const width = this._searchController.allocation.get_width();
+            const height = this._searchController.allocation.get_height();
             geometry = { x, y, width, height };
         }
         else {
@@ -496,20 +505,18 @@ class MultiMonitorsControlsManager extends St.Widget {
             (Main.overview.animationInProgress && !Main.overview.visibleTarget))
             return;
 
-        let activePage = Main.overview.viewSelector.getActivePage();
-        let thumbnailsVisible = activePage == ViewSelector.ViewPage.WINDOWS;
+        let activePage = Main.overview.searchController.getActivePage();
+        let thumbnailsVisible = activePage == SearchController.ViewPage.WINDOWS;
 
         let opacity = null;
         if (thumbnailsVisible) {
             opacity = 255;
             if (this._fixGeometry===1)
                 this._fixGeometry = 0;
-            this._thumbnailsSlider.slideIn();
         }
         else {
             opacity = 0;
             this._fixGeometry = 1;
-            this._thumbnailsSlider.slideOut();
         }
 
         if (!this._workspacesViews)
@@ -523,12 +530,12 @@ class MultiMonitorsControlsManager extends St.Widget {
     }
 
     _onPageEmpty() {
-        this._thumbnailsSlider.pageEmpty();
+        //this._thumbnailsSlider.pageEmpty();
     }
     
     show() {
-        this._viewSelector.visible = true;
-        this._workspacesViews = Main.overview.viewSelector._workspacesDisplay._workspacesViews[this._monitorIndex];
+        this._searchController.visible = true;
+        this._workspacesViews = Main.overview.searchController._workspacesDisplay._workspacesViews[this._monitorIndex];
         this._visible = true;
         const geometry = this.getWorkspacesActualGeometry();
 
@@ -537,6 +544,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             return;
         }
 
+        /*
         if (this._fixGeometry) {
             const width = this._thumbnailsSlider.get_width();
             if (this._fixGeometry===2) {
@@ -552,6 +560,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             }
             this._fixGeometry = 0;
         }
+        */
 
         this._workspacesViews.ease({
             ...geometry,
@@ -571,7 +580,7 @@ class MultiMonitorsControlsManager extends St.Widget {
             duration: Main.overview.animationInProgress ? Overview.ANIMATION_TIME : 0,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
-                this._viewSelector.visible = false;
+                this._searchController.visible = false;
             },
         });
         this._workspacesViews = null;
