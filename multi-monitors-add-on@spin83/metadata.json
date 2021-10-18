@@ -1,5 +1,5 @@
 {
-    "shell-version": ["40", "42"],
+    "shell-version": ["40", "41", "42"],
     "uuid": "multi-monitors-add-on@spin83",
     "name": "Multi Monitors Add-On",
     "settings-schema": "org.gnome.shell.extensions.multi-monitors-add-on",
