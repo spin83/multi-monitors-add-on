@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# ALBANO BATTISTELLA <ALBANO_BATTISTELLA@HOTMAIL.COM>, 2019,2022.
 #
 msgid ""
 msgstr ""
@@ -9,8 +9,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://github.com/spin83/multi-monitors-add-on/"
 "issues\n"
 "POT-Creation-Date: 2019-10-04 04:44-0300\n"
-"PO-Revision-Date: 2019-10-21 14:53+0200\n"
-"Last-Translator: Luca Bandini (@Vombato) <luca.vombato@gmail.com>\n"
+"PO-Revision-Date: 2022-01-02 14:53+0200\n"
+"Last-Translator: Albano Battistella <albano_battistella@hotmail.com>\n"
 "Language-Team: ItalianLanguage: it\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,7 @@ msgstr "Mostra il Bottone Data/Ora sui monitor secondari."
 
 #: prefs.js:71
 msgid "Enable hot corners."
-msgstr ""
+msgstr "Abilita angoli attivi."
 
 #: prefs.js:77
 msgid "A list of indicators for transfer to additional monitors."
@@ -79,7 +79,7 @@ msgstr "Seleziona indicatore"
 
 #: prefs.js:127
 msgid "Add"
-msgstr "Aggiungere"
+msgstr "Aggiungi"
 
 #: prefs.js:141
 msgid "Indicators on Top Panel"
