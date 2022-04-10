@@ -9,7 +9,7 @@ in dynamic fashion, no restart needed.
 Versions
 ========
 
-* Branch [master](https://github.com/realh/multi-monitors-add-on/tree/master) contains extension for GNOME 40
+* Branch [master](https://github.com/realh/multi-monitors-add-on/tree/master) contains extension for GNOME 42
 * Branch [gnome-3-32_3-36](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-32_3-36) contains extension for GNOME 3.32, 3.34 and 3.36
 * Branch [gnome-3-24_3-30](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-24_3-30) contains extension for GNOME 3.24, 3.26, 3.28 and 3.30
 * Branch [gnome-3-20_3-22](https://github.com/spin83/multi-monitors-add-on/tree/gnome-3-20_3-22) contains extension for GNOME 3.20 and 3.22
