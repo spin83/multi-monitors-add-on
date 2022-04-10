@@ -376,12 +376,6 @@ var MultiMonitorsPanel = (() => {
         this._rightBox = new St.BoxLayout({ name: 'panelRight' });
         this.add_child(this._rightBox);
 
-        this._leftCorner = new Panel.PanelCorner(St.Side.LEFT);
-        this.add_child(this._leftCorner);
-
-        this._rightCorner = new Panel.PanelCorner(St.Side.RIGHT);
-        this.add_child(this._rightCorner);
-
         this._showingId = Main.overview.connect('showing', () => {
             this.add_style_pseudo_class('overview');
         });
