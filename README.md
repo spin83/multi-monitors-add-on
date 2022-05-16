@@ -20,7 +20,7 @@ Versions
 Installation from git
 =====================
 
-    git clone git://github.com/spin83/multi-monitors-add-on.git
+    git clone git@github.com:spin83/multi-monitors-add-on.git
     cd multi-monitors-add-on
     cp -r multi-monitors-add-on@spin83 ~/.local/share/gnome-shell/extensions/
 
