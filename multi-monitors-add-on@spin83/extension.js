@@ -40,6 +40,7 @@ const THUMBNAILS_SLIDER_POSITION_ID = 'thumbnails-slider-position';
 
 function copyClass (s, d) {
 //    global.log(s.name +" > "+ d.name);
+    if (!s) throw Error(`copyClass s undefined for d ${d.name}`)
     let propertyNames = Reflect.ownKeys(s.prototype);
     for (let pName of propertyNames.values()) {
 
@@ -64,7 +65,7 @@ class MultiMonitorsAddOn {
 
     constructor() {
         this._settings = Convenience.getSettings();
-        this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
+//        this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
         this._mu_settings = new Gio.Settings({ schema: MUTTER_SCHEMA });
 
         this.mmIndicator = null;
@@ -99,8 +100,8 @@ class MultiMonitorsAddOn {
 			return;
 		}
 
-		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-			this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
+//		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+//			this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 			this._mu_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 
@@ -114,8 +115,8 @@ class MultiMonitorsAddOn {
 			}
 		}
 
-		this.syncWorkspacesActualGeometry = Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry;
-		Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = function() {
+		this.syncWorkspacesActualGeometry = Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry;
+		Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry = function() {
 			if (this._inWindowFade)
 				return;
 
@@ -156,7 +157,7 @@ class MultiMonitorsAddOn {
                 Main.mmOverview[idx].destroy();
         }
         Main.mmOverview = null;
-        Main.overview.viewSelector._workspacesDisplay._syncWorkspacesActualGeometry = this.syncWorkspacesActualGeometry;
+        Main.overview.searchController._workspacesDisplay._syncWorkspacesActualGeometry = this.syncWorkspacesActualGeometry;
     }
 
     _relayout() {
@@ -173,7 +174,10 @@ class MultiMonitorsAddOn {
     }
 
     _switchOffThumbnails() {
-		if (this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID) || this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID)) {
+		if (
+//            this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID) ||
+            this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+        {
 			this._settings.set_string(THUMBNAILS_SLIDER_POSITION_ID, 'none');
 		}
     }
@@ -186,8 +190,8 @@ class MultiMonitorsAddOn {
 		
 		this._mmMonitors = 0;
 
-		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
-																	this._switchOffThumbnails.bind(this));
+//		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
+//																	this._switchOffThumbnails.bind(this));
 		this._switchOffThumbnailsMuId = this._mu_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	this._switchOffThumbnails.bind(this));
 
@@ -205,7 +209,7 @@ class MultiMonitorsAddOn {
 
     disable() {
 		Main.layoutManager.disconnect(this._relayoutId);
-		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
+//		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
 		this._mu_settings.disconnect(this._switchOffThumbnailsMuId);
 		
 		this._settings.disconnect(this._showPanelId);

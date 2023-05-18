@@ -24,11 +24,36 @@ const PanelMenu = imports.ui.panelMenu;
 const MessageList = imports.ui.messageList;
 const DateMenu = imports.ui.dateMenu;
 const Calendar = imports.ui.calendar;
+const PopupMenu = imports.ui.popupMenu;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const CE = ExtensionUtils.getCurrentExtension();
 const MultiMonitors = CE.imports.extension;
 const Convenience = CE.imports.convenience;
+
+// Calendar.DoNotDisturbSwitch is const, so not exported. Either
+// <https://gjs.guide/guides/gobject/subclassing.html#gtypename> is untrue, or
+// GObject.type_from_name() is broken, so we can't get its constructor via GI
+// either. Luckily it's a short class, so we can copy & paste.
+const MultiMonitorsDoNotDisturbSwitch = GObject.registerClass(
+class MultiMonitorsDoNotDisturbSwitch extends PopupMenu.Switch {
+    _init() {
+        this._settings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.notifications',
+        });
+
+        super._init(this._settings.get_boolean('show-banners'));
+
+        this._settings.bind('show-banners',
+            this, 'state',
+            Gio.SettingsBindFlags.INVERT_BOOLEAN);
+
+        this.connect('destroy', () => {
+            this._settings.run_dispose();
+            this._settings = null;
+        });
+    }
+});
 
 var MultiMonitorsCalendar = (() => {
 	let MultiMonitorsCalendar = class MultiMonitorsCalendar extends St.Widget {
@@ -180,7 +205,7 @@ var MultiMonitorsCalendarMessageList = (() => {
         });
         hbox.add_child(dndLabel);
 
-        this._dndSwitch = new Calendar.DoNotDisturbSwitch();
+        this._dndSwitch = new MultiMonitorsDoNotDisturbSwitch();
         this._dndButton = new St.Button({
             can_focus: true,
             toggle_mode: true,
