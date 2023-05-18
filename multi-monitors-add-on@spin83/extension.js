@@ -65,7 +65,7 @@ class MultiMonitorsAddOn {
 
     constructor() {
         this._settings = Convenience.getSettings();
-        this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
+//        this._ov_settings = new Gio.Settings({ schema: OVERRIDE_SCHEMA });
         this._mu_settings = new Gio.Settings({ schema: MUTTER_SCHEMA });
 
         this.mmIndicator = null;
@@ -100,8 +100,8 @@ class MultiMonitorsAddOn {
 			return;
 		}
 
-		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
-			this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
+//		if(this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+//			this._ov_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 		if(this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
 			this._mu_settings.set_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID, false);
 
@@ -174,7 +174,10 @@ class MultiMonitorsAddOn {
     }
 
     _switchOffThumbnails() {
-		if (this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID) || this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID)) {
+		if (
+//            this._ov_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID) ||
+            this._mu_settings.get_boolean(WORKSPACES_ONLY_ON_PRIMARY_ID))
+        {
 			this._settings.set_string(THUMBNAILS_SLIDER_POSITION_ID, 'none');
 		}
     }
@@ -187,8 +190,8 @@ class MultiMonitorsAddOn {
 		
 		this._mmMonitors = 0;
 
-		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
-																	this._switchOffThumbnails.bind(this));
+//		this._switchOffThumbnailsOvId = this._ov_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
+//																	this._switchOffThumbnails.bind(this));
 		this._switchOffThumbnailsMuId = this._mu_settings.connect('changed::'+WORKSPACES_ONLY_ON_PRIMARY_ID,
 																	this._switchOffThumbnails.bind(this));
 
@@ -206,7 +209,7 @@ class MultiMonitorsAddOn {
 
     disable() {
 		Main.layoutManager.disconnect(this._relayoutId);
-		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
+//		this._ov_settings.disconnect(this._switchOffThumbnailsOvId);
 		this._mu_settings.disconnect(this._switchOffThumbnailsMuId);
 		
 		this._settings.disconnect(this._showPanelId);
